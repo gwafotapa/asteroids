@@ -3,7 +3,7 @@ use rand::Rng;
 
 mod spaceship;
 
-use spaceship::Spaceship;
+use spaceship::{Direction, Spaceship};
 
 const INITIAL_COUNT_OF_STARS_BY_VELOCITY: usize = 10;
 const MAX_VELOCITY_OF_STARS: usize = 10;
@@ -161,7 +161,7 @@ fn update_stars(
 //     }
 // }
 
-fn keyboard_input(keys: Res<Input<KeyCode>>, mut query: Query<&mut Transform, With<Spaceship>>) {
+fn keyboard_input(keys: Res<Input<KeyCode>>, mut query: Query<(&mut Transform, &mut Spaceship)>) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
     // }
@@ -170,38 +170,47 @@ fn keyboard_input(keys: Res<Input<KeyCode>>, mut query: Query<&mut Transform, Wi
     //     // Left Ctrl was released
     // }
 
+    let (mut transform, mut spaceship) = query.single_mut();
+
+    // // we can check multiple at once with `.any_*`
+    // if keys.any_pressed([
+    //     KeyCode::Left,
+    //     KeyCode::Down,
+    //     KeyCode::Up,
+    //     KeyCode::Right,
+    //     KeyCode::H,
+    //     KeyCode::J,
+    //     KeyCode::K,
+    //     KeyCode::L,
+    // ]) {
+    // Either the left or right shift are being held down
     if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
         // W is being held down
-        let mut transform = query.single_mut();
-        transform.translation += Vec3::from([-2., 0., 0.]);
+        // transform.translation += Vec3::from([-spaceship.acceleration(), 0., 0.]);
+        spaceship.accelerate(Direction::Left);
+    } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
+        // W is being held down
+        spaceship.accelerate(Direction::Right);
+    } else {
+        spaceship.decelerate_x();
     }
 
     if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
         // W is being held down
-        let mut transform = query.single_mut();
-        transform.translation += Vec3::from([0., -2., 0.]);
-    }
-
-    if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
+        spaceship.accelerate(Direction::Down);
+    } else if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
         // W is being held down
-        let mut transform = query.single_mut();
-        transform.translation += Vec3::from([0., 2., 0.]);
+        spaceship.accelerate(Direction::Up);
+    } else {
+        spaceship.decelerate_y();
     }
-
-    if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
-        // W is being held down
-        let mut transform = query.single_mut();
-        transform.translation += Vec3::from([2., 0., 0.]);
-    }
-
-    // // we can check multiple at once with `.any_*`
-    // if keys.any_pressed([KeyCode::LShift, KeyCode::RShift]) {
-    //     // Either the left or right shift are being held down
+    // } else {
+    //     spaceship.decelerate();
     // }
-
     // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
     //     // Either delete or backspace was just pressed
     // }
+    transform.translation += spaceship.velocity();
 }
 
 fn asteroids(

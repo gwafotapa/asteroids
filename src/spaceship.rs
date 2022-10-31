@@ -21,15 +21,118 @@ const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
     [0.0, -15.0, 0.0],
 ];
 
+// const VELOCITY_MAX: f32 = 5.0;
+const ACCELERATION: f32 = 0.05;
+
+pub enum Direction {
+    Left,
+    Down,
+    Up,
+    Right,
+}
+
 #[derive(Component)]
 pub struct Spaceship {
     envelop: Vec<Vec3>,
+    velocity: Vec3,
 }
 
 impl Spaceship {
     pub fn envelop(&self) -> &Vec<Vec3> {
         &self.envelop
     }
+
+    pub fn velocity(&self) -> Vec3 {
+        self.velocity
+    }
+
+    pub fn accelerate(&mut self, direction: Direction) {
+        // if self.velocity.length() < VELOCITY_MAX {
+        self.velocity += match direction {
+            Direction::Left => Vec3 {
+                x: -ACCELERATION,
+                y: 0.0,
+                z: 0.0,
+            },
+            Direction::Down => Vec3 {
+                x: 0.0,
+                y: -ACCELERATION,
+                z: 0.0,
+            },
+            Direction::Up => Vec3 {
+                x: 0.0,
+                y: ACCELERATION,
+                z: 0.0,
+            },
+            Direction::Right => Vec3 {
+                x: ACCELERATION,
+                y: 0.0,
+                z: 0.0,
+            },
+        };
+        // }
+    }
+
+    pub fn decelerate_x(&mut self) {
+        if self.velocity.x > 0.0 {
+            self.velocity.x -= ACCELERATION / 2.0;
+        } else if self.velocity.x < 0.0 {
+            self.velocity.x += ACCELERATION / 2.0;
+        }
+    }
+
+    pub fn decelerate_y(&mut self) {
+        if self.velocity.y > 0.0 {
+            self.velocity.y -= ACCELERATION / 2.0;
+        } else if self.velocity.y < 0.0 {
+            self.velocity.y += ACCELERATION / 2.0;
+        }
+    }
+
+    pub fn decelerate(&mut self, direction: Direction) {
+        // if self.velocity.x > 0.0 {
+        //     self.velocity.x -= ACCELERATION / 2.0;
+        // } else if self.velocity.x < 0.0 {
+        //     self.velocity.x += ACCELERATION / 2.0;
+        // }
+        // if self.velocity.y > 0.0 {
+        //     self.velocity.y -= ACCELERATION / 2.0;
+        // } else if self.velocity.y < 0.0 {
+        //     self.velocity.y += ACCELERATION / 2.0;
+        // }
+        // if self.velocity.z > 0.0 {
+        //     self.velocity.z -= ACCELERATION / 2.0;
+        // } else if self.velocity.z < 0.0 {
+        //     self.velocity.z += ACCELERATION / 2.0;
+        // }
+        self.velocity -= match direction {
+            Direction::Left => Vec3 {
+                x: -ACCELERATION / 2.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            Direction::Down => Vec3 {
+                x: 0.0,
+                y: -ACCELERATION / 2.0,
+                z: 0.0,
+            },
+            Direction::Up => Vec3 {
+                x: 0.0,
+                y: ACCELERATION / 2.0,
+                z: 0.0,
+            },
+            Direction::Right => Vec3 {
+                x: ACCELERATION / 2.0,
+                y: 0.0,
+                z: 0.0,
+            },
+        };
+    }
+
+    // pub fn move(&mut self, query: Query<(&mut Transform, &Spaceship>>) {
+    // 	let (mut transform, spaceship) = query.single_mut();
+    // 	transform.translation += velocity;
+    // }
 }
 
 pub fn spaceship(
@@ -60,6 +163,11 @@ pub fn spaceship(
         .spawn()
         .insert(Spaceship {
             envelop: SPACESHIP_ENVELOP.map(|x| Vec3::from(x)).to_vec(),
+            velocity: Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
         })
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
