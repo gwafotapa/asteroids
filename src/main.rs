@@ -1,9 +1,9 @@
-use bevy::{
-    prelude::*,
-    render::mesh::{Indices, PrimitiveTopology},
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 use rand::Rng;
+
+mod spaceship;
+
+use spaceship::Spaceship;
 
 const INITIAL_COUNT_OF_STARS_BY_VELOCITY: usize = 10;
 const MAX_VELOCITY_OF_STARS: usize = 10;
@@ -14,9 +14,6 @@ struct Stars {}
 
 #[derive(Component)]
 struct Velocity(Vec3);
-
-#[derive(Component)]
-struct Spaceship {}
 
 #[derive(Component)]
 struct Asteroid {
@@ -34,7 +31,7 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
         .add_plugins(DefaultPlugins)
         .add_startup_system(camera)
-        .add_startup_system(spaceship)
+        .add_startup_system(spaceship::spaceship)
         .add_startup_system(setup_stars)
         .add_system(add_stars)
         .add_system(update_stars)
@@ -51,63 +48,6 @@ fn main() {
 
 fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
-}
-
-fn spaceship(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
-
-    let v_pos = vec![
-        [4., -0.5, 0.],
-        [-2., 1.5, 0.],
-        [-4., -2.5, 0.],
-        [1., -0.5, 0.],
-        [-3., 2.5, 0.],
-        [-3., -0.5, 0.],
-    ];
-    let v_normals = vec![[0., 0., 1.]; 6];
-    let v_uvs = vec![[1., 1.]; 6];
-    spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
-    spaceship.insert_attribute(Mesh::ATTRIBUTE_NORMAL, v_normals);
-    spaceship.insert_attribute(Mesh::ATTRIBUTE_UV_0, v_uvs);
-
-    // let mut v_color: Vec<u32> = vec![Color::BLUE.as_linear_rgba_u32()];
-    // v_color.extend_from_slice(&[Color::YELLOW.as_linear_rgba_u32(); 2]);
-    // spaceship.insert_attribute(
-    //     MeshVertexAttribute::new("Vertex_Color", 10, VertexFormat::Uint32),
-    //     v_color,
-    // );
-
-    let indices = vec![0, 1, 2, 3, 4, 5];
-    // for i in 2..=10 {
-    //     indices.extend_from_slice(&[0, i, i - 1]);
-    // }
-    spaceship.set_indices(Some(Indices::U32(indices)));
-
-    commands
-        .spawn()
-        .insert(Spaceship {})
-        .insert_bundle(ColorMesh2dBundle {
-            // mesh: Mesh2dHandle(meshes.add(spaceship)),
-            mesh: meshes.add(spaceship).into(),
-            transform: Transform::from_xyz(-300., 0., 0.).with_scale(Vec3::splat(10.0)),
-            material: materials.add(Color::rgb(0.25, 0., 1.).into()),
-            ..default()
-        });
-
-    // commands
-    //     .spawn_bundle((
-    //         ColoredMesh2d::default(),
-    //         Mesh2dHandle(meshes.add(spaceship)),
-    //         Transform::default(),
-    //         GlobalTransform::default(),
-    //         Visibility::default(),
-    //         ComputedVisibility::default(),
-    //     ))
-    //     .insert(Spaceship {});
 }
 
 // /// A marker component for colored 2d meshes
@@ -305,14 +245,23 @@ fn detect_collision_spaceship_asteroid(
     spaceship_query: Query<(Entity, &Transform, &Spaceship)>,
     asteroid_query: Query<(&Transform, &Asteroid)>,
 ) {
-    let (spaceship_entity, spaceship_transform, _) = spaceship_query.single();
+    let (spaceship_entity, spaceship_transform, spaceship) = spaceship_query.single();
     for (asteroid_transform, asteroid) in asteroid_query.iter() {
-        if spaceship_transform
-            .translation
-            .distance(asteroid_transform.translation)
-            < asteroid.radius * 1.5
-        {
-            commands.entity(spaceship_entity).despawn();
+        // if spaceship_transform
+        //     .translation
+        //     .distance(asteroid_transform.translation)
+        //     < asteroid.radius + 40.0
+        // {
+        for &point in spaceship.envelop() {
+            if asteroid_transform
+                .translation
+                // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
+                .distance(point + spaceship_transform.translation)
+                < asteroid.radius
+            {
+                commands.entity(spaceship_entity).despawn();
+            }
         }
+        // }
     }
 }
