@@ -13,7 +13,7 @@ const MAX_VELOCITY_OF_ASTEROIDS: usize = 5;
 const BULLET_RADIUS: f32 = 2.0;
 
 #[derive(Component)]
-struct Stars {}
+struct Star {}
 
 #[derive(Component)]
 struct Velocity(Vec3);
@@ -68,82 +68,54 @@ fn setup_stars(
 ) {
     let mut rng = rand::thread_rng();
     for velocity in 1..MAX_VELOCITY_OF_STARS + 1 {
-        let mut vertices = Vec::new();
         for _i in 0..INITIAL_COUNT_OF_STARS_BY_VELOCITY {
             let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
             let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
-            vertices.push(([x, y, 0.0], [0., 1., 0.], [1., 1.]));
+
+            commands
+                .spawn()
+                .insert(Star {})
+                .insert(Velocity(Vec3::from([-(velocity as f32), 0., 0.])))
+                .insert_bundle(MaterialMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: 1.0,
+                            vertices: 4,
+                        }))
+                        .into(),
+                    transform: Transform::from_translation(Vec3 { x, y, z: 0.0 }),
+                    material: materials.add(Color::rgb(1., 1., 1.).into()),
+                    ..default()
+                });
         }
-
-        let mut positions = Vec::new();
-        let mut normals = Vec::new();
-        let mut uvs = Vec::new();
-
-        for (position, normal, uv) in vertices.iter() {
-            positions.push(*position);
-            normals.push(*normal);
-            uvs.push(*uv);
-        }
-
-        let mut stars = Mesh::new(PrimitiveTopology::PointList);
-        stars.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-        stars.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-        stars.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-
-        commands
-            .spawn()
-            .insert(Stars {})
-            .insert(Velocity(Vec3::from([-(velocity as f32), 0., 0.])))
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes.add(stars).into(),
-                material: materials.add(Color::rgb(1., 1., 1.).into()),
-                ..default()
-            });
     }
 }
 
-// TODO
 fn add_stars(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mut rng = rand::thread_rng();
-    let mut vertices = Vec::new();
     let velocity = Vec3::from([
         -(rng.gen_range(1..MAX_VELOCITY_OF_STARS + 1) as f32),
         0.,
         0.,
     ]);
 
-    // for _j in 0..1 {
     let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
-    // vertices.push(([WINDOW_WIDTH / 2.0, y, 0.0], [0., 1., 0.], [1., 1.]));
-    vertices.push(([0.0, 0.0, 0.0], [0., 1., 0.], [1., 1.]));
-    // }
-
-    let mut positions = Vec::new();
-    let mut normals = Vec::new();
-    let mut uvs = Vec::new();
-
-    for (position, normal, uv) in vertices.iter() {
-        positions.push(*position);
-        normals.push(*normal);
-        uvs.push(*uv);
-    }
-
-    let mut stars = Mesh::new(PrimitiveTopology::PointList);
-    stars.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-    stars.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-    stars.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    // stars.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
 
     commands
         .spawn()
-        .insert(Stars {})
+        .insert(Star {})
         .insert(Velocity(velocity))
         .insert_bundle(MaterialMesh2dBundle {
-            mesh: meshes.add(stars).into(),
+            mesh: meshes
+                .add(Mesh::from(shape::Circle {
+                    radius: 1.0,
+                    vertices: 4,
+                }))
+                .into(),
             transform: Transform::from_translation(Vec3 {
                 x: WINDOW_WIDTH / 2.0,
                 y,
@@ -157,7 +129,7 @@ fn add_stars(
 fn update_stars(
     mut commands: Commands,
     // mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<Stars>>,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<Star>>,
 ) {
     for (mut transform, velocity, star) in query.iter_mut() {
         transform.translation += velocity.0;
@@ -172,7 +144,7 @@ fn update_stars(
 }
 
 // /// Print the up-to-date global coordinates of the player as of **this frame**.
-// fn debug_globaltransform(query: Query<&GlobalTransform, With<Stars>>) {
+// fn debug_globaltransform(query: Query<&GlobalTransform, With<Star>>) {
 //     for mesh in query.iter() {
 //         debug!("Mesh at: {:?}", mesh.translation());
 //     }
