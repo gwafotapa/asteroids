@@ -3,6 +3,8 @@ use bevy::{
     render::mesh::{Indices, PrimitiveTopology},
 };
 
+const SPACESHIP_ALTITUDE: f32 = 100.0;
+
 const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
     [40.0, -5.0, 0.0],
     [-20.0, 15.0, 0.0],
@@ -23,6 +25,7 @@ const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
 
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.05;
+pub const CANON_POSITION: [f32; 3] = [40.0, -5.0, 0.0];
 
 pub enum Direction {
     Left,
@@ -88,51 +91,6 @@ impl Spaceship {
             self.velocity.y += ACCELERATION / 2.0;
         }
     }
-
-    pub fn decelerate(&mut self, direction: Direction) {
-        // if self.velocity.x > 0.0 {
-        //     self.velocity.x -= ACCELERATION / 2.0;
-        // } else if self.velocity.x < 0.0 {
-        //     self.velocity.x += ACCELERATION / 2.0;
-        // }
-        // if self.velocity.y > 0.0 {
-        //     self.velocity.y -= ACCELERATION / 2.0;
-        // } else if self.velocity.y < 0.0 {
-        //     self.velocity.y += ACCELERATION / 2.0;
-        // }
-        // if self.velocity.z > 0.0 {
-        //     self.velocity.z -= ACCELERATION / 2.0;
-        // } else if self.velocity.z < 0.0 {
-        //     self.velocity.z += ACCELERATION / 2.0;
-        // }
-        self.velocity -= match direction {
-            Direction::Left => Vec3 {
-                x: -ACCELERATION / 2.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            Direction::Down => Vec3 {
-                x: 0.0,
-                y: -ACCELERATION / 2.0,
-                z: 0.0,
-            },
-            Direction::Up => Vec3 {
-                x: 0.0,
-                y: ACCELERATION / 2.0,
-                z: 0.0,
-            },
-            Direction::Right => Vec3 {
-                x: ACCELERATION / 2.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        };
-    }
-
-    // pub fn move(&mut self, query: Query<(&mut Transform, &Spaceship>>) {
-    // 	let (mut transform, spaceship) = query.single_mut();
-    // 	transform.translation += velocity;
-    // }
 }
 
 pub fn spaceship(
@@ -172,7 +130,7 @@ pub fn spaceship(
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
-            transform: Transform::from_xyz(-300., 0., 0.),
+            transform: Transform::from_xyz(-300., 0., SPACESHIP_ALTITUDE),
             // .with_scale(Vec3::splat(10.0)),
             material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             ..default()

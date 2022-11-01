@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 mod spaceship;
@@ -8,9 +8,10 @@ use spaceship::{Direction, Spaceship};
 const WINDOW_WIDTH: f32 = 800.0;
 const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_COUNT_OF_STARS_BY_VELOCITY: usize = 10;
-const MAX_VELOCITY_OF_STARS: usize = 10;
-const MAX_VELOCITY_OF_ASTEROIDS: usize = 5;
+const MAX_SPEED_OF_STARS: usize = 10;
+const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const BULLET_RADIUS: f32 = 2.0;
+const PLANE_ALTITUDE: f32 = 100.0;
 
 #[derive(Component)]
 struct Star {}
@@ -26,6 +27,9 @@ struct Asteroid {
 #[derive(Component)]
 struct Bullet {}
 
+// #[derive(Component)]
+// struct Depth(f32);
+
 fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
@@ -38,7 +42,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_startup_system(camera)
         .add_startup_system(spaceship::spaceship)
-        .add_startup_system(setup_stars)
+        // .add_startup_system(setup_stars)
         .add_system(add_stars)
         .add_system(update_stars)
         .add_system(asteroids)
@@ -67,7 +71,8 @@ fn setup_stars(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mut rng = rand::thread_rng();
-    for velocity in 1..MAX_VELOCITY_OF_STARS + 1 {
+    for speed in 1..(MAX_SPEED_OF_STARS + 1) {
+        let z = 95.0 + speed as f32;
         for _i in 0..INITIAL_COUNT_OF_STARS_BY_VELOCITY {
             let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
             let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
@@ -75,7 +80,7 @@ fn setup_stars(
             commands
                 .spawn()
                 .insert(Star {})
-                .insert(Velocity(Vec3::from([-(velocity as f32), 0., 0.])))
+                .insert(Velocity(Vec3::from([-(speed as f32), 0., 0.])))
                 .insert_bundle(MaterialMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {
@@ -97,13 +102,11 @@ fn add_stars(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mut rng = rand::thread_rng();
-    let velocity = Vec3::from([
-        -(rng.gen_range(1..MAX_VELOCITY_OF_STARS + 1) as f32),
-        0.,
-        0.,
-    ]);
+    let speed = rng.gen_range(1..MAX_SPEED_OF_STARS + 1) as f32;
+    let velocity = Vec3::from([-speed, 0., 0.]);
 
     let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
+    let z = PLANE_ALTITUDE - (MAX_SPEED_OF_STARS / 2) as f32 + speed;
 
     commands
         .spawn()
@@ -119,7 +122,7 @@ fn add_stars(
             transform: Transform::from_translation(Vec3 {
                 x: WINDOW_WIDTH / 2.0,
                 y,
-                z: 0.0,
+                z,
             }),
             material: materials.add(Color::rgb(1., 1., 1.).into()),
             ..default()
@@ -177,12 +180,12 @@ fn keyboard_input(
         //     KeyCode::K,
         //     KeyCode::L,
         // ]) {
-        if keys.just_pressed(KeyCode::Space) {
+        if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
             create_bullet(
                 commands,
                 meshes,
                 materials,
-                transform.translation + Vec3::from([40.0, 0.0, 0.0]),
+                transform.translation + Vec3::from(spaceship::CANON_POSITION),
             );
         }
         // Either the left or right shift are being held down
@@ -248,11 +251,8 @@ fn asteroids(
 
     if rng.gen_range(0..100) == 0 {
         let radius = rng.gen_range(10..50) as f32;
-        let velocity = Vec3::from([
-            -(rng.gen_range(1..MAX_VELOCITY_OF_ASTEROIDS + 1) as f32),
-            0.,
-            0.,
-        ]);
+        let speed = rng.gen_range(1..MAX_SPEED_OF_ASTEROIDS + 1) as f32;
+        let velocity = Vec3::from([-speed, 0., 0.]);
         commands
             .spawn_bundle(MaterialMesh2dBundle {
                 mesh: meshes
@@ -261,7 +261,11 @@ fn asteroids(
                         vertices: 16,
                     }))
                     .into(),
-                transform: Transform::from_xyz(450., rng.gen_range(-250..250) as f32, 0.),
+                transform: Transform::from_xyz(
+                    450.,
+                    rng.gen_range(-250..250) as f32,
+                    PLANE_ALTITUDE,
+                ),
                 material: materials.add(ColorMaterial::from(Color::PURPLE)),
                 ..default()
             })
