@@ -5,9 +5,12 @@ mod spaceship;
 
 use spaceship::{Direction, Spaceship};
 
+const WINDOW_WIDTH: f32 = 800.0;
+const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_COUNT_OF_STARS_BY_VELOCITY: usize = 10;
 const MAX_VELOCITY_OF_STARS: usize = 10;
 const MAX_VELOCITY_OF_ASTEROIDS: usize = 5;
+const BULLET_RADIUS: f32 = 2.0;
 
 #[derive(Component)]
 struct Stars {}
@@ -20,12 +23,15 @@ struct Asteroid {
     radius: f32,
 }
 
+#[derive(Component)]
+struct Bullet {}
+
 fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
             title: "Asteroids".to_string(),
-            width: 800.,
-            height: 600.,
+            width: WINDOW_WIDTH,
+            height: WINDOW_HEIGHT,
             ..default()
         })
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
@@ -38,6 +44,7 @@ fn main() {
         .add_system(asteroids)
         .add_system(keyboard_input)
         .add_system(detect_collision_spaceship_asteroid)
+        .add_system(update_bullets)
         .add_system(bevy::window::close_on_esc)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
@@ -63,8 +70,8 @@ fn setup_stars(
     for velocity in 1..MAX_VELOCITY_OF_STARS + 1 {
         let mut vertices = Vec::new();
         for _i in 0..INITIAL_COUNT_OF_STARS_BY_VELOCITY {
-            let x = rng.gen_range(-400. ..400.);
-            let y = rng.gen_range(-300. ..300.);
+            let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
+            let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
             vertices.push(([x, y, 0.0], [0., 1., 0.], [1., 1.]));
         }
 
@@ -95,6 +102,7 @@ fn setup_stars(
     }
 }
 
+// TODO
 fn add_stars(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -108,10 +116,11 @@ fn add_stars(
         0.,
     ]);
 
-    for _j in 0..1 {
-        let y = rng.gen_range(-300. ..300.);
-        vertices.push(([400., y, 0.0], [0., 1., 0.], [1., 1.]));
-    }
+    // for _j in 0..1 {
+    let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
+    // vertices.push(([WINDOW_WIDTH / 2.0, y, 0.0], [0., 1., 0.], [1., 1.]));
+    vertices.push(([0.0, 0.0, 0.0], [0., 1., 0.], [1., 1.]));
+    // }
 
     let mut positions = Vec::new();
     let mut normals = Vec::new();
@@ -135,21 +144,29 @@ fn add_stars(
         .insert(Velocity(velocity))
         .insert_bundle(MaterialMesh2dBundle {
             mesh: meshes.add(stars).into(),
+            transform: Transform::from_translation(Vec3 {
+                x: WINDOW_WIDTH / 2.0,
+                y,
+                z: 0.0,
+            }),
             material: materials.add(Color::rgb(1., 1., 1.).into()),
             ..default()
         });
 }
 
 fn update_stars(
-    // mut commands: Commands,
+    mut commands: Commands,
     // mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&mut Transform, &Velocity), With<Stars>>,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<Stars>>,
 ) {
-    for (mut transform, velocity) in query.iter_mut() {
-        transform.translation += velocity.0
+    for (mut transform, velocity, star) in query.iter_mut() {
+        transform.translation += velocity.0;
         //     for value in mesh.attributes() {
         //         println!("{}", value);
         //     }
+        if transform.translation.x < -WINDOW_WIDTH / 2.0 {
+            commands.entity(star).despawn();
+        }
     }
     // for mesh in meshes.get_handle() {}
 }
@@ -161,7 +178,13 @@ fn update_stars(
 //     }
 // }
 
-fn keyboard_input(keys: Res<Input<KeyCode>>, mut query: Query<(&mut Transform, &mut Spaceship)>) {
+fn keyboard_input(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    keys: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Transform, &mut Spaceship)>,
+) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
     // }
@@ -170,54 +193,84 @@ fn keyboard_input(keys: Res<Input<KeyCode>>, mut query: Query<(&mut Transform, &
     //     // Left Ctrl was released
     // }
 
-    let (mut transform, mut spaceship) = query.single_mut();
+    if let Ok((mut transform, mut spaceship)) = query.get_single_mut() {
+        // // we can check multiple at once with `.any_*`
+        // if keys.any_pressed([
+        //     KeyCode::Left,
+        //     KeyCode::Down,
+        //     KeyCode::Up,
+        //     KeyCode::Right,
+        //     KeyCode::H,
+        //     KeyCode::J,
+        //     KeyCode::K,
+        //     KeyCode::L,
+        // ]) {
+        if keys.just_pressed(KeyCode::Space) {
+            create_bullet(
+                commands,
+                meshes,
+                materials,
+                transform.translation + Vec3::from([40.0, 0.0, 0.0]),
+            );
+        }
+        // Either the left or right shift are being held down
+        if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
+            // W is being held down
+            // transform.translation += Vec3::from([-spaceship.acceleration(), 0., 0.]);
+            spaceship.accelerate(Direction::Left);
+        } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
+            // W is being held down
+            spaceship.accelerate(Direction::Right);
+        } else {
+            spaceship.decelerate_x();
+        }
 
-    // // we can check multiple at once with `.any_*`
-    // if keys.any_pressed([
-    //     KeyCode::Left,
-    //     KeyCode::Down,
-    //     KeyCode::Up,
-    //     KeyCode::Right,
-    //     KeyCode::H,
-    //     KeyCode::J,
-    //     KeyCode::K,
-    //     KeyCode::L,
-    // ]) {
-    // Either the left or right shift are being held down
-    if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
-        // W is being held down
-        // transform.translation += Vec3::from([-spaceship.acceleration(), 0., 0.]);
-        spaceship.accelerate(Direction::Left);
-    } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
-        // W is being held down
-        spaceship.accelerate(Direction::Right);
-    } else {
-        spaceship.decelerate_x();
+        if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
+            // W is being held down
+            spaceship.accelerate(Direction::Down);
+        } else if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
+            // W is being held down
+            spaceship.accelerate(Direction::Up);
+        } else {
+            spaceship.decelerate_y();
+        }
+        // } else {
+        //     spaceship.decelerate();
+        // }
+        // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
+        //     // Either delete or backspace was just pressed
+        // }
+        transform.translation += spaceship.velocity();
     }
+}
 
-    if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
-        // W is being held down
-        spaceship.accelerate(Direction::Down);
-    } else if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
-        // W is being held down
-        spaceship.accelerate(Direction::Up);
-    } else {
-        spaceship.decelerate_y();
-    }
-    // } else {
-    //     spaceship.decelerate();
-    // }
-    // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
-    //     // Either delete or backspace was just pressed
-    // }
-    transform.translation += spaceship.velocity();
+fn create_bullet(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    position: Vec3,
+) {
+    commands
+        .spawn()
+        .insert(Bullet {})
+        .insert_bundle(MaterialMesh2dBundle {
+            mesh: meshes
+                .add(Mesh::from(shape::Circle {
+                    radius: BULLET_RADIUS,
+                    vertices: 4,
+                }))
+                .into(),
+            transform: Transform::from_translation(position),
+            material: materials.add(ColorMaterial::from(Color::YELLOW)),
+            ..default()
+        });
 }
 
 fn asteroids(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query: Query<(&mut Transform, &Velocity), With<Asteroid>>,
+    mut query: Query<(&mut Transform, &Velocity, &Asteroid, Entity)>,
 ) {
     let mut rng = rand::thread_rng();
 
@@ -244,8 +297,11 @@ fn asteroids(
             .insert(Velocity(velocity));
     }
 
-    for (mut transform, velocity) in query.iter_mut() {
+    for (mut transform, velocity, asteroid, entity) in query.iter_mut() {
         transform.translation += velocity.0;
+        if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
+            commands.entity(entity).despawn();
+        }
     }
 }
 
@@ -254,23 +310,41 @@ fn detect_collision_spaceship_asteroid(
     spaceship_query: Query<(Entity, &Transform, &Spaceship)>,
     asteroid_query: Query<(&Transform, &Asteroid)>,
 ) {
-    let (spaceship_entity, spaceship_transform, spaceship) = spaceship_query.single();
-    for (asteroid_transform, asteroid) in asteroid_query.iter() {
-        // if spaceship_transform
-        //     .translation
-        //     .distance(asteroid_transform.translation)
-        //     < asteroid.radius + 40.0
-        // {
-        for &point in spaceship.envelop() {
-            if asteroid_transform
-                .translation
-                // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
-                .distance(point + spaceship_transform.translation)
-                < asteroid.radius
-            {
-                commands.entity(spaceship_entity).despawn();
+    if let Ok((spaceship_entity, spaceship_transform, spaceship)) = spaceship_query.get_single() {
+        for (asteroid_transform, asteroid) in asteroid_query.iter() {
+            // if spaceship_transform
+            //     .translation
+            //     .distance(asteroid_transform.translation)
+            //     < asteroid.radius + 40.0
+            // {
+            for &point in spaceship.envelop() {
+                if asteroid_transform
+                    .translation
+                    // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
+                    .distance(point + spaceship_transform.translation)
+                    < asteroid.radius
+                {
+                    commands.entity(spaceship_entity).despawn();
+                    return;
+                }
             }
+            // }
         }
-        // }
+    }
+}
+
+fn update_bullets(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, Entity), With<Bullet>>,
+) {
+    for (mut transform, entity) in query.iter_mut() {
+        transform.translation += Vec3 {
+            x: 4.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        if transform.translation.x > WINDOW_WIDTH / 2.0 {
+            commands.entity(entity).despawn();
+        }
     }
 }
