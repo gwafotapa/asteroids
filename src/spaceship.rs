@@ -3,6 +3,8 @@ use bevy::{
     render::mesh::{Indices, PrimitiveTopology},
 };
 
+use super::Velocity;
+
 const SPACESHIP_ALTITUDE: f32 = 100.0;
 
 const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
@@ -37,7 +39,6 @@ pub enum Direction {
 #[derive(Component)]
 pub struct Spaceship {
     envelop: Vec<Vec3>,
-    velocity: Vec3,
 }
 
 impl Spaceship {
@@ -45,13 +46,9 @@ impl Spaceship {
         &self.envelop
     }
 
-    pub fn velocity(&self) -> Vec3 {
-        self.velocity
-    }
-
-    pub fn accelerate(&mut self, direction: Direction) {
+    pub fn accelerate(velocity: &mut Velocity, direction: Direction) {
         // if self.velocity.length() < VELOCITY_MAX {
-        self.velocity += match direction {
+        velocity.0 += match direction {
             Direction::Left => Vec3 {
                 x: -ACCELERATION,
                 y: 0.0,
@@ -76,19 +73,19 @@ impl Spaceship {
         // }
     }
 
-    pub fn decelerate_x(&mut self) {
-        if self.velocity.x > 0.0 {
-            self.velocity.x -= ACCELERATION / 2.0;
-        } else if self.velocity.x < 0.0 {
-            self.velocity.x += ACCELERATION / 2.0;
+    pub fn decelerate_x(velocity: &mut Velocity) {
+        if velocity.0.x > 0.0 {
+            velocity.0.x -= ACCELERATION / 2.0;
+        } else if velocity.0.x < 0.0 {
+            velocity.0.x += ACCELERATION / 2.0;
         }
     }
 
-    pub fn decelerate_y(&mut self) {
-        if self.velocity.y > 0.0 {
-            self.velocity.y -= ACCELERATION / 2.0;
-        } else if self.velocity.y < 0.0 {
-            self.velocity.y += ACCELERATION / 2.0;
+    pub fn decelerate_y(velocity: &mut Velocity) {
+        if velocity.0.y > 0.0 {
+            velocity.0.y -= ACCELERATION / 2.0;
+        } else if velocity.0.y < 0.0 {
+            velocity.0.y += ACCELERATION / 2.0;
         }
     }
 }
@@ -121,12 +118,12 @@ pub fn spaceship(
         .spawn()
         .insert(Spaceship {
             envelop: SPACESHIP_ENVELOP.map(|x| Vec3::from(x)).to_vec(),
-            velocity: Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
         })
+        .insert(Velocity(Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }))
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
