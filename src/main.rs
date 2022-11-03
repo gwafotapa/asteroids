@@ -1,5 +1,6 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
+// use std::time::Instant;
 
 mod spaceship;
 
@@ -13,7 +14,7 @@ const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const PLANE_ALTITUDE: f32 = 100.0;
-
+const INITIAL_DISTANCE: usize = 10_000;
 #[derive(Component)]
 struct Star;
 
@@ -35,6 +36,12 @@ struct Debris;
 #[derive(Component)]
 struct Impact;
 
+// #[derive(Component)]
+// struct SpawnedTime(Instant);
+
+#[derive(Component)]
+struct Distance(usize);
+
 fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
@@ -47,6 +54,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_startup_system(camera)
         .add_startup_system(spaceship::spaceship)
+        .add_startup_system(setup_distance)
         .add_startup_system(setup_stars)
         .add_system(add_stars)
         .add_system(update_stars)
@@ -57,6 +65,7 @@ fn main() {
         .add_system(update_impacts)
         .add_system(detect_collision_bullet_asteroid)
         .add_system(update_debris)
+        .add_system(update_distance)
         .add_system(bevy::window::close_on_esc)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
@@ -70,9 +79,44 @@ fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
 }
 
-// /// A marker component for colored 2d meshes
-// #[derive(Component, Default)]
-// pub struct ColoredMesh2d;
+fn setup_distance(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn_bundle(
+            // Create a TextBundle that has a Text with a single section.
+            TextBundle::from_section(
+                // Accepts a `String` or any type that converts into a `String`, such as `&str`
+                format!("Distance: {:12}", INITIAL_DISTANCE),
+                TextStyle {
+                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                    font_size: 20.0,
+                    color: Color::GRAY,
+                },
+            )
+            // Set the alignment of the Text
+            // .with_text_alignment(TextAlignment::TOP_RIGHT)
+            // Set the style of the TextBundle itself.
+            .with_style(Style {
+                // align_self: AlignSelf::FlexStart,
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    top: Val::Px(0.0),
+                    left: Val::Px(WINDOW_WIDTH - 150.0),
+                    // bottom: Val::Px(10.0),
+                    // right: Val::Px(1000.0),
+                    ..default()
+                },
+                ..default()
+            }),
+        )
+        .insert(Distance(INITIAL_DISTANCE));
+}
+
+fn update_distance(mut query: Query<(&mut Text, &mut Distance)>) {
+    for (mut text, mut distance) in &mut query {
+        distance.0 -= 1;
+        text.sections[0].value = format!("Distance: {:12}", distance.0);
+    }
+}
 
 fn setup_stars(
     mut commands: Commands,
@@ -167,7 +211,7 @@ fn keyboard_input(
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform, &mut Spaceship, &mut Velocity)>,
+    mut query: Query<(&mut Transform, &mut Velocity), With<Spaceship>>,
 ) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
@@ -177,7 +221,7 @@ fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((mut transform, mut spaceship, mut velocity)) = query.get_single_mut() {
+    if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
         // // we can check multiple at once with `.any_*`
         // if keys.any_pressed([
         //     KeyCode::Left,
