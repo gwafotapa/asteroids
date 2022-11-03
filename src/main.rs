@@ -1,6 +1,7 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 // use std::time::Instant;
+use std::f32::consts::PI;
 
 mod spaceship;
 
@@ -13,8 +14,9 @@ const MAX_SPEED_OF_STARS: usize = 10;
 const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
-const PLANE_ALTITUDE: f32 = 100.0;
-const INITIAL_DISTANCE: usize = 10_000;
+const ALTITUDE: f32 = 100.0;
+const INITIAL_DISTANCE: usize = 0;
+
 #[derive(Component)]
 struct Star;
 
@@ -42,6 +44,12 @@ struct Impact;
 #[derive(Component)]
 struct Distance(usize);
 
+#[derive(Component)]
+struct Boss;
+
+#[derive(Component)]
+struct BossPart;
+
 fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
@@ -66,6 +74,8 @@ fn main() {
         .add_system(detect_collision_bullet_asteroid)
         .add_system(update_debris)
         .add_system(update_distance)
+        .add_system(add_boss)
+        .add_system(move_boss)
         .add_system(bevy::window::close_on_esc)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
@@ -85,7 +95,8 @@ fn setup_distance(mut commands: Commands, asset_server: Res<AssetServer>) {
             // Create a TextBundle that has a Text with a single section.
             TextBundle::from_section(
                 // Accepts a `String` or any type that converts into a `String`, such as `&str`
-                format!("Distance: {:12}", INITIAL_DISTANCE),
+                // format!("Distance: {:12}", INITIAL_DISTANCE),
+                "",
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                     font_size: 20.0,
@@ -113,7 +124,9 @@ fn setup_distance(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn update_distance(mut query: Query<(&mut Text, &mut Distance)>) {
     for (mut text, mut distance) in &mut query {
-        distance.0 -= 1;
+        if distance.0 > 0 {
+            distance.0 -= 1;
+        }
         text.sections[0].value = format!("Distance: {:12}", distance.0);
     }
 }
@@ -125,7 +138,7 @@ fn setup_stars(
 ) {
     let mut rng = rand::thread_rng();
     for speed in 1..(MAX_SPEED_OF_STARS + 1) {
-        let z = PLANE_ALTITUDE - (MAX_SPEED_OF_STARS / 2 + speed) as f32 + 0.5;
+        let z = ALTITUDE - (MAX_SPEED_OF_STARS / 2 + speed) as f32 + 0.5;
         for _i in 0..INITIAL_COUNT_OF_STARS_BY_VELOCITY {
             let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
             let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
@@ -159,7 +172,7 @@ fn add_stars(
     let velocity = Vec3::from([-speed, 0., 0.]);
 
     let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
-    let z = PLANE_ALTITUDE - (MAX_SPEED_OF_STARS / 2) as f32 + speed + 0.5;
+    let z = ALTITUDE - (MAX_SPEED_OF_STARS / 2) as f32 + speed + 0.5;
 
     commands
         .spawn()
@@ -298,11 +311,12 @@ fn asteroids(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query: Query<(&mut Transform, &Velocity, &Asteroid, Entity)>,
+    mut asteroid_query: Query<(&mut Transform, &Velocity, &Asteroid, Entity)>,
+    distance_query: Query<&Distance>,
 ) {
     let mut rng = rand::thread_rng();
 
-    if rng.gen_range(0..100) == 0 {
+    if distance_query.single().0 > 0 && rng.gen_range(0..100) == 0 {
         let health = rng.gen_range(1..MAX_HEALTH_OF_ASTEROIDS + 1);
         let radius = (health * 20) as f32;
         let speed = rng.gen_range(1..MAX_SPEED_OF_ASTEROIDS + 1) as f32;
@@ -316,11 +330,7 @@ fn asteroids(
                         vertices: 16,
                     }))
                     .into(),
-                transform: Transform::from_xyz(
-                    450.,
-                    rng.gen_range(-250..250) as f32,
-                    PLANE_ALTITUDE,
-                ),
+                transform: Transform::from_xyz(450., rng.gen_range(-250..250) as f32, ALTITUDE),
                 material: materials.add(ColorMaterial::from(Color::PURPLE)),
                 ..default()
             })
@@ -328,7 +338,7 @@ fn asteroids(
             .insert(Velocity(velocity));
     }
 
-    for (mut transform, velocity, asteroid, entity) in query.iter_mut() {
+    for (mut transform, velocity, asteroid, entity) in asteroid_query.iter_mut() {
         transform.translation += velocity.0;
         if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
             commands.entity(entity).despawn();
@@ -384,7 +394,7 @@ fn detect_collision_spaceship_asteroid(
                                         vertices: 4,
                                     }))
                                     .into(),
-                                transform: Transform::from_xyz(debris_x, debris_y, PLANE_ALTITUDE)
+                                transform: Transform::from_xyz(debris_x, debris_y, ALTITUDE)
                                     .with_scale(Vec3::splat(4.0)),
                                 material: materials.add(Color::BLUE.into()),
                                 ..default()
@@ -487,7 +497,7 @@ fn detect_collision_bullet_asteroid(
                                 transform: Transform::from_xyz(
                                     debris_x,
                                     debris_y,
-                                    PLANE_ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                                    ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
                                 )
                                 .with_scale(Vec3::splat(4.0)),
                                 material: materials.add(Color::PURPLE.into()),
@@ -530,5 +540,73 @@ fn update_impacts(
         if transform.scale.x < 0.25 {
             commands.entity(impact).despawn();
         }
+    }
+}
+
+fn add_boss(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    distance_query: Query<&Distance>,
+    asteroid_query: Query<&Asteroid>,
+    boss_query: Query<&Boss>,
+) {
+    if distance_query.single().0 == 0 && boss_query.is_empty() && asteroid_query.is_empty() {
+        let boss = commands
+            .spawn()
+            .insert(Boss)
+            .insert_bundle(SpatialBundle {
+                transform: Transform::from_xyz(300.0, 0.0, ALTITUDE),
+                ..default()
+            })
+            .id();
+
+        let boss_part1 = commands
+            .spawn()
+            .insert(BossPart)
+            .insert_bundle(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Quad {
+                        size: (200.0, 200.0).into(),
+                        flip: false,
+                    }))
+                    .into(),
+                material: materials.add(Color::ORANGE.into()),
+                ..default()
+            })
+            .id();
+
+        let boss_part2 = commands
+            .spawn()
+            .insert(BossPart)
+            .insert_bundle(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Quad {
+                        size: (200.0, 200.0).into(),
+                        flip: false,
+                    }))
+                    .into(),
+                transform: Transform::identity().with_rotation(Quat::from_rotation_z(PI / 4.0)),
+                material: materials.add(Color::ORANGE.into()),
+                ..default()
+            })
+            .id();
+
+        commands
+            .entity(boss)
+            .push_children(&[boss_part1, boss_part2]);
+    }
+}
+
+fn move_boss(mut query: Query<&mut Transform, With<Boss>>) {
+    if let Ok(mut transform) = query.get_single_mut() {
+        let mut rng = rand::thread_rng();
+        transform.translation += match rng.gen_range(0..4) {
+            0 => Vec3::from([1.0, 0.0, 0.0]),
+            1 => Vec3::from([-1.0, 0.0, 0.0]),
+            2 => Vec3::from([0.0, 1.0, 0.0]),
+            3 => Vec3::from([0.0, -1.0, 0.0]),
+            _ => unreachable!(),
+        };
     }
 }
