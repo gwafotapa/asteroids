@@ -22,6 +22,8 @@ const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
     z: ALTITUDE,
 };
 const BOSS_ACCELERATION: f32 = 0.1;
+const BOSS_COLOR: Color = Color::ORANGE;
+const BULLET_COLOR: Color = Color::YELLOW_GREEN;
 
 #[derive(Component)]
 struct Star;
@@ -308,7 +310,7 @@ fn create_bullet(
                 }))
                 .into(),
             transform: Transform::from_translation(position),
-            material: materials.add(ColorMaterial::from(Color::YELLOW)),
+            material: materials.add(ColorMaterial::from(BULLET_COLOR)),
             ..default()
         });
 }
@@ -458,7 +460,7 @@ fn detect_collision_bullet_asteroid(
                             }))
                             .into(),
                         transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                        material: materials.add(Color::YELLOW.into()),
+                        material: materials.add(BULLET_COLOR.into()),
                         ..default()
                     });
 

@@ -28,6 +28,7 @@ const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.05;
 pub const CANON_POSITION: [f32; 3] = [40.0, -5.0, 0.0];
+const SPACESHIP_COLOR: Color = Color::BLUE;
 
 pub enum Direction {
     Left,
@@ -129,7 +130,8 @@ pub fn spaceship(
             mesh: meshes.add(spaceship).into(),
             transform: Transform::from_xyz(-300., 0., SPACESHIP_ALTITUDE),
             // .with_scale(Vec3::splat(10.0)),
-            material: materials.add(Color::rgb(0.25, 0., 1.).into()),
+            // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
+            material: materials.add(SPACESHIP_COLOR.into()),
             ..default()
         });
 }
