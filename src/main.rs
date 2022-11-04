@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::{seq::SliceRandom, Rng};
 // use std::time::Instant;
-use std::f32::consts::PI;
+use std::f32::consts::{PI, SQRT_2};
 
 mod spaceship;
 
@@ -16,6 +16,7 @@ const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
 const INITIAL_DISTANCE: usize = 0;
+const BOSS_SIZE: f32 = 100.0;
 const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
     x: 300.0,
     y: 0.0,
@@ -24,6 +25,49 @@ const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
 const BOSS_ACCELERATION: f32 = 0.1;
 const BOSS_COLOR: Color = Color::ORANGE;
 const BULLET_COLOR: Color = Color::YELLOW_GREEN;
+const BOSS_BULLET_COLOR: Color = Color::RED;
+const BOSS_POSITIONS_OF_CANONS: [Vec3; 8] = [
+    Vec3 {
+        x: BOSS_SIZE * SQRT_2,
+        y: 0.0,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: -BOSS_SIZE * SQRT_2,
+        y: 0.0,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: 0.0,
+        y: BOSS_SIZE * SQRT_2,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: 0.0,
+        y: -BOSS_SIZE * SQRT_2,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: BOSS_SIZE,
+        y: BOSS_SIZE,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: -BOSS_SIZE,
+        y: -BOSS_SIZE,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: BOSS_SIZE,
+        y: -BOSS_SIZE,
+        z: ALTITUDE,
+    },
+    Vec3 {
+        x: -BOSS_SIZE,
+        y: BOSS_SIZE,
+        z: ALTITUDE,
+    },
+];
 
 #[derive(Component)]
 struct Star;
@@ -39,6 +83,9 @@ struct Asteroid {
 
 #[derive(Component)]
 struct Bullet;
+
+#[derive(Component)]
+struct BossBullet;
 
 #[derive(Component)]
 struct Debris;
@@ -84,6 +131,8 @@ fn main() {
         .add_system(update_distance)
         .add_system(add_boss)
         .add_system(move_boss)
+        .add_system(attack_boss)
+        .add_system(update_boss_bullets)
         .add_system(bevy::window::close_on_esc)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
@@ -591,12 +640,12 @@ fn add_boss(
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Quad {
-                        size: (200.0, 200.0).into(),
+                        size: (2.0 * BOSS_SIZE, 2.0 * BOSS_SIZE).into(),
                         flip: false,
                     }))
                     .into(),
                 transform: Transform::identity().with_rotation(Quat::from_rotation_z(PI / 4.0)),
-                material: materials.add(Color::ORANGE.into()),
+                material: materials.add(BOSS_COLOR.into()),
                 ..default()
             })
             .id();
@@ -632,5 +681,60 @@ fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) {
             // _ => unreachable!(),
         };
         transform.translation += velocity.0;
+    }
+}
+
+fn attack_boss(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query_boss: Query<&Transform, With<Boss>>,
+    query_spaceship: Query<&Transform, With<Spaceship>>,
+) {
+    if let Ok(boss_transform) = query_boss.get_single() {
+        if let Ok(spaceship_transform) = query_spaceship.get_single() {
+            let mut rng = rand::thread_rng();
+            for canon_relative_position in BOSS_POSITIONS_OF_CANONS {
+                if rng.gen_range(0..100) == 0 {
+                    let canon_absolute_position = boss_transform.translation
+                        + canon_relative_position
+                        + Vec3::from([0.0, 0.0, 1.0]);
+                    commands
+                        .spawn()
+                        .insert(BossBullet)
+                        .insert(Velocity(
+                            (spaceship_transform.translation - canon_absolute_position).normalize()
+                                * 4.0,
+                        ))
+                        .insert_bundle(MaterialMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: 10.0,
+                                    vertices: 8,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(canon_absolute_position),
+                            material: materials.add(BOSS_BULLET_COLOR.into()),
+                            ..default()
+                        });
+                }
+            }
+        }
+    }
+}
+
+fn update_boss_bullets(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<BossBullet>>,
+) {
+    for (mut transform, velocity, bullet) in query.iter_mut() {
+        transform.translation += velocity.0;
+        if transform.translation.x > WINDOW_WIDTH / 2.0
+            || transform.translation.x < -WINDOW_WIDTH / 2.0
+            || transform.translation.y > WINDOW_HEIGHT / 2.0
+            || transform.translation.y < -WINDOW_HEIGHT / 2.0
+        {
+            commands.entity(bullet).despawn();
+        }
     }
 }
