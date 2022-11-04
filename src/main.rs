@@ -16,6 +16,7 @@ const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
 const INITIAL_DISTANCE: usize = 0;
+const BOSS_ACCELERATION: f32 = 0.1;
 
 #[derive(Component)]
 struct Star;
@@ -555,6 +556,7 @@ fn add_boss(
         let boss = commands
             .spawn()
             .insert(Boss)
+            .insert(Velocity(Vec3::ZERO))
             .insert_bundle(SpatialBundle {
                 transform: Transform::from_xyz(300.0, 0.0, ALTITUDE),
                 ..default()
@@ -598,15 +600,16 @@ fn add_boss(
     }
 }
 
-fn move_boss(mut query: Query<&mut Transform, With<Boss>>) {
-    if let Ok(mut transform) = query.get_single_mut() {
+fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) {
+    if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
         let mut rng = rand::thread_rng();
-        transform.translation += match rng.gen_range(0..4) {
-            0 => Vec3::from([1.0, 0.0, 0.0]),
-            1 => Vec3::from([-1.0, 0.0, 0.0]),
-            2 => Vec3::from([0.0, 1.0, 0.0]),
-            3 => Vec3::from([0.0, -1.0, 0.0]),
+        velocity.0 += match rng.gen_range(0..4) {
+            0 => Vec3::from([BOSS_ACCELERATION, 0.0, 0.0]),
+            1 => Vec3::from([-BOSS_ACCELERATION, 0.0, 0.0]),
+            2 => Vec3::from([0.0, BOSS_ACCELERATION, 0.0]),
+            3 => Vec3::from([0.0, -BOSS_ACCELERATION, 0.0]),
             _ => unreachable!(),
         };
+        transform.translation += velocity.0;
     }
 }
