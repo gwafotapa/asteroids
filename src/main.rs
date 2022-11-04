@@ -1,5 +1,5 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 // use std::time::Instant;
 use std::f32::consts::PI;
 
@@ -16,6 +16,11 @@ const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
 const INITIAL_DISTANCE: usize = 0;
+const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
+    x: 300.0,
+    y: 0.0,
+    z: ALTITUDE,
+};
 const BOSS_ACCELERATION: f32 = 0.1;
 
 #[derive(Component)]
@@ -558,7 +563,7 @@ fn add_boss(
             .insert(Boss)
             .insert(Velocity(Vec3::ZERO))
             .insert_bundle(SpatialBundle {
-                transform: Transform::from_xyz(300.0, 0.0, ALTITUDE),
+                transform: Transform::from_translation(BOSS_INITIAL_POSITION),
                 ..default()
             })
             .id();
@@ -603,12 +608,26 @@ fn add_boss(
 fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) {
     if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
         let mut rng = rand::thread_rng();
-        velocity.0 += match rng.gen_range(0..4) {
-            0 => Vec3::from([BOSS_ACCELERATION, 0.0, 0.0]),
-            1 => Vec3::from([-BOSS_ACCELERATION, 0.0, 0.0]),
-            2 => Vec3::from([0.0, BOSS_ACCELERATION, 0.0]),
-            3 => Vec3::from([0.0, -BOSS_ACCELERATION, 0.0]),
-            _ => unreachable!(),
+        let mut acceleration = Vec::new();
+        if transform.translation.x < WINDOW_WIDTH / 2.0 {
+            acceleration.push(Direction::Left);
+        }
+        if transform.translation.x > -WINDOW_WIDTH / 2.0 {
+            acceleration.push(Direction::Right);
+        }
+        if transform.translation.y < WINDOW_HEIGHT / 2.0 {
+            acceleration.push(Direction::Up);
+        }
+        if transform.translation.y > -WINDOW_HEIGHT / 2.0 {
+            acceleration.push(Direction::Down);
+        }
+
+        velocity.0 += match acceleration.choose(&mut rng).unwrap() {
+            Direction::Left => Vec3::from([BOSS_ACCELERATION, 0.0, 0.0]),
+            Direction::Right => Vec3::from([-BOSS_ACCELERATION, 0.0, 0.0]),
+            Direction::Up => Vec3::from([0.0, BOSS_ACCELERATION, 0.0]),
+            Direction::Down => Vec3::from([0.0, -BOSS_ACCELERATION, 0.0]),
+            // _ => unreachable!(),
         };
         transform.translation += velocity.0;
     }
