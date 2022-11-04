@@ -133,6 +133,7 @@ fn main() {
         .add_system(move_boss)
         .add_system(attack_boss)
         .add_system(update_boss_bullets)
+        .add_system(detect_collision_bullet_boss)
         .add_system(bevy::window::close_on_esc)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
@@ -735,6 +736,90 @@ fn update_boss_bullets(
             || transform.translation.y < -WINDOW_HEIGHT / 2.0
         {
             commands.entity(bullet).despawn();
+        }
+    }
+}
+
+fn detect_collision_bullet_boss(
+    mut commands: Commands,
+    bullet_query: Query<(Entity, &Transform), With<Bullet>>,
+    mut boss_query: Query<(Entity, &Transform, &Velocity), With<Boss>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    if let Ok((boss, boss_transform, velocity_boss)) = boss_query.get_single_mut() {
+        for (bullet_entity, bullet_transform) in bullet_query.iter() {
+            if bullet_transform
+                .translation
+                .distance(boss_transform.translation)
+                < BOSS_SIZE
+            {
+                commands
+                    .spawn()
+                    .insert(Impact)
+                    .insert_bundle(MaterialMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: 4.0,
+                                vertices: 8,
+                            }))
+                            .into(),
+                        transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
+                        material: materials.add(BULLET_COLOR.into()),
+                        ..default()
+                    });
+
+                commands.entity(bullet_entity).despawn();
+
+                //             asteroid.health -= 1;
+                //             if asteroid.health == 0 {
+                //                 commands.entity(asteroid_entity).despawn();
+                //                 let mut rng = rand::thread_rng();
+                //                 for _ in 1..asteroid.radius as usize {
+                //                     let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
+                //                     let debris_x = asteroid_transform.translation.x + debris_dx;
+                //                     let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
+                //                     let debris_dy = rng.gen_range(-dy_max..dy_max);
+                //                     let debris_y = asteroid_transform.translation.y + debris_dy;
+                //                     // let z = rng.gen_range(
+                //                     //     asteroid_transform.translation.z - asteroid.radius
+                //                     //         ..asteroid_transform.translation.z + asteroid.radius,
+                //                     // );
+
+                //                     let velocity = Vec3 {
+                //                         x: rng.gen_range(-0.5..0.5),
+                //                         y: rng.gen_range(-0.5..0.5),
+                //                         // z: rng.gen_range(-0.5..0.5),
+                //                         z: 0.0,
+                //                     };
+
+                //                     commands
+                //                         .spawn()
+                //                         .insert(Debris)
+                //                         .insert(Velocity(asteroid_velocity.0 + velocity))
+                //                         // .insert(Velocity(asteroid_velocity.0 * 0.5))
+                //                         .insert_bundle(MaterialMesh2dBundle {
+                //                             mesh: meshes
+                //                                 .add(Mesh::from(shape::Circle {
+                //                                     radius: rng.gen_range(
+                //                                         asteroid.radius / 100.0..asteroid.radius / 20.0,
+                //                                     ),
+                //                                     vertices: 8,
+                //                                 }))
+                //                                 .into(),
+                //                             transform: Transform::from_xyz(
+                //                                 debris_x,
+                //                                 debris_y,
+                //                                 ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                //                             )
+                //                             .with_scale(Vec3::splat(4.0)),
+                //                             material: materials.add(Color::PURPLE.into()),
+                //                             ..default()
+                //                         });
+                //                 }
+                //             }
+                //             break;
+            }
         }
     }
 }
