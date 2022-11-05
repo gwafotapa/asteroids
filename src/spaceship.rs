@@ -1,8 +1,9 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology};
 
-use super::{RectangularEnvelop, Velocity};
+use super::{Health, RectangularEnvelop, Velocity};
 
-const SPACESHIP_ALTITUDE: f32 = 100.0;
+const ALTITUDE: f32 = 100.0;
+const HEALTH: usize = 10;
 
 const O: Vec3 = Vec3::ZERO;
 const A: Vec3 = Vec3 {
@@ -50,13 +51,13 @@ const MIDPOINT_DB: Vec3 = Vec3 {
     y: (D.y + B.y) / 2.0,
     z: (D.z + B.z) / 2.0,
 };
-const SPACESHIP_TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-const SPACESHIP_RECTANGULAR_ENVELOP: RectangularEnvelop = RectangularEnvelop {
+pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
+const RECTANGULAR_ENVELOP: RectangularEnvelop = RectangularEnvelop {
     half_x: 3.5,
     half_y: 3.0,
 };
-pub const SPACESHIP_ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
-// const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
+pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
+// const TRIANGLELIST: [[f32; 3]; 6] = [
 //     [40.0, -5.0, 0.0],
 //     [-20.0, 15.0, 0.0],
 //     [-40.0, -25.0, 0.0],
@@ -65,7 +66,7 @@ pub const SPACESHIP_ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_D
 //     [-30.0, -5.0, 0.0],
 // ];
 
-// const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
+// const ENVELOP: [[f32; 3]; 6] = [
 //     [40.0, -5.0, 0.0],
 //     [-30.0, 25.0, 0.0],
 //     [-40.0, -25.0, 0.0],
@@ -77,7 +78,7 @@ pub const SPACESHIP_ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_D
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.05;
 pub const CANON_POSITION: Vec3 = B;
-const SPACESHIP_COLOR: Color = Color::BLUE;
+const COLOR: Color = Color::BLUE;
 
 pub enum Direction {
     Left,
@@ -145,7 +146,7 @@ pub fn spaceship(
 ) {
     let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
 
-    let v_pos = SPACESHIP_TRIANGLE_LIST.map(|x| x.to_array()).to_vec();
+    let v_pos = TRIANGLE_LIST.map(|x| x.to_array()).to_vec();
     let v_normals = vec![[0., 0., 1.]; 12];
     let v_uvs = vec![[1., 1.]; 12];
     spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
@@ -165,19 +166,23 @@ pub fn spaceship(
     commands
         .spawn()
         .insert(Spaceship)
+        .insert(Health(HEALTH))
         .insert(Velocity(Vec3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         }))
-        .insert(SPACESHIP_RECTANGULAR_ENVELOP)
+        .insert(RECTANGULAR_ENVELOP)
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
-            transform: Transform::from_xyz(-300., 0., SPACESHIP_ALTITUDE)
-                .with_scale(Vec3::splat(10.0)),
+            transform: Transform::from_xyz(-300., 0., ALTITUDE).with_scale(Vec3 {
+                x: 10.0,
+                y: 10.0,
+                z: 1.0,
+            }),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
-            material: materials.add(SPACESHIP_COLOR.into()),
+            material: materials.add(COLOR.into()),
             ..default()
         });
 }
