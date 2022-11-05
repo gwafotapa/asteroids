@@ -1,9 +1,6 @@
-use bevy::{
-    prelude::*,
-    render::mesh::{Indices, PrimitiveTopology},
-};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology};
 
-use super::Velocity;
+use super::{RectangularEnvelop, Velocity};
 
 const SPACESHIP_ALTITUDE: f32 = 100.0;
 
@@ -44,7 +41,13 @@ const G: Vec3 = Vec3 {
     z: 0.0,
 };
 const SPACESHIP_TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-// const SPACESHIP_RECTANGULAR_ENVELOP:
+const SPACESHIP_RECTANGULAR_ENVELOP: RectangularEnvelop = RectangularEnvelop {
+    x1: -4.0,
+    x2: 3.0,
+    y1: -3.0,
+    y2: 3.0,
+};
+pub const SPACESHIP_ENVELOP: [Vec3; 5] = [E, A, B, D, G];
 // const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
 //     [40.0, -5.0, 0.0],
 //     [-20.0, 15.0, 0.0],
@@ -54,18 +57,18 @@ const SPACESHIP_TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O]
 //     [-30.0, -5.0, 0.0],
 // ];
 
-const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
-    [40.0, -5.0, 0.0],
-    [-30.0, 25.0, 0.0],
-    [-40.0, -25.0, 0.0],
-    [-30.0, -5.0, 0.0],
-    [-5.0, 10.0, 0.0],
-    [0.0, -15.0, 0.0],
-];
+// const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
+//     [40.0, -5.0, 0.0],
+//     [-30.0, 25.0, 0.0],
+//     [-40.0, -25.0, 0.0],
+//     [-30.0, -5.0, 0.0],
+//     [-5.0, 10.0, 0.0],
+//     [0.0, -15.0, 0.0],
+// ];
 
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.05;
-pub const CANON_POSITION: [f32; 3] = [40.0, -5.0, 0.0];
+pub const CANON_POSITION: Vec3 = B;
 const SPACESHIP_COLOR: Color = Color::BLUE;
 
 pub enum Direction {
@@ -76,14 +79,12 @@ pub enum Direction {
 }
 
 #[derive(Component)]
-pub struct Spaceship {
-    envelop: Vec<Vec3>,
-}
+pub struct Spaceship;
 
 impl Spaceship {
-    pub fn envelop(&self) -> &Vec<Vec3> {
-        &self.envelop
-    }
+    // pub fn envelop(&self) -> &Vec<Vec3> {
+    //     &self.envelop
+    // }
 
     pub fn accelerate(velocity: &mut Velocity, direction: Direction) {
         // if self.velocity.length() < VELOCITY_MAX {
@@ -155,9 +156,7 @@ pub fn spaceship(
 
     commands
         .spawn()
-        .insert(Spaceship {
-            envelop: SPACESHIP_ENVELOP.map(|x| Vec3::from(x)).to_vec(),
-        })
+        .insert(Spaceship)
         .insert(Velocity(Vec3 {
             x: 0.0,
             y: 0.0,

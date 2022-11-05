@@ -16,7 +16,7 @@ const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
-const INITIAL_DISTANCE_TO_BOSS: usize = 0;
+const INITIAL_DISTANCE_TO_BOSS: usize = 10_000;
 const BOSS_SIZE: f32 = 100.0;
 const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
     x: 300.0,
@@ -111,6 +111,14 @@ struct BossPart;
 
 #[derive(Component)]
 pub struct Health(usize);
+
+#[derive(Component)]
+struct RectangularEnvelop {
+    x1: f32,
+    x2: f32,
+    y1: f32,
+    y2: f32,
+}
 
 pub fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
@@ -281,7 +289,7 @@ pub fn keyboard_input(
                 commands,
                 meshes,
                 materials,
-                transform.translation + Vec3::from(spaceship::CANON_POSITION),
+                transform.translation + spaceship::CANON_POSITION * transform.scale,
             );
         }
         // Either the left or right shift are being held down
@@ -394,11 +402,11 @@ pub fn detect_collision_spaceship_asteroid(
             //     .distance(asteroid_transform.translation)
             //     < asteroid.radius + 40.0
             // {
-            for &point in spaceship.envelop() {
+            for point in spaceship::SPACESHIP_ENVELOP {
                 if asteroid_transform
                     .translation
                     // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
-                    .distance(point + spaceship_transform.translation)
+                    .distance(point * spaceship_transform.scale + spaceship_transform.translation)
                     < asteroid.radius
                 {
                     commands.entity(spaceship_entity).despawn();
