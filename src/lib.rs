@@ -1029,8 +1029,8 @@ pub fn rectangles_intersect(
     center2: Vec3,
     envelop2: RectangularEnvelop,
 ) -> bool {
-    let intersect_x = (center1.x - center2.x).abs() < envelop1.half_x + envelop2.half_x;
-    let intersect_y = (center1.y - center2.y).abs() < envelop1.half_y + envelop2.half_y;
+    let intersect_x = (center1.x - center2.x).abs() <= envelop1.half_x + envelop2.half_x;
+    let intersect_y = (center1.y - center2.y).abs() <= envelop1.half_y + envelop2.half_y;
 
     return intersect_x && intersect_y;
 }

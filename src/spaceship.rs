@@ -40,12 +40,22 @@ const G: Vec3 = Vec3 {
     y: 2.0,
     z: 0.0,
 };
+const MIDPOINT_AB: Vec3 = Vec3 {
+    x: (A.x + B.x) / 2.0,
+    y: (A.y + B.y) / 2.0,
+    z: (A.z + B.z) / 2.0,
+};
+const MIDPOINT_DB: Vec3 = Vec3 {
+    x: (D.x + B.x) / 2.0,
+    y: (D.y + B.y) / 2.0,
+    z: (D.z + B.z) / 2.0,
+};
 const SPACESHIP_TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
 const SPACESHIP_RECTANGULAR_ENVELOP: RectangularEnvelop = RectangularEnvelop {
     half_x: 3.5,
     half_y: 3.0,
 };
-pub const SPACESHIP_ENVELOP: [Vec3; 5] = [E, A, B, D, G];
+pub const SPACESHIP_ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
 //     [40.0, -5.0, 0.0],
 //     [-20.0, 15.0, 0.0],
