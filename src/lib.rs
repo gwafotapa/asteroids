@@ -6,6 +6,7 @@ use std::f32::consts::{PI, SQRT_2};
 mod boss;
 pub mod spaceship;
 
+use boss::OUTER_RADIUS;
 use spaceship::{Direction, Spaceship};
 
 pub const WINDOW_WIDTH: f32 = 800.0;
@@ -16,7 +17,7 @@ const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
-const INITIAL_DISTANCE_TO_BOSS: usize = 10_000;
+const INITIAL_DISTANCE_TO_BOSS: usize = 0;
 const BOSS_SIZE: f32 = 100.0;
 const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
     x: 300.0,
@@ -631,6 +632,10 @@ pub fn add_boss(
             .insert(Boss)
             .insert(Health(BOSS_HEALTH))
             .insert(Velocity(Vec3::ZERO))
+            .insert(RectangularEnvelop {
+                half_x: OUTER_RADIUS,
+                half_y: OUTER_RADIUS,
+            })
             .insert_bundle(SpatialBundle {
                 transform: Transform::from_translation(BOSS_INITIAL_POSITION),
                 ..default()
@@ -762,18 +767,22 @@ pub fn update_boss_bullets(
 pub fn detect_collision_bullet_boss(
     mut commands: Commands,
     bullet_query: Query<(Entity, &Transform), With<Bullet>>,
-    mut boss_query: Query<(Entity, &Transform, &mut Health), With<Boss>>,
+    mut boss_query: Query<(Entity, &Transform, &mut Health, &RectangularEnvelop), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((boss, boss_transform, mut boss_health)) = boss_query.get_single_mut() {
+    if let Ok((boss, boss_transform, mut boss_health, boss_envelop)) = boss_query.get_single_mut() {
         for (bullet_entity, bullet_transform) in bullet_query.iter() {
-            if bullet_transform
-                .translation
-                .distance(boss_transform.translation)
-                < BOSS_SIZE * SQRT_2
-            {
-                let boss_polygon = boss::BOSS_POLYGON.map(|x| x + boss_transform.translation);
+            if rectangles_intersect(
+                bullet_transform.translation,
+                RectangularEnvelop {
+                    half_x: 0.0,
+                    half_y: 0.0,
+                },
+                boss_transform.translation,
+                *boss_envelop,
+            ) {
+                let boss_polygon = boss::POLYGON.map(|x| x + boss_transform.translation);
                 let triangle_list = boss::create_triangle_list_from_polygon(
                     &boss_polygon,
                     boss_transform.translation,
@@ -993,11 +1002,10 @@ pub fn add_boss_2(
     let mut level = level_query.single_mut();
     if !level.has_boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position =
-            boss::create_triangle_list_from_polygon(&boss::BOSS_POLYGON, Vec3::ZERO)
-                .into_iter()
-                .map(|x| x.to_array())
-                .collect::<Vec<_>>();
+        let vertices_position = boss::create_triangle_list_from_polygon(&boss::POLYGON, Vec3::ZERO)
+            .into_iter()
+            .map(|x| x.to_array())
+            .collect::<Vec<_>>();
         let mut vertices_normal = Vec::new();
         let mut vertices_uv = Vec::new();
         for _ in &vertices_position {
@@ -1014,6 +1022,10 @@ pub fn add_boss_2(
             .insert(Boss)
             .insert(Health(BOSS_HEALTH))
             .insert(Velocity(Vec3::ZERO))
+            .insert(RectangularEnvelop {
+                half_x: OUTER_RADIUS,
+                half_y: OUTER_RADIUS,
+            })
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes.add(boss).into(),
                 transform: Transform::from_translation(BOSS_INITIAL_POSITION),

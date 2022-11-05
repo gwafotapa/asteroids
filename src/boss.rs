@@ -1,89 +1,89 @@
 use bevy::prelude::*;
 use std::f32::consts::SQRT_2;
 
-const BOSS_INNER_RADIUS: f32 = 100.0;
-const BOSS_OUTER_RADIUS: f32 = BOSS_INNER_RADIUS * SQRT_2;
+const INNER_RADIUS: f32 = 100.0;
+pub const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
 /// Counter clockwise
-pub const BOSS_POLYGON: [Vec3; 16] = [
+pub const POLYGON: [Vec3; 16] = [
     Vec3 {
-        x: -BOSS_OUTER_RADIUS,
+        x: -OUTER_RADIUS,
         y: 0.0,
         z: 0.0,
     },
     Vec3 {
-        x: -BOSS_INNER_RADIUS,
-        y: BOSS_INNER_RADIUS - BOSS_OUTER_RADIUS,
+        x: -INNER_RADIUS,
+        y: INNER_RADIUS - OUTER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: -BOSS_INNER_RADIUS,
-        y: -BOSS_INNER_RADIUS,
+        x: -INNER_RADIUS,
+        y: -INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_INNER_RADIUS - BOSS_OUTER_RADIUS,
-        y: -BOSS_INNER_RADIUS,
+        x: INNER_RADIUS - OUTER_RADIUS,
+        y: -INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
         x: 0.0,
-        y: -BOSS_OUTER_RADIUS,
+        y: -OUTER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_OUTER_RADIUS - BOSS_INNER_RADIUS,
-        y: -BOSS_INNER_RADIUS,
+        x: OUTER_RADIUS - INNER_RADIUS,
+        y: -INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_INNER_RADIUS,
-        y: -BOSS_INNER_RADIUS,
+        x: INNER_RADIUS,
+        y: -INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_INNER_RADIUS,
-        y: BOSS_INNER_RADIUS - BOSS_OUTER_RADIUS,
+        x: INNER_RADIUS,
+        y: INNER_RADIUS - OUTER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_OUTER_RADIUS,
+        x: OUTER_RADIUS,
         y: 0.0,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_INNER_RADIUS,
-        y: BOSS_OUTER_RADIUS - BOSS_INNER_RADIUS,
+        x: INNER_RADIUS,
+        y: OUTER_RADIUS - INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_INNER_RADIUS,
-        y: BOSS_INNER_RADIUS,
+        x: INNER_RADIUS,
+        y: INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_OUTER_RADIUS - BOSS_INNER_RADIUS,
-        y: BOSS_INNER_RADIUS,
+        x: OUTER_RADIUS - INNER_RADIUS,
+        y: INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
         x: 0.0,
-        y: BOSS_OUTER_RADIUS,
+        y: OUTER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: BOSS_INNER_RADIUS - BOSS_OUTER_RADIUS,
-        y: BOSS_INNER_RADIUS,
+        x: INNER_RADIUS - OUTER_RADIUS,
+        y: INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: -BOSS_INNER_RADIUS,
-        y: BOSS_INNER_RADIUS,
+        x: -INNER_RADIUS,
+        y: INNER_RADIUS,
         z: 0.0,
     },
     Vec3 {
-        x: -BOSS_INNER_RADIUS,
-        y: BOSS_OUTER_RADIUS - BOSS_INNER_RADIUS,
+        x: -INNER_RADIUS,
+        y: OUTER_RADIUS - INNER_RADIUS,
         z: 0.0,
     },
 ];
