@@ -78,7 +78,6 @@ pub struct Velocity(Vec3);
 
 #[derive(Component)]
 pub struct Asteroid {
-    health: usize,
     radius: f32,
 }
 
@@ -105,6 +104,9 @@ pub struct Boss;
 
 #[derive(Component)]
 struct BossPart;
+
+#[derive(Component)]
+pub struct Health(usize);
 
 pub fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
@@ -344,7 +346,11 @@ pub fn asteroids(
         let velocity = Vec3::from([-speed, 0., 0.]);
 
         commands
-            .spawn_bundle(MaterialMesh2dBundle {
+            .spawn()
+            .insert(Asteroid { radius })
+            .insert(Health(health))
+            .insert(Velocity(velocity))
+            .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
                         radius,
@@ -354,9 +360,7 @@ pub fn asteroids(
                 transform: Transform::from_xyz(450., rng.gen_range(-250..250) as f32, ALTITUDE),
                 material: materials.add(ColorMaterial::from(Color::PURPLE)),
                 ..default()
-            })
-            .insert(Asteroid { health, radius })
-            .insert(Velocity(velocity));
+            });
     }
 
     for (mut transform, velocity, asteroid, entity) in asteroid_query.iter_mut() {
@@ -449,13 +453,18 @@ pub fn update_bullets(
 pub fn detect_collision_bullet_asteroid(
     mut commands: Commands,
     bullet_query: Query<(Entity, &Transform), With<Bullet>>,
-    mut asteroid_query: Query<(Entity, &Transform, &mut Asteroid, &Velocity)>,
+    mut asteroid_query: Query<(Entity, &Transform, &Asteroid, &mut Health, &Velocity)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for (bullet_entity, bullet_transform) in bullet_query.iter() {
-        for (asteroid_entity, asteroid_transform, mut asteroid, asteroid_velocity) in
-            asteroid_query.iter_mut()
+        for (
+            asteroid_entity,
+            asteroid_transform,
+            asteroid,
+            mut asteroid_health,
+            asteroid_velocity,
+        ) in asteroid_query.iter_mut()
         {
             if bullet_transform
                 .translation
@@ -479,8 +488,8 @@ pub fn detect_collision_bullet_asteroid(
 
                 commands.entity(bullet_entity).despawn();
 
-                asteroid.health -= 1;
-                if asteroid.health == 0 {
+                asteroid_health.0 -= 1;
+                if asteroid_health.0 == 0 {
                     commands.entity(asteroid_entity).despawn();
                     let mut rng = rand::thread_rng();
                     for _ in 1..asteroid.radius as usize {
@@ -706,11 +715,11 @@ pub fn update_boss_bullets(
 pub fn detect_collision_bullet_boss(
     mut commands: Commands,
     bullet_query: Query<(Entity, &Transform), With<Bullet>>,
-    mut boss_query: Query<(Entity, &Transform, &Velocity), With<Boss>>,
+    mut boss_query: Query<(Entity, &Transform), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((boss, boss_transform, velocity_boss)) = boss_query.get_single_mut() {
+    if let Ok((boss, boss_transform)) = boss_query.get_single_mut() {
         for (bullet_entity, bullet_transform) in bullet_query.iter() {
             if bullet_transform
                 .translation
@@ -738,7 +747,7 @@ pub fn detect_collision_bullet_boss(
                     //     x: bullet_transform.translation.x,
                     //     y: bullet_transform.translation.y,
                     // };
-                    collision = is_point_in_triangle_2D(
+                    collision = is_point_in_triangle_2d(
                         *p1.unwrap(),
                         *p2.unwrap(),
                         *p3.unwrap(),
@@ -858,7 +867,7 @@ pub fn add_boss_2(
     }
 }
 
-pub fn is_point_in_triangle_2D(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
+pub fn is_point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
     let denominator = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
     let a = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / denominator;
     let b = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / denominator;

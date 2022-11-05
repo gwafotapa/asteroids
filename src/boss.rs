@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use std::f32::consts::{PI, SQRT_2};
+use std::f32::consts::SQRT_2;
 
 const BOSS_INNER_RADIUS: f32 = 100.0;
 const BOSS_OUTER_RADIUS: f32 = BOSS_INNER_RADIUS * SQRT_2;
