@@ -112,12 +112,10 @@ struct BossPart;
 #[derive(Component)]
 pub struct Health(usize);
 
-#[derive(Component)]
-struct RectangularEnvelop {
-    x1: f32,
-    x2: f32,
-    y1: f32,
-    y2: f32,
+#[derive(Component, Clone, Copy)]
+pub struct RectangularEnvelop {
+    half_x: f32,
+    half_y: f32,
 }
 
 pub fn camera(mut commands: Commands) {
@@ -359,12 +357,18 @@ pub fn asteroids(
         let radius = (health * 20) as f32;
         let speed = rng.gen_range(1..MAX_SPEED_OF_ASTEROIDS + 1) as f32;
         let velocity = Vec3::from([-speed, 0., 0.]);
+        let x = WINDOW_WIDTH / 2.0 + (MAX_HEALTH_OF_ASTEROIDS * 20) as f32;
+        let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
         commands
             .spawn()
             .insert(Asteroid { radius })
             .insert(Health(health))
             .insert(Velocity(velocity))
+            .insert(RectangularEnvelop {
+                half_x: radius,
+                half_y: radius,
+            })
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
@@ -372,7 +376,7 @@ pub fn asteroids(
                         vertices: 16,
                     }))
                     .into(),
-                transform: Transform::from_xyz(450., rng.gen_range(-250..250) as f32, ALTITUDE),
+                transform: Transform::from_xyz(x, y, ALTITUDE),
                 material: materials.add(ColorMaterial::from(Color::PURPLE)),
                 ..default()
             });
@@ -388,63 +392,77 @@ pub fn asteroids(
 
 pub fn detect_collision_spaceship_asteroid(
     mut commands: Commands,
-    spaceship_query: Query<(Entity, &Transform, &Spaceship, &Velocity)>,
-    asteroid_query: Query<(&Transform, &Asteroid)>,
+    spaceship_query: Query<(
+        Entity,
+        &Transform,
+        &Spaceship,
+        &Velocity,
+        &RectangularEnvelop,
+    )>,
+    asteroid_query: Query<(&Transform, &Asteroid, &RectangularEnvelop)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((spaceship_entity, spaceship_transform, spaceship, spaceship_velocity)) =
-        spaceship_query.get_single()
+    if let Ok((
+        spaceship_entity,
+        spaceship_transform,
+        spaceship,
+        spaceship_velocity,
+        spaceship_rectangular_envelop,
+    )) = spaceship_query.get_single()
     {
-        for (asteroid_transform, asteroid) in asteroid_query.iter() {
-            // if spaceship_transform
-            //     .translation
-            //     .distance(asteroid_transform.translation)
-            //     < asteroid.radius + 40.0
-            // {
-            for point in spaceship::SPACESHIP_ENVELOP {
-                if asteroid_transform
-                    .translation
-                    // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
-                    .distance(point * spaceship_transform.scale + spaceship_transform.translation)
-                    < asteroid.radius
-                {
-                    commands.entity(spaceship_entity).despawn();
-                    let mut rng = rand::thread_rng();
-                    for _ in 1..10 {
-                        let debris_dx = rng.gen_range(-30.0..30.0);
-                        let debris_x = spaceship_transform.translation.x + debris_dx;
-                        let debris_dy = rng.gen_range(-20.0..20.0);
-                        let debris_y = spaceship_transform.translation.y + debris_dy;
+        for (asteroid_transform, asteroid, asteroid_rectangular_envelop) in asteroid_query.iter() {
+            if rectangles_intersect(
+                spaceship_transform.translation,
+                *spaceship_rectangular_envelop,
+                asteroid_transform.translation,
+                *asteroid_rectangular_envelop,
+            ) {
+                for point in spaceship::SPACESHIP_ENVELOP {
+                    if asteroid_transform
+                        .translation
+                        // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
+                        .distance(
+                            point * spaceship_transform.scale + spaceship_transform.translation,
+                        )
+                        < asteroid.radius
+                    {
+                        commands.entity(spaceship_entity).despawn();
+                        let mut rng = rand::thread_rng();
+                        for _ in 1..10 {
+                            let debris_dx = rng.gen_range(-30.0..30.0);
+                            let debris_x = spaceship_transform.translation.x + debris_dx;
+                            let debris_dy = rng.gen_range(-20.0..20.0);
+                            let debris_y = spaceship_transform.translation.y + debris_dy;
 
-                        let velocity = Vec3 {
-                            x: rng.gen_range(-0.5..0.5),
-                            y: rng.gen_range(-0.5..0.5),
-                            z: 0.0,
-                        };
+                            let velocity = Vec3 {
+                                x: rng.gen_range(-0.5..0.5),
+                                y: rng.gen_range(-0.5..0.5),
+                                z: 0.0,
+                            };
 
-                        commands
-                            .spawn()
-                            .insert(Debris)
-                            .insert(Velocity(spaceship_velocity.0 + velocity))
-                            .insert_bundle(MaterialMesh2dBundle {
-                                mesh: meshes
-                                    .add(Mesh::from(shape::Circle {
-                                        radius: 10.0,
-                                        vertices: 4,
-                                    }))
-                                    .into(),
-                                transform: Transform::from_xyz(debris_x, debris_y, ALTITUDE)
-                                    .with_scale(Vec3::splat(4.0)),
-                                material: materials.add(Color::BLUE.into()),
-                                ..default()
-                            });
+                            commands
+                                .spawn()
+                                .insert(Debris)
+                                .insert(Velocity(spaceship_velocity.0 + velocity))
+                                .insert_bundle(MaterialMesh2dBundle {
+                                    mesh: meshes
+                                        .add(Mesh::from(shape::Circle {
+                                            radius: 10.0,
+                                            vertices: 4,
+                                        }))
+                                        .into(),
+                                    transform: Transform::from_xyz(debris_x, debris_y, ALTITUDE)
+                                        .with_scale(Vec3::splat(4.0)),
+                                    material: materials.add(Color::BLUE.into()),
+                                    ..default()
+                                });
+                        }
+
+                        return;
                     }
-
-                    return;
                 }
             }
-            // }
         }
     }
 }
@@ -755,7 +773,7 @@ pub fn detect_collision_bullet_boss(
                 let mut p2 = iter_triangle.next();
                 let mut p3 = iter_triangle.next();
                 while !collision && p3.is_some() {
-                    collision = is_point_in_triangle_2d(
+                    collision = point_in_triangle_2d(
                         *p1.unwrap(),
                         *p2.unwrap(),
                         *p3.unwrap(),
@@ -868,7 +886,7 @@ pub fn detect_collision_bullet_spaceship(
             //         let mut p2 = iter_triangle.next();
             //         let mut p3 = iter_triangle.next();
             //         while !collision && p3.is_some() {
-            //             collision = is_point_in_triangle_2d(
+            //             collision = point_in_triangle_2d(
             //                 *p1.unwrap(),
             //                 *p2.unwrap(),
             //                 *p3.unwrap(),
@@ -996,11 +1014,23 @@ pub fn add_boss_2(
     }
 }
 
-pub fn is_point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
+pub fn point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
     let denominator = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
     let a = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / denominator;
     let b = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / denominator;
     let c = 1.0 - a - b;
 
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
+}
+
+fn rectangles_intersect(
+    center1: Vec3,
+    envelop1: RectangularEnvelop,
+    center2: Vec3,
+    envelop2: RectangularEnvelop,
+) -> bool {
+    let intersect_x = (center1.x - center2.x).abs() < envelop1.half_x + envelop2.half_x;
+    let intersect_y = (center1.y - center2.y).abs() < envelop1.half_y + envelop2.half_y;
+
+    return intersect_x && intersect_y;
 }

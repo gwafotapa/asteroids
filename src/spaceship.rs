@@ -42,10 +42,8 @@ const G: Vec3 = Vec3 {
 };
 const SPACESHIP_TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
 const SPACESHIP_RECTANGULAR_ENVELOP: RectangularEnvelop = RectangularEnvelop {
-    x1: -4.0,
-    x2: 3.0,
-    y1: -3.0,
-    y2: 3.0,
+    half_x: 3.5,
+    half_y: 3.0,
 };
 pub const SPACESHIP_ENVELOP: [Vec3; 5] = [E, A, B, D, G];
 // const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
@@ -162,6 +160,7 @@ pub fn spaceship(
             y: 0.0,
             z: 0.0,
         }))
+        .insert(SPACESHIP_RECTANGULAR_ENVELOP)
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
