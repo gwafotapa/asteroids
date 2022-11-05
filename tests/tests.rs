@@ -74,23 +74,23 @@ const N: Vec3 = Vec3 {
 };
 
 #[test]
-fn point_in_triangle_2D() {
-    assert!(is_point_in_triangle_2D(A, B, C, D));
-    assert!(!is_point_in_triangle_2D(A, B, C, E));
-    assert!(is_point_in_triangle_2D(A, B, C, F));
-    assert!(is_point_in_triangle_2D(A, B, C, G));
-    assert!(is_point_in_triangle_2D(A, B, C, H));
-    assert!(!is_point_in_triangle_2D(A, B, C, I));
-    assert!(!is_point_in_triangle_2D(A, B, C, J));
-    assert!(!is_point_in_triangle_2D(A, B, C, K));
-    assert!(!is_point_in_triangle_2D(A, B, C, L));
-    assert!(!is_point_in_triangle_2D(A, B, C, M));
-    assert!(!is_point_in_triangle_2D(A, B, C, N));
-    assert!(is_point_in_triangle_2D(A, B, C, O));
-    assert!(is_point_in_triangle_2D(J, M, K, A));
-    assert!(is_point_in_triangle_2D(J, M, K, N));
-    assert!(is_point_in_triangle_2D(J, M, K, H));
-    assert!(!is_point_in_triangle_2D(J, M, K, F));
-    assert!(!is_point_in_triangle_2D(J, M, K, I));
-    assert!(!is_point_in_triangle_2D(J, M, K, D));
+fn point_in_triangle_2d() {
+    assert!(is_point_in_triangle_2d(A, B, C, D));
+    assert!(!is_point_in_triangle_2d(A, B, C, E));
+    assert!(is_point_in_triangle_2d(A, B, C, F));
+    assert!(is_point_in_triangle_2d(A, B, C, G));
+    assert!(is_point_in_triangle_2d(A, B, C, H));
+    assert!(!is_point_in_triangle_2d(A, B, C, I));
+    assert!(!is_point_in_triangle_2d(A, B, C, J));
+    assert!(!is_point_in_triangle_2d(A, B, C, K));
+    assert!(!is_point_in_triangle_2d(A, B, C, L));
+    assert!(!is_point_in_triangle_2d(A, B, C, M));
+    assert!(!is_point_in_triangle_2d(A, B, C, N));
+    assert!(is_point_in_triangle_2d(A, B, C, O));
+    assert!(is_point_in_triangle_2d(J, M, K, A));
+    assert!(is_point_in_triangle_2d(J, M, K, N));
+    assert!(is_point_in_triangle_2d(J, M, K, H));
+    assert!(!is_point_in_triangle_2d(J, M, K, F));
+    assert!(!is_point_in_triangle_2d(J, M, K, I));
+    assert!(!is_point_in_triangle_2d(J, M, K, D));
 }
