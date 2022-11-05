@@ -114,8 +114,8 @@ pub struct Health(usize);
 
 #[derive(Component, Clone, Copy)]
 pub struct RectangularEnvelop {
-    half_x: f32,
-    half_y: f32,
+    pub half_x: f32,
+    pub half_y: f32,
 }
 
 pub fn camera(mut commands: Commands) {
@@ -1023,7 +1023,7 @@ pub fn point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
 }
 
-fn rectangles_intersect(
+pub fn rectangles_intersect(
     center1: Vec3,
     envelop1: RectangularEnvelop,
     center2: Vec3,
