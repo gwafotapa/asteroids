@@ -16,7 +16,7 @@ const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
-const INITIAL_DISTANCE: usize = 0;
+const INITIAL_DISTANCE_TO_BOSS: usize = 0;
 const BOSS_SIZE: f32 = 100.0;
 const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
     x: 300.0,
@@ -25,6 +25,7 @@ const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
 };
 const BOSS_ACCELERATION: f32 = 0.1;
 const BOSS_COLOR: Color = Color::ORANGE;
+const BOSS_HEALTH: usize = 10;
 const BULLET_COLOR: Color = Color::YELLOW_GREEN;
 const BOSS_BULLET_COLOR: Color = Color::RED;
 const BOSS_POSITIONS_OF_CANONS: [Vec3; 8] = [
@@ -97,7 +98,10 @@ pub struct Impact;
 // struct SpawnedTime(Instant);
 
 #[derive(Component)]
-pub struct Distance(usize);
+pub struct Level {
+    distance_to_boss: usize,
+    has_boss_spawned: bool,
+}
 
 #[derive(Component)]
 pub struct Boss;
@@ -112,7 +116,7 @@ pub fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
 }
 
-pub fn setup_distance(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(
             // Create a TextBundle that has a Text with a single section.
@@ -142,15 +146,18 @@ pub fn setup_distance(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             }),
         )
-        .insert(Distance(INITIAL_DISTANCE));
+        .insert(Level {
+            distance_to_boss: INITIAL_DISTANCE_TO_BOSS,
+            has_boss_spawned: false,
+        });
 }
 
-pub fn update_distance(mut query: Query<(&mut Text, &mut Distance)>) {
-    for (mut text, mut distance) in &mut query {
-        if distance.0 > 0 {
-            distance.0 -= 1;
+pub fn update_distance_to_boss(mut query: Query<(&mut Text, &mut Level)>) {
+    for (mut text, mut level) in &mut query {
+        if level.distance_to_boss > 0 {
+            level.distance_to_boss -= 1;
         }
-        text.sections[0].value = format!("Distance: {:12}", distance.0);
+        text.sections[0].value = format!("Distance: {:12}", level.distance_to_boss);
     }
 }
 
@@ -335,11 +342,11 @@ pub fn asteroids(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut asteroid_query: Query<(&mut Transform, &Velocity, &Asteroid, Entity)>,
-    distance_query: Query<&Distance>,
+    level_query: Query<&Level>,
 ) {
     let mut rng = rand::thread_rng();
 
-    if distance_query.single().0 > 0 && rng.gen_range(0..100) == 0 {
+    if level_query.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
         let health = rng.gen_range(1..MAX_HEALTH_OF_ASTEROIDS + 1);
         let radius = (health * 20) as f32;
         let speed = rng.gen_range(1..MAX_SPEED_OF_ASTEROIDS + 1) as f32;
@@ -577,14 +584,15 @@ pub fn add_boss(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    distance_query: Query<&Distance>,
+    mut level_query: Query<&mut Level>,
     asteroid_query: Query<&Asteroid>,
-    boss_query: Query<&Boss>,
 ) {
-    if distance_query.single().0 == 0 && boss_query.is_empty() && asteroid_query.is_empty() {
+    let mut level = level_query.single_mut();
+    if !level.has_boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let boss = commands
             .spawn()
             .insert(Boss)
+            .insert(Health(BOSS_HEALTH))
             .insert(Velocity(Vec3::ZERO))
             .insert_bundle(SpatialBundle {
                 transform: Transform::from_translation(BOSS_INITIAL_POSITION),
@@ -626,6 +634,8 @@ pub fn add_boss(
         commands
             .entity(boss)
             .push_children(&[boss_part1, boss_part2]);
+
+        level.has_boss_spawned = true;
     }
 }
 
@@ -715,11 +725,11 @@ pub fn update_boss_bullets(
 pub fn detect_collision_bullet_boss(
     mut commands: Commands,
     bullet_query: Query<(Entity, &Transform), With<Bullet>>,
-    mut boss_query: Query<(Entity, &Transform), With<Boss>>,
+    mut boss_query: Query<(Entity, &Transform, &mut Health), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((boss, boss_transform)) = boss_query.get_single_mut() {
+    if let Ok((boss, boss_transform, mut boss_health)) = boss_query.get_single_mut() {
         for (bullet_entity, bullet_transform) in bullet_query.iter() {
             if bullet_transform
                 .translation
@@ -774,6 +784,11 @@ pub fn detect_collision_bullet_boss(
                         });
 
                     commands.entity(bullet_entity).despawn();
+
+                    boss_health.0 -= 1;
+                    if boss_health.0 == 0 {
+                        commands.entity(boss).despawn_recursive();
+                    }
                 }
                 //             asteroid.health -= 1;
                 //             if asteroid.health == 0 {
@@ -832,11 +847,11 @@ pub fn add_boss_2(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    distance_query: Query<&Distance>,
+    mut level_query: Query<&mut Level>,
     asteroid_query: Query<&Asteroid>,
-    boss_query: Query<&Boss>,
 ) {
-    if distance_query.single().0 == 0 && boss_query.is_empty() && asteroid_query.is_empty() {
+    let mut level = level_query.single_mut();
+    if !level.has_boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
         let vertices_position =
             boss::create_triangle_list_from_polygon(&boss::BOSS_POLYGON, Vec3::ZERO)
@@ -857,6 +872,7 @@ pub fn add_boss_2(
         commands
             .spawn()
             .insert(Boss)
+            .insert(Health(BOSS_HEALTH))
             .insert(Velocity(Vec3::ZERO))
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes.add(boss).into(),
@@ -864,6 +880,8 @@ pub fn add_boss_2(
                 material: materials.add(BOSS_COLOR.into()),
                 ..default()
             });
+
+        level.has_boss_spawned = true;
     }
 }
 
