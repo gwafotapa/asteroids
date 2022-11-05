@@ -7,14 +7,52 @@ use super::Velocity;
 
 const SPACESHIP_ALTITUDE: f32 = 100.0;
 
-const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
-    [40.0, -5.0, 0.0],
-    [-20.0, 15.0, 0.0],
-    [-40.0, -25.0, 0.0],
-    [10.0, -5.0, 0.0],
-    [-30.0, 25.0, 0.0],
-    [-30.0, -5.0, 0.0],
-];
+const O: Vec3 = Vec3::ZERO;
+const A: Vec3 = Vec3 {
+    x: -3.0,
+    y: -3.0,
+    z: 0.0,
+};
+const B: Vec3 = Vec3 {
+    x: 3.0,
+    y: 0.0,
+    z: 0.0,
+};
+const C: Vec3 = Vec3 {
+    x: -2.0,
+    y: 0.0,
+    z: 0.0,
+};
+const D: Vec3 = Vec3 {
+    x: -3.0,
+    y: 3.0,
+    z: 0.0,
+};
+const E: Vec3 = Vec3 {
+    x: -4.0,
+    y: -2.0,
+    z: 0.0,
+};
+const F: Vec3 = Vec3 {
+    x: -3.0,
+    y: 0.0,
+    z: 0.0,
+};
+const G: Vec3 = Vec3 {
+    x: -4.0,
+    y: 2.0,
+    z: 0.0,
+};
+const SPACESHIP_TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
+// const SPACESHIP_RECTANGULAR_ENVELOP:
+// const SPACESHIP_TRIANGLELIST: [[f32; 3]; 6] = [
+//     [40.0, -5.0, 0.0],
+//     [-20.0, 15.0, 0.0],
+//     [-40.0, -25.0, 0.0],
+//     [10.0, -5.0, 0.0],
+//     [-30.0, 25.0, 0.0],
+//     [-30.0, -5.0, 0.0],
+// ];
 
 const SPACESHIP_ENVELOP: [[f32; 3]; 6] = [
     [40.0, -5.0, 0.0],
@@ -98,9 +136,9 @@ pub fn spaceship(
 ) {
     let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
 
-    let v_pos = SPACESHIP_TRIANGLELIST.to_vec();
-    let v_normals = vec![[0., 0., 1.]; 6];
-    let v_uvs = vec![[1., 1.]; 6];
+    let v_pos = SPACESHIP_TRIANGLE_LIST.map(|x| x.to_array()).to_vec();
+    let v_normals = vec![[0., 0., 1.]; 12];
+    let v_uvs = vec![[1., 1.]; 12];
     spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
     spaceship.insert_attribute(Mesh::ATTRIBUTE_NORMAL, v_normals);
     spaceship.insert_attribute(Mesh::ATTRIBUTE_UV_0, v_uvs);
@@ -112,8 +150,8 @@ pub fn spaceship(
     //     v_color,
     // );
 
-    let indices = vec![0, 1, 2, 3, 4, 5];
-    spaceship.set_indices(Some(Indices::U32(indices)));
+    // let indices = vec![0, 1, 2, 3, 4, 5];
+    // spaceship.set_indices(Some(Indices::U32(indices)));
 
     commands
         .spawn()
@@ -128,8 +166,8 @@ pub fn spaceship(
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
-            transform: Transform::from_xyz(-300., 0., SPACESHIP_ALTITUDE),
-            // .with_scale(Vec3::splat(10.0)),
+            transform: Transform::from_xyz(-300., 0., SPACESHIP_ALTITUDE)
+                .with_scale(Vec3::splat(10.0)),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             material: materials.add(SPACESHIP_COLOR.into()),
             ..default()

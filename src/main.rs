@@ -31,6 +31,7 @@ fn main() {
         .add_system(attack_boss)
         .add_system(update_boss_bullets)
         .add_system(detect_collision_bullet_boss)
+        .add_system(detect_collision_bullet_spaceship)
         .add_system(bevy::window::close_on_esc)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
