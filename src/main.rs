@@ -1,4 +1,4 @@
-use asteroids::{boss, spaceship, *};
+use asteroids::{asteroid, boss, spaceship, *};
 use bevy::prelude::*;
 
 fn main() {
@@ -18,7 +18,7 @@ fn main() {
         .add_system(bevy::window::close_on_esc)
         .add_system(add_stars)
         .add_system(update_stars)
-        .add_system(asteroids)
+        .add_system(asteroid::asteroids)
         .add_system(keyboard_input)
         .add_system(detect_collision_spaceship_asteroid)
         .add_system(update_bullets)

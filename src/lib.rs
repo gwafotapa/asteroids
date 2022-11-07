@@ -3,9 +3,12 @@ use rand::Rng;
 // use std::time::Instant;
 // use std::f32::consts::SQRT_2;
 
+pub mod asteroid;
 pub mod boss;
 pub mod spaceship;
 
+use asteroid::Asteroid;
+use boss::Boss;
 use spaceship::Spaceship;
 
 pub enum Direction {
@@ -15,13 +18,11 @@ pub enum Direction {
     Right,
 }
 
+const ALTITUDE: f32 = 100.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
 pub const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_COUNT_OF_STARS_BY_VELOCITY: usize = 10;
 const MAX_SPEED_OF_STARS: usize = 10;
-const MAX_SPEED_OF_ASTEROIDS: usize = 5;
-const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
-const ALTITUDE: f32 = 100.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0;
 
 #[derive(Component)]
@@ -29,11 +30,6 @@ pub struct Star;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
-
-#[derive(Component)]
-pub struct Asteroid {
-    radius: f32,
-}
 
 #[derive(Component)]
 pub struct Fire;
@@ -55,12 +51,6 @@ pub struct Level {
     distance_to_boss: usize,
     boss_spawned: bool,
 }
-
-#[derive(Component)]
-pub struct Boss;
-
-#[derive(Component)]
-struct BossPart;
 
 #[derive(Component)]
 pub struct Health(usize);
@@ -276,53 +266,6 @@ pub fn keyboard_input(
         //     // Either delete or backspace was just pressed
         // }
         transform.translation += velocity.0;
-    }
-}
-
-pub fn asteroids(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut asteroid_query: Query<(&mut Transform, &Velocity, &Asteroid, Entity)>,
-    level_query: Query<&Level>,
-) {
-    let mut rng = rand::thread_rng();
-
-    if level_query.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
-        let health = rng.gen_range(1..MAX_HEALTH_OF_ASTEROIDS + 1);
-        let radius = (health * 20) as f32;
-        let speed = rng.gen_range(1..MAX_SPEED_OF_ASTEROIDS + 1) as f32;
-        let velocity = Vec3::from([-speed, 0., 0.]);
-        let x = WINDOW_WIDTH / 2.0 + (MAX_HEALTH_OF_ASTEROIDS * 20) as f32;
-        let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
-
-        commands
-            .spawn()
-            .insert(Asteroid { radius })
-            .insert(Health(health))
-            .insert(Velocity(velocity))
-            .insert(RectangularEnvelop {
-                half_x: radius,
-                half_y: radius,
-            })
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius,
-                        vertices: 16,
-                    }))
-                    .into(),
-                transform: Transform::from_xyz(x, y, ALTITUDE),
-                material: materials.add(ColorMaterial::from(Color::PURPLE)),
-                ..default()
-            });
-    }
-
-    for (mut transform, velocity, asteroid, entity) in asteroid_query.iter_mut() {
-        transform.translation += velocity.0;
-        if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
-            commands.entity(entity).despawn();
-        }
     }
 }
 

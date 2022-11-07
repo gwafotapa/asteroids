@@ -1,8 +1,7 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 
-use super::{Attack, Blast, Direction, Fire, Health, RectangularEnvelop, Velocity};
+use super::{Attack, Blast, Direction, Fire, Health, RectangularEnvelop, Velocity, ALTITUDE};
 
-const ALTITUDE: f32 = 100.0;
 const HEALTH: usize = 10;
 
 const O: Vec3 = Vec3::ZERO;

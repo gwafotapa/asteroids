@@ -2,14 +2,19 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
-use super::{
-    Asteroid, Boss, BossPart, Direction, Health, Level, RectangularEnvelop, Velocity,
-    WINDOW_HEIGHT, WINDOW_WIDTH,
+use crate::{
+    asteroid::Asteroid, Direction, Health, Level, RectangularEnvelop, Spaceship, Velocity,
+    ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-const ALTITUDE: f32 = 100.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
+
+#[derive(Component)]
+pub struct Boss;
+
+#[derive(Component)]
+pub struct BossPart;
 
 /// Counter clockwise
 pub const POLYGON: [Vec3; 16] = [
@@ -313,7 +318,7 @@ pub fn attack_boss(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss: Query<&Transform, With<Boss>>,
-    query_spaceship: Query<&Transform, With<crate::Spaceship>>,
+    query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
     if let Ok(boss_transform) = query_boss.get_single() {
         if let Ok(spaceship_transform) = query_spaceship.get_single() {
