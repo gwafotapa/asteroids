@@ -83,7 +83,7 @@ pub const ATTACK_COLOR: Color = Color::YELLOW_GREEN;
 const BLAST_RADIUS: f32 = 0.4;
 const BLAST_VERTICES: usize = 8;
 const FIRE_RADIUS: f32 = 2.0;
-const FIRE_VERTICES: usize = 2;
+const FIRE_VERTICES: usize = 4;
 
 pub enum Direction {
     Left,

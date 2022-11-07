@@ -383,36 +383,30 @@ pub fn detect_collision_spaceship_asteroid(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((
-        spaceship_entity,
-        spaceship_transform,
-        spaceship_velocity,
-        spaceship_rectangular_envelop,
-    )) = spaceship_query.get_single()
+    if let Ok((s_entity, s_transform, s_velocity, s_rectangular_envelop)) =
+        spaceship_query.get_single()
     {
-        for (asteroid_transform, asteroid, asteroid_rectangular_envelop) in asteroid_query.iter() {
+        for (a_transform, asteroid, a_rectangular_envelop) in asteroid_query.iter() {
             if rectangles_intersect(
-                spaceship_transform.translation,
-                *spaceship_rectangular_envelop,
-                asteroid_transform.translation,
-                *asteroid_rectangular_envelop,
+                s_transform.translation,
+                *s_rectangular_envelop,
+                a_transform.translation,
+                *a_rectangular_envelop,
             ) {
                 for point in spaceship::ENVELOP {
-                    if asteroid_transform
+                    if a_transform
                         .translation
-                        // .distance((point + spaceship_transform.translation) * spaceship_transform.scale.x)
-                        .distance(
-                            point * spaceship_transform.scale + spaceship_transform.translation,
-                        )
+                        // .distance((point + s_transform.translation) * s_transform.scale.x)
+                        .distance(point * s_transform.scale + s_transform.translation)
                         < asteroid.radius
                     {
-                        commands.entity(spaceship_entity).despawn();
+                        commands.entity(s_entity).despawn();
                         let mut rng = rand::thread_rng();
                         for _ in 1..10 {
                             let debris_dx = rng.gen_range(-30.0..30.0);
-                            let debris_x = spaceship_transform.translation.x + debris_dx;
+                            let debris_x = s_transform.translation.x + debris_dx;
                             let debris_dy = rng.gen_range(-20.0..20.0);
-                            let debris_y = spaceship_transform.translation.y + debris_dy;
+                            let debris_y = s_transform.translation.y + debris_dy;
 
                             let velocity = Vec3 {
                                 x: rng.gen_range(-0.5..0.5),
@@ -423,7 +417,7 @@ pub fn detect_collision_spaceship_asteroid(
                             commands
                                 .spawn()
                                 .insert(Debris)
-                                .insert(Velocity(spaceship_velocity.0 + velocity))
+                                .insert(Velocity(s_velocity.0 + velocity))
                                 .insert_bundle(MaterialMesh2dBundle {
                                     mesh: meshes
                                         .add(Mesh::from(shape::Circle {
@@ -1043,4 +1037,11 @@ pub fn rectangles_intersect(
     let intersect_y = (center1.y - center2.y).abs() <= envelop1.half_y + envelop2.half_y;
 
     return intersect_x && intersect_y;
+}
+
+pub fn despawn_blast(mut commands: Commands, query: Query<(Entity, &Parent), With<Blast>>) {
+    for (blast, parent) in query.iter() {
+        commands.entity(parent.get()).remove_children(&[blast]);
+        commands.entity(blast).despawn();
+    }
 }
