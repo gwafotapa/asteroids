@@ -15,7 +15,6 @@ const INITIAL_COUNT_OF_STARS_BY_VELOCITY: usize = 10;
 const MAX_SPEED_OF_STARS: usize = 10;
 const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
-const BULLET_RADIUS: f32 = 2.0;
 const ALTITUDE: f32 = 100.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0;
 const BOSS_SIZE: f32 = 100.0;
@@ -27,7 +26,7 @@ const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
 const BOSS_ACCELERATION: f32 = 0.1;
 const BOSS_COLOR: Color = Color::ORANGE;
 const BOSS_HEALTH: usize = 10;
-const BULLET_COLOR: Color = Color::YELLOW_GREEN;
+
 const BOSS_BULLET_COLOR: Color = Color::RED;
 const BOSS_POSITIONS_OF_CANONS: [Vec3; 8] = [
     Vec3 {
@@ -84,10 +83,10 @@ pub struct Asteroid {
 }
 
 #[derive(Component)]
-pub struct Bullet;
+pub struct Fire;
 
 #[derive(Component)]
-pub struct BossBullet;
+pub struct BossFire;
 
 #[derive(Component)]
 pub struct Debris;
@@ -95,13 +94,16 @@ pub struct Debris;
 #[derive(Component)]
 pub struct Impact;
 
+#[derive(Component)]
+pub struct Blast;
+
 // #[derive(Component)]
 // struct SpawnedTime(Instant);
 
 #[derive(Component)]
 pub struct Level {
     distance_to_boss: usize,
-    has_boss_spawned: bool,
+    boss_spawned: bool,
 }
 
 #[derive(Component)]
@@ -117,6 +119,16 @@ pub struct Health(usize);
 pub struct RectangularEnvelop {
     pub half_x: f32,
     pub half_y: f32,
+}
+
+#[derive(Component)]
+pub struct Attack {
+    source: Vec3,
+    color: Color,
+    blast_radius: f32,
+    blast_vertices: usize,
+    fire_radius: f32,
+    fire_vertices: usize,
 }
 
 pub fn camera(mut commands: Commands) {
@@ -155,7 +167,7 @@ pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
         )
         .insert(Level {
             distance_to_boss: INITIAL_DISTANCE_TO_BOSS,
-            has_boss_spawned: false,
+            boss_spawned: false,
         });
 }
 
@@ -261,7 +273,7 @@ pub fn keyboard_input(
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform, &mut Velocity), With<Spaceship>>,
+    mut query: Query<(Entity, &mut Transform, &mut Velocity, &Attack), With<Spaceship>>,
 ) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
@@ -271,7 +283,7 @@ pub fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
+    if let Ok((spaceship, mut transform, mut velocity, attack)) = query.get_single_mut() {
         // // we can check multiple at once with `.any_*`
         // if keys.any_pressed([
         //     KeyCode::Left,
@@ -284,12 +296,7 @@ pub fn keyboard_input(
         //     KeyCode::L,
         // ]) {
         if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
-            create_bullet(
-                commands,
-                meshes,
-                materials,
-                transform.translation + spaceship::CANON_POSITION * transform.scale,
-            );
+            spaceship::attack(commands, meshes, materials, spaceship, &transform, attack);
         }
         // Either the left or right shift are being held down
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
@@ -320,28 +327,6 @@ pub fn keyboard_input(
         // }
         transform.translation += velocity.0;
     }
-}
-
-fn create_bullet(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    position: Vec3,
-) {
-    commands
-        .spawn()
-        .insert(Bullet)
-        .insert_bundle(MaterialMesh2dBundle {
-            mesh: meshes
-                .add(Mesh::from(shape::Circle {
-                    radius: BULLET_RADIUS,
-                    vertices: 4,
-                }))
-                .into(),
-            transform: Transform::from_translation(position),
-            material: materials.add(ColorMaterial::from(BULLET_COLOR)),
-            ..default()
-        });
 }
 
 pub fn asteroids(
@@ -463,7 +448,7 @@ pub fn detect_collision_spaceship_asteroid(
 
 pub fn update_bullets(
     mut commands: Commands,
-    mut query: Query<(&mut Transform, Entity), With<Bullet>>,
+    mut query: Query<(&mut Transform, Entity), With<Fire>>,
 ) {
     for (mut transform, entity) in query.iter_mut() {
         transform.translation += Vec3 {
@@ -479,7 +464,7 @@ pub fn update_bullets(
 
 pub fn detect_collision_bullet_asteroid(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<Bullet>>,
+    bullet_query: Query<(Entity, &Transform), With<Fire>>,
     mut asteroid_query: Query<(
         Entity,
         &Transform,
@@ -526,7 +511,7 @@ pub fn detect_collision_bullet_asteroid(
                                 }))
                                 .into(),
                             transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(BULLET_COLOR.into()),
+                            material: materials.add(spaceship::ATTACK_COLOR.into()),
                             ..default()
                         });
 
@@ -626,7 +611,7 @@ pub fn add_boss(
     asteroid_query: Query<&Asteroid>,
 ) {
     let mut level = level_query.single_mut();
-    if !level.has_boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
+    if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let boss = commands
             .spawn()
             .insert(Boss)
@@ -677,7 +662,7 @@ pub fn add_boss(
             .entity(boss)
             .push_children(&[boss_part1, boss_part2]);
 
-        level.has_boss_spawned = true;
+        level.boss_spawned = true;
     }
 }
 
@@ -726,7 +711,7 @@ pub fn attack_boss(
                         + Vec3::from([0.0, 0.0, 1.0]);
                     commands
                         .spawn()
-                        .insert(BossBullet)
+                        .insert(BossFire)
                         .insert(Velocity(
                             (spaceship_transform.translation - canon_absolute_position).normalize()
                                 * 4.0,
@@ -750,7 +735,7 @@ pub fn attack_boss(
 
 pub fn update_boss_bullets(
     mut commands: Commands,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<BossBullet>>,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<BossFire>>,
 ) {
     for (mut transform, velocity, bullet) in query.iter_mut() {
         transform.translation += velocity.0;
@@ -766,7 +751,7 @@ pub fn update_boss_bullets(
 
 pub fn detect_collision_bullet_boss(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<Bullet>>,
+    bullet_query: Query<(Entity, &Transform), With<Fire>>,
     mut boss_query: Query<(Entity, &Transform, &mut Health, &RectangularEnvelop), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -815,7 +800,7 @@ pub fn detect_collision_bullet_boss(
                                 }))
                                 .into(),
                             transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(BULLET_COLOR.into()),
+                            material: materials.add(spaceship::ATTACK_COLOR.into()),
                             ..default()
                         });
 
@@ -878,7 +863,7 @@ pub fn detect_collision_bullet_boss(
 
 pub fn detect_collision_bullet_spaceship(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<BossBullet>>,
+    bullet_query: Query<(Entity, &Transform), With<BossFire>>,
     mut spaceship_query: Query<
         (Entity, &Transform, &mut Health, &RectangularEnvelop),
         With<Spaceship>,
@@ -1002,7 +987,7 @@ pub fn add_boss_2(
     asteroid_query: Query<&Asteroid>,
 ) {
     let mut level = level_query.single_mut();
-    if !level.has_boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
+    if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
         let vertices_position = boss::create_triangle_list_from_polygon(&boss::POLYGON, Vec3::ZERO)
             .into_iter()
@@ -1035,7 +1020,7 @@ pub fn add_boss_2(
                 ..default()
             });
 
-        level.has_boss_spawned = true;
+        level.boss_spawned = true;
     }
 }
 

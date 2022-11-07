@@ -1,6 +1,6 @@
-use bevy::{prelude::*, render::mesh::PrimitiveTopology};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 
-use super::{Health, RectangularEnvelop, Velocity};
+use super::{Attack, Blast, Fire, Health, RectangularEnvelop, Velocity};
 
 const ALTITUDE: f32 = 100.0;
 const HEALTH: usize = 10;
@@ -77,8 +77,13 @@ pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.05;
-pub const CANON_POSITION: Vec3 = B;
-const COLOR: Color = Color::BLUE;
+pub const ATTACK_SOURCE: Vec3 = B;
+const SPACESHIP_COLOR: Color = Color::BLUE;
+pub const ATTACK_COLOR: Color = Color::YELLOW_GREEN;
+const BLAST_RADIUS: f32 = 0.4;
+const BLAST_VERTICES: usize = 8;
+const FIRE_RADIUS: f32 = 2.0;
+const FIRE_VERTICES: usize = 2;
 
 pub enum Direction {
     Left,
@@ -173,6 +178,14 @@ pub fn spaceship(
             z: 0.0,
         }))
         .insert(RECTANGULAR_ENVELOP)
+        .insert(Attack {
+            source: ATTACK_SOURCE,
+            color: ATTACK_COLOR,
+            blast_radius: BLAST_RADIUS,
+            blast_vertices: BLAST_VERTICES,
+            fire_radius: FIRE_RADIUS,
+            fire_vertices: FIRE_VERTICES,
+        })
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
@@ -182,7 +195,55 @@ pub fn spaceship(
                 z: 1.0,
             }),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
-            material: materials.add(COLOR.into()),
+            material: materials.add(SPACESHIP_COLOR.into()),
+            ..default()
+        });
+}
+
+pub fn attack(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    spaceship: Entity,
+    transform: &Transform,
+    attack: &Attack,
+) {
+    // let (spaceship, transform) = query.single();
+
+    let blast = commands
+        .spawn()
+        .insert(Blast)
+        .insert_bundle(MaterialMesh2dBundle {
+            mesh: meshes
+                .add(Mesh::from(shape::Circle {
+                    radius: attack.blast_radius,
+                    vertices: attack.blast_vertices,
+                }))
+                .into(),
+            // transform: transform.clone().with_scale(Vec3::splat(5.0)),
+            transform: Transform::from_translation(attack.source),
+            // .with_scale(Vec3::splat(1.0)),
+            material: materials.add(attack.color.into()),
+            ..default()
+        })
+        .id();
+
+    commands.entity(spaceship).push_children(&[blast]);
+
+    commands
+        .spawn()
+        .insert(Fire)
+        .insert_bundle(MaterialMesh2dBundle {
+            mesh: meshes
+                .add(Mesh::from(shape::Circle {
+                    radius: attack.fire_radius,
+                    vertices: attack.fire_vertices,
+                }))
+                .into(),
+            transform: Transform::from_translation(
+                transform.translation + attack.source * transform.scale,
+            ),
+            material: materials.add(attack.color.into()),
             ..default()
         });
 }
