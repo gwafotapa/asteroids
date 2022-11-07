@@ -1,4 +1,4 @@
-use asteroids::{spaceship, *};
+use asteroids::{boss, spaceship, *};
 use bevy::prelude::*;
 
 fn main() {
@@ -26,10 +26,10 @@ fn main() {
         .add_system(detect_collision_bullet_asteroid)
         .add_system(update_debris)
         .add_system(update_distance_to_boss)
-        .add_system(add_boss)
-        // .add_system(add_boss_2)
-        .add_system(move_boss)
-        .add_system(attack_boss)
+        .add_system(boss::add_boss)
+        // .add_system(boss::add_boss_2)
+        .add_system(boss::move_boss)
+        .add_system(boss::attack_boss)
         .add_system(update_boss_bullets)
         .add_system(detect_collision_bullet_boss)
         .add_system(detect_collision_bullet_spaceship)

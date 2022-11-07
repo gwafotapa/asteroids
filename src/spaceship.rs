@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 
-use super::{Attack, Blast, Fire, Health, RectangularEnvelop, Velocity};
+use super::{Attack, Blast, Direction, Fire, Health, RectangularEnvelop, Velocity};
 
 const ALTITUDE: f32 = 100.0;
 const HEALTH: usize = 10;
@@ -84,13 +84,6 @@ const BLAST_RADIUS: f32 = 0.4;
 const BLAST_VERTICES: usize = 8;
 const FIRE_RADIUS: f32 = 2.0;
 const FIRE_VERTICES: usize = 4;
-
-pub enum Direction {
-    Left,
-    Down,
-    Up,
-    Right,
-}
 
 #[derive(Component)]
 pub struct Spaceship;

@@ -1,13 +1,19 @@
-use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
-use rand::{seq::SliceRandom, Rng};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use rand::Rng;
 // use std::time::Instant;
-use std::f32::consts::{PI, SQRT_2};
+// use std::f32::consts::SQRT_2;
 
-mod boss;
+pub mod boss;
 pub mod spaceship;
 
-use boss::OUTER_RADIUS;
-use spaceship::{Direction, Spaceship};
+use spaceship::Spaceship;
+
+pub enum Direction {
+    Left,
+    Down,
+    Up,
+    Right,
+}
 
 pub const WINDOW_WIDTH: f32 = 800.0;
 pub const WINDOW_HEIGHT: f32 = 600.0;
@@ -17,59 +23,6 @@ const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
 const ALTITUDE: f32 = 100.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0;
-const BOSS_SIZE: f32 = 100.0;
-const BOSS_INITIAL_POSITION: Vec3 = Vec3 {
-    x: 300.0,
-    y: 0.0,
-    z: ALTITUDE,
-};
-const BOSS_ACCELERATION: f32 = 0.1;
-const BOSS_COLOR: Color = Color::ORANGE;
-const BOSS_HEALTH: usize = 10;
-
-const BOSS_BULLET_COLOR: Color = Color::RED;
-const BOSS_POSITIONS_OF_CANONS: [Vec3; 8] = [
-    Vec3 {
-        x: BOSS_SIZE * SQRT_2,
-        y: 0.0,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: -BOSS_SIZE * SQRT_2,
-        y: 0.0,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: 0.0,
-        y: BOSS_SIZE * SQRT_2,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: 0.0,
-        y: -BOSS_SIZE * SQRT_2,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: BOSS_SIZE,
-        y: BOSS_SIZE,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: -BOSS_SIZE,
-        y: -BOSS_SIZE,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: BOSS_SIZE,
-        y: -BOSS_SIZE,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: -BOSS_SIZE,
-        y: BOSS_SIZE,
-        z: ALTITUDE,
-    },
-];
 
 #[derive(Component)]
 pub struct Star;
@@ -84,9 +37,6 @@ pub struct Asteroid {
 
 #[derive(Component)]
 pub struct Fire;
-
-#[derive(Component)]
-pub struct BossFire;
 
 #[derive(Component)]
 pub struct Debris;
@@ -597,139 +547,9 @@ pub fn update_impacts(
     }
 }
 
-pub fn add_boss(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut level_query: Query<&mut Level>,
-    asteroid_query: Query<&Asteroid>,
-) {
-    let mut level = level_query.single_mut();
-    if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
-        let boss = commands
-            .spawn()
-            .insert(Boss)
-            .insert(Health(BOSS_HEALTH))
-            .insert(Velocity(Vec3::ZERO))
-            .insert(RectangularEnvelop {
-                half_x: OUTER_RADIUS,
-                half_y: OUTER_RADIUS,
-            })
-            .insert_bundle(SpatialBundle {
-                transform: Transform::from_translation(BOSS_INITIAL_POSITION),
-                ..default()
-            })
-            .id();
-
-        let boss_part1 = commands
-            .spawn()
-            .insert(BossPart)
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Quad {
-                        size: (200.0, 200.0).into(),
-                        flip: false,
-                    }))
-                    .into(),
-                material: materials.add(Color::ORANGE.into()),
-                ..default()
-            })
-            .id();
-
-        let boss_part2 = commands
-            .spawn()
-            .insert(BossPart)
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Quad {
-                        size: (2.0 * BOSS_SIZE, 2.0 * BOSS_SIZE).into(),
-                        flip: false,
-                    }))
-                    .into(),
-                transform: Transform::identity().with_rotation(Quat::from_rotation_z(PI / 4.0)),
-                material: materials.add(BOSS_COLOR.into()),
-                ..default()
-            })
-            .id();
-
-        commands
-            .entity(boss)
-            .push_children(&[boss_part1, boss_part2]);
-
-        level.boss_spawned = true;
-    }
-}
-
-pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) {
-    if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
-        let mut rng = rand::thread_rng();
-        let mut acceleration = Vec::new();
-        if transform.translation.x < WINDOW_WIDTH / 2.0 {
-            acceleration.push(Direction::Left);
-        }
-        if transform.translation.x > -WINDOW_WIDTH / 2.0 {
-            acceleration.push(Direction::Right);
-        }
-        if transform.translation.y < WINDOW_HEIGHT / 2.0 {
-            acceleration.push(Direction::Up);
-        }
-        if transform.translation.y > -WINDOW_HEIGHT / 2.0 {
-            acceleration.push(Direction::Down);
-        }
-
-        velocity.0 += match acceleration.choose(&mut rng).unwrap() {
-            Direction::Left => Vec3::from([BOSS_ACCELERATION, 0.0, 0.0]),
-            Direction::Right => Vec3::from([-BOSS_ACCELERATION, 0.0, 0.0]),
-            Direction::Up => Vec3::from([0.0, BOSS_ACCELERATION, 0.0]),
-            Direction::Down => Vec3::from([0.0, -BOSS_ACCELERATION, 0.0]),
-            // _ => unreachable!(),
-        };
-        transform.translation += velocity.0;
-    }
-}
-
-pub fn attack_boss(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss: Query<&Transform, With<Boss>>,
-    query_spaceship: Query<&Transform, With<Spaceship>>,
-) {
-    if let Ok(boss_transform) = query_boss.get_single() {
-        if let Ok(spaceship_transform) = query_spaceship.get_single() {
-            let mut rng = rand::thread_rng();
-            for canon_relative_position in BOSS_POSITIONS_OF_CANONS {
-                if rng.gen_range(0..100) == 0 {
-                    let canon_absolute_position = boss_transform.translation
-                        + canon_relative_position
-                        + Vec3::from([0.0, 0.0, 1.0]);
-                    commands
-                        .spawn()
-                        .insert(BossFire)
-                        .insert(Velocity(
-                            (spaceship_transform.translation - canon_absolute_position).normalize()
-                                * 4.0,
-                        ))
-                        .insert_bundle(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: 10.0,
-                                    vertices: 8,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(canon_absolute_position),
-                            material: materials.add(BOSS_BULLET_COLOR.into()),
-                            ..default()
-                        });
-                }
-            }
-        }
-    }
-}
-
 pub fn update_boss_bullets(
     mut commands: Commands,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<BossFire>>,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<boss::Fire>>,
 ) {
     for (mut transform, velocity, bullet) in query.iter_mut() {
         transform.translation += velocity.0;
@@ -857,7 +677,7 @@ pub fn detect_collision_bullet_boss(
 
 pub fn detect_collision_bullet_spaceship(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<BossFire>>,
+    bullet_query: Query<(Entity, &Transform), With<boss::Fire>>,
     mut spaceship_query: Query<
         (Entity, &Transform, &mut Health, &RectangularEnvelop),
         With<Spaceship>,
@@ -912,7 +732,7 @@ pub fn detect_collision_bullet_spaceship(
                                 }))
                                 .into(),
                             transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(BOSS_BULLET_COLOR.into()),
+                            material: materials.add(boss::BULLET_COLOR.into()),
                             ..default()
                         });
 
@@ -970,51 +790,6 @@ pub fn detect_collision_bullet_spaceship(
                 }
             }
         }
-    }
-}
-
-pub fn add_boss_2(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut level_query: Query<&mut Level>,
-    asteroid_query: Query<&Asteroid>,
-) {
-    let mut level = level_query.single_mut();
-    if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
-        let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position = boss::create_triangle_list_from_polygon(&boss::POLYGON, Vec3::ZERO)
-            .into_iter()
-            .map(|x| x.to_array())
-            .collect::<Vec<_>>();
-        let mut vertices_normal = Vec::new();
-        let mut vertices_uv = Vec::new();
-        for _ in &vertices_position {
-            vertices_normal.push([0.0, 0.0, 1.0]);
-            vertices_uv.push([0.0, 0.0]);
-        }
-
-        boss.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
-        boss.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
-        boss.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
-
-        commands
-            .spawn()
-            .insert(Boss)
-            .insert(Health(BOSS_HEALTH))
-            .insert(Velocity(Vec3::ZERO))
-            .insert(RectangularEnvelop {
-                half_x: OUTER_RADIUS,
-                half_y: OUTER_RADIUS,
-            })
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes.add(boss).into(),
-                transform: Transform::from_translation(BOSS_INITIAL_POSITION),
-                material: materials.add(BOSS_COLOR.into()),
-                ..default()
-            });
-
-        level.boss_spawned = true;
     }
 }
 
