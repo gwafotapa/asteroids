@@ -163,38 +163,6 @@ pub fn detect_collision_fire_asteroid(
     }
 }
 
-pub fn update_debris(
-    mut commands: Commands,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<Debris>>,
-) {
-    for (mut transform, velocity, debris) in query.iter_mut() {
-        transform.translation += velocity.0;
-        transform.scale -= 0.01;
-        // if transform.translation.x < -WINDOW_WIDTH / 2.0
-        //     || transform.translation.x > WINDOW_WIDTH / 2.0
-        //     || transform.translation.y < -WINDOW_HEIGHT / 2.0
-        //     || transform.translation.y > WINDOW_HEIGHT / 2.0
-        if transform.scale.x < 0.005 {
-            commands.entity(debris).despawn();
-        }
-    }
-}
-
-pub fn update_impacts(
-    mut commands: Commands,
-    mut query: Query<(&mut Transform, Entity), With<Impact>>,
-) {
-    for (mut transform, impact) in query.iter_mut() {
-        // transform.scale -= Vec3::ONE;
-        transform.scale -= 0.05;
-        // println!("{}", transform.scale);
-        // if transform.scale == Vec3::ONE {
-        if transform.scale.x < 0.05 {
-            commands.entity(impact).despawn();
-        }
-    }
-}
-
 pub fn detect_collision_fire_boss(
     mut commands: Commands,
     fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
@@ -214,7 +182,8 @@ pub fn detect_collision_fire_boss(
                 *boss_envelop,
             ) {
                 let triangles = boss::triangles_from_polygon(
-                    &boss::POLYGON.map(|x| x + boss_transform.translation),
+                    &boss::POLYGON
+                        .map(|x| boss_transform.rotation.mul_vec3(x) + boss_transform.translation),
                     boss_transform.translation,
                 );
                 let mut iter_triangles = triangles.chunks(3);
@@ -331,23 +300,15 @@ pub fn detect_collision_fire_spaceship(
                     half_y: spaceship_envelop.half_y * spaceship_transform.scale.y,
                 },
             ) {
-                let mut iter_triangle = spaceship::TRIANGLE_LIST
-                    .into_iter()
+                let triangles = spaceship::TRIANGLE_LIST
                     .map(|x| x.mul_add(spaceship_transform.scale, spaceship_transform.translation));
+                let mut iter_triangles = triangles.chunks(3);
                 let mut collision = false;
-                let mut p1 = iter_triangle.next();
-                let mut p2 = iter_triangle.next();
-                let mut p3 = iter_triangle.next();
-                while !collision && p3.is_some() {
-                    collision = math::point_in_triangle_2d(
-                        p1.unwrap(),
-                        p2.unwrap(),
-                        p3.unwrap(),
-                        fire_transform.translation,
-                    );
-                    p1 = iter_triangle.next();
-                    p2 = iter_triangle.next();
-                    p3 = iter_triangle.next();
+                while let Some(&[a, b, c]) = iter_triangles.next() {
+                    collision = math::point_in_triangle_2d(a, b, c, fire_transform.translation);
+                    if collision {
+                        break;
+                    }
                 }
 
                 if collision {
@@ -370,7 +331,7 @@ pub fn detect_collision_fire_spaceship(
 
                     spaceship_health.0 -= 1;
                     if spaceship_health.0 == 0 {
-                        commands.entity(spaceship).despawn_recursive();
+                        commands.entity(spaceship).despawn();
                         spaceship::explode(
                             commands,
                             meshes,
@@ -426,6 +387,38 @@ pub fn detect_collision_fire_spaceship(
                     }
                 }
             }
+        }
+    }
+}
+
+pub fn update_debris(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<Debris>>,
+) {
+    for (mut transform, velocity, debris) in query.iter_mut() {
+        transform.translation += velocity.0;
+        transform.scale -= 0.01;
+        // if transform.translation.x < -WINDOW_WIDTH / 2.0
+        //     || transform.translation.x > WINDOW_WIDTH / 2.0
+        //     || transform.translation.y < -WINDOW_HEIGHT / 2.0
+        //     || transform.translation.y > WINDOW_HEIGHT / 2.0
+        if transform.scale.x < 0.005 {
+            commands.entity(debris).despawn();
+        }
+    }
+}
+
+pub fn update_impacts(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, Entity), With<Impact>>,
+) {
+    for (mut transform, impact) in query.iter_mut() {
+        // transform.scale -= Vec3::ONE;
+        transform.scale -= 0.05;
+        // println!("{}", transform.scale);
+        // if transform.scale == Vec3::ONE {
+        if transform.scale.x < 0.05 {
+            commands.entity(impact).despawn();
         }
     }
 }

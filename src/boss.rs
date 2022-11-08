@@ -107,7 +107,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
     z: ALTITUDE,
 };
 const ACCELERATION: f32 = 0.1;
-const COLOR: Color = Color::GRAY;
+const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const HEALTH: usize = 10;
 
 pub const ATTACK_COLOR: Color = Color::RED;
@@ -321,16 +321,16 @@ pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) 
     if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
         let mut rng = rand::thread_rng();
         let mut acceleration = Vec::new();
-        if transform.translation.x < WINDOW_WIDTH / 2.0 {
+        if transform.translation.x < WINDOW_WIDTH / 3.0 {
             acceleration.push(Direction::Left);
         }
-        if transform.translation.x > -WINDOW_WIDTH / 2.0 {
+        if transform.translation.x > -WINDOW_WIDTH / 3.0 {
             acceleration.push(Direction::Right);
         }
-        if transform.translation.y < WINDOW_HEIGHT / 2.0 {
+        if transform.translation.y < WINDOW_HEIGHT / 3.0 {
             acceleration.push(Direction::Up);
         }
-        if transform.translation.y > -WINDOW_HEIGHT / 2.0 {
+        if transform.translation.y > -WINDOW_HEIGHT / 3.0 {
             acceleration.push(Direction::Down);
         }
 
