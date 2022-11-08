@@ -171,7 +171,7 @@ pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     // let mut triangle_list = Vec::new();
     // let mut iter = polygon.iter();
     // let mut p1 = iter.next();
-    // let mut p2 = iter.next();
+    // let mut p2 = iter.next();n
     // let p0 = p1;
     // while p2.is_some() {
     //     triangle_list.push(center);
@@ -359,7 +359,7 @@ pub fn attack_boss(
             for canon_relative_position in ATTACK_SOURCE {
                 if rng.gen_range(0..100) == 0 {
                     let canon_absolute_position = boss_transform.translation
-                        + canon_relative_position
+                        + boss_transform.rotation.mul_vec3(canon_relative_position)
                         + Vec3::from([0.0, 0.0, 1.0]);
 
                     let blast = commands
