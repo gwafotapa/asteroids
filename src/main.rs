@@ -1,4 +1,4 @@
-use asteroids::{asteroid, boss, spaceship, *};
+use asteroids::*;
 use bevy::prelude::*;
 
 fn main() {

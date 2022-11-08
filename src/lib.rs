@@ -1,10 +1,11 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 // use std::time::Instant;
-// use std::f32::consts::SQRT_2;
+// use std::f32::consts::SQRT_2;pub
 
 pub mod asteroid;
 pub mod boss;
+mod math;
 pub mod spaceship;
 pub mod star;
 
@@ -195,7 +196,7 @@ pub fn detect_collision_spaceship_asteroid(
         spaceship_query.get_single()
     {
         for (a_transform, asteroid, a_rectangular_envelop) in asteroid_query.iter() {
-            if rectangles_intersect(
+            if math::rectangles_intersect(
                 s_transform.translation,
                 *s_rectangular_envelop,
                 a_transform.translation,
@@ -288,7 +289,7 @@ pub fn detect_collision_bullet_asteroid(
             asteroid_envelop,
         ) in asteroid_query.iter_mut()
         {
-            if rectangles_intersect(
+            if math::rectangles_intersect(
                 bullet_transform.translation,
                 RectangularEnvelop {
                     half_x: 0.0,
@@ -430,7 +431,7 @@ pub fn detect_collision_bullet_boss(
 ) {
     if let Ok((boss, boss_transform, mut boss_health, boss_envelop)) = boss_query.get_single_mut() {
         for (bullet_entity, bullet_transform) in bullet_query.iter() {
-            if rectangles_intersect(
+            if math::rectangles_intersect(
                 bullet_transform.translation,
                 RectangularEnvelop {
                     half_x: 0.0,
@@ -450,7 +451,7 @@ pub fn detect_collision_bullet_boss(
                 let mut p2 = iter_triangle.next();
                 let mut p3 = iter_triangle.next();
                 while !collision && p3.is_some() {
-                    collision = point_in_triangle_2d(
+                    collision = math::point_in_triangle_2d(
                         *p1.unwrap(),
                         *p2.unwrap(),
                         *p3.unwrap(),
@@ -547,7 +548,7 @@ pub fn detect_collision_bullet_spaceship(
         spaceship_query.get_single_mut()
     {
         for (bullet_entity, bullet_transform) in bullet_query.iter() {
-            if rectangles_intersect(
+            if math::rectangles_intersect(
                 bullet_transform.translation,
                 RectangularEnvelop {
                     half_x: 0.0,
@@ -567,7 +568,7 @@ pub fn detect_collision_bullet_spaceship(
                 let mut p2 = iter_triangle.next();
                 let mut p3 = iter_triangle.next();
                 while !collision && p3.is_some() {
-                    collision = point_in_triangle_2d(
+                    collision = math::point_in_triangle_2d(
                         p1.unwrap(),
                         p2.unwrap(),
                         p3.unwrap(),
@@ -649,27 +650,6 @@ pub fn detect_collision_bullet_spaceship(
             }
         }
     }
-}
-
-pub fn point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
-    let denominator = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
-    let a = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / denominator;
-    let b = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / denominator;
-    let c = 1.0 - a - b;
-
-    a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
-}
-
-pub fn rectangles_intersect(
-    center1: Vec3,
-    envelop1: RectangularEnvelop,
-    center2: Vec3,
-    envelop2: RectangularEnvelop,
-) -> bool {
-    let intersect_x = (center1.x - center2.x).abs() <= envelop1.half_x + envelop2.half_x;
-    let intersect_y = (center1.y - center2.y).abs() <= envelop1.half_y + envelop2.half_y;
-
-    return intersect_x && intersect_y;
 }
 
 pub fn despawn_blast(mut commands: Commands, query: Query<(Entity, &Parent), With<Blast>>) {
