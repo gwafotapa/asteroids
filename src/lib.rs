@@ -170,25 +170,26 @@ pub fn keyboard_input(
     }
 }
 
-pub fn update_bullets(
-    mut commands: Commands,
-    mut query: Query<(&mut Transform, Entity), With<Fire>>,
-) {
-    for (mut transform, entity) in query.iter_mut() {
-        transform.translation += Vec3 {
-            x: 4.0,
-            y: 0.0,
-            z: 0.0,
-        };
-        if transform.translation.x > WINDOW_WIDTH / 2.0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn update_bullets(
+//     mut commands: Commands,
+//     mut query: Query<(&mut Transform, &Velocity, Entity), With<Fire>>,
+// ) {
+//     for (mut transform, velocity, entity) in query.iter_mut() {
+//         transform.translation += velocity.0;
+//         // transform.translation += Vec3 {
+//         //     x: 4.0,
+//         //     y: 0.0,
+//         //     z: 0.0,
+//         // };
+//         if transform.translation.x > WINDOW_WIDTH / 2.0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }
 
-pub fn update_boss_bullets(
+pub fn update_fire(
     mut commands: Commands,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<boss::Fire>>,
+    mut query: Query<(&mut Transform, &Velocity, Entity), With<Fire>>,
 ) {
     for (mut transform, velocity, bullet) in query.iter_mut() {
         transform.translation += velocity.0;

@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 
-use super::{
+use crate::{
     collision::RectangularEnvelop, Attack, Blast, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
@@ -227,6 +227,11 @@ pub fn attack(
     commands
         .spawn()
         .insert(Fire)
+        .insert(Velocity(Vec3 {
+            x: 4.0,
+            y: 0.0,
+            z: 0.0,
+        }))
         .insert_bundle(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {

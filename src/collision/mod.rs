@@ -2,8 +2,10 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    asteroid::Asteroid, boss, boss::Boss, boss::Fire, spaceship, Health, Spaceship, Velocity,
-    ALTITUDE,
+    asteroid::Asteroid,
+    boss::{self, Boss},
+    spaceship::{self, Spaceship},
+    Fire, Health, Velocity, ALTITUDE,
 };
 
 mod math;
@@ -339,7 +341,7 @@ pub fn detect_collision_bullet_boss(
 
 pub fn detect_collision_bullet_spaceship(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<boss::Fire>>,
+    bullet_query: Query<(Entity, &Transform), With<Fire>>,
     mut spaceship_query: Query<
         (Entity, &Transform, &mut Health, &RectangularEnvelop),
         With<Spaceship>,
@@ -394,7 +396,7 @@ pub fn detect_collision_bullet_spaceship(
                                 }))
                                 .into(),
                             transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(boss::BULLET_COLOR.into()),
+                            material: materials.add(boss::ATTACK_COLOR.into()),
                             ..default()
                         });
 

@@ -3,8 +3,8 @@ use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    asteroid::Asteroid, collision::RectangularEnvelop, Direction, Health, Level, Spaceship,
-    Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asteroid::Asteroid, collision::RectangularEnvelop, spaceship::Spaceship, Direction, Fire,
+    Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const INNER_RADIUS: f32 = 100.0;
@@ -110,7 +110,7 @@ const ACCELERATION: f32 = 0.1;
 const COLOR: Color = Color::ORANGE;
 const HEALTH: usize = 10;
 
-pub const BULLET_COLOR: Color = Color::RED;
+pub const ATTACK_COLOR: Color = Color::RED;
 const POSITIONS_OF_CANONS: [Vec3; 8] = [
     Vec3 {
         x: SIZE * SQRT_2,
@@ -153,9 +153,6 @@ const POSITIONS_OF_CANONS: [Vec3; 8] = [
         z: ALTITUDE,
     },
 ];
-
-#[derive(Component)]
-pub struct Fire;
 
 pub fn create_triangle_list_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangle_list = Vec::new();
@@ -343,7 +340,7 @@ pub fn attack_boss(
                                 }))
                                 .into(),
                             transform: Transform::from_translation(canon_absolute_position),
-                            material: materials.add(BULLET_COLOR.into()),
+                            material: materials.add(ATTACK_COLOR.into()),
                             ..default()
                         });
                 }
