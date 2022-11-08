@@ -362,6 +362,19 @@ pub fn attack_boss(
                         + boss_transform.rotation.mul_vec3(canon_relative_position)
                         + Vec3::from([0.0, 0.0, 1.0]);
 
+                    // Compute coordinates of vector from boss to spaceship
+                    let vec_boss_spaceship =
+                        spaceship_transform.translation - boss_transform.translation;
+                    // Compute coordinates of vector from boss to canon
+                    let vec_boss_center_canon =
+                        canon_absolute_position - boss_transform.translation;
+                    let scalar_product = vec_boss_spaceship.x * vec_boss_center_canon.x
+                        + vec_boss_spaceship.y * vec_boss_center_canon.y;
+                    // Scalar product sign determines whether or not canon has line of sight
+                    if scalar_product < 0.0 {
+                        continue;
+                    }
+
                     let blast = commands
                         .spawn()
                         .insert(Blast)
