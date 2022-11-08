@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    asteroid::Asteroid,
+    asteroid::{self, Asteroid},
     boss::{self, Boss},
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity, ALTITUDE,
@@ -151,7 +151,7 @@ pub fn detect_collision_fire_asteroid(
                                         debris_y,
                                         ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
                                     ),
-                                    material: materials.add(Color::PURPLE.into()),
+                                    material: materials.add(asteroid::COLOR.into()),
                                     ..default()
                                 });
                         }

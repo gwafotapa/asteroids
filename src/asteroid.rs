@@ -5,8 +5,9 @@ use crate::{
     collision::RectangularEnvelop, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-const MAX_SPEED_OF_ASTEROIDS: usize = 5;
-const MAX_HEALTH_OF_ASTEROIDS: usize = 6;
+const MAX_SPEED: usize = 5;
+const MAX_HEALTH: usize = 6;
+pub const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 
 #[derive(Component)]
 pub struct Asteroid {
@@ -22,11 +23,11 @@ pub fn asteroids(
     let mut rng = rand::thread_rng();
 
     if level_query.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
-        let health = rng.gen_range(1..MAX_HEALTH_OF_ASTEROIDS + 1);
+        let health = rng.gen_range(1..MAX_HEALTH + 1);
         let radius = (health * 20) as f32;
-        let speed = rng.gen_range(1..MAX_SPEED_OF_ASTEROIDS + 1) as f32;
+        let speed = rng.gen_range(1..MAX_SPEED + 1) as f32;
         let velocity = Vec3::from([-speed, 0., 0.]);
-        let x = WINDOW_WIDTH / 2.0 + (MAX_HEALTH_OF_ASTEROIDS * 20) as f32;
+        let x = WINDOW_WIDTH / 2.0 + (MAX_HEALTH * 20) as f32;
         let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
         commands
@@ -46,7 +47,7 @@ pub fn asteroids(
                     }))
                     .into(),
                 transform: Transform::from_xyz(x, y, ALTITUDE),
-                material: materials.add(ColorMaterial::from(Color::PURPLE)),
+                material: materials.add(ColorMaterial::from(COLOR)),
                 ..default()
             });
     }
