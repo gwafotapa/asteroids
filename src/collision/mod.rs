@@ -55,7 +55,7 @@ pub fn detect_collision_spaceship_asteroid(
 
 pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
-    fire_query: Query<(Entity, &Transform), With<Fire>>,
+    fire_query: Query<(Entity, &Fire, &Transform)>,
     mut asteroid_query: Query<(
         Entity,
         &Transform,
@@ -67,7 +67,7 @@ pub fn detect_collision_fire_asteroid(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (fire_entity, fire_transform) in fire_query.iter() {
+    for (fire_entity, fire, fire_transform) in fire_query.iter() {
         for (
             asteroid_entity,
             asteroid_transform,
@@ -97,14 +97,16 @@ pub fn detect_collision_fire_asteroid(
                         .insert_bundle(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
-                                    radius: 4.0,
-                                    vertices: 8,
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: fire_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(spaceship::ATTACK_COLOR.into()),
+                            transform: *fire_transform,
+                            material: materials.add(fire.color.into()),
                             ..default()
                         });
+
+                    // commands.entity(asteroid_entity).push_children(&[impact]);
 
                     commands.entity(fire_entity).despawn();
 
