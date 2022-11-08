@@ -3,8 +3,8 @@ use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    asteroid::Asteroid, collision::RectangularEnvelop, spaceship::Spaceship, Direction, Enemy,
-    Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asteroid::Asteroid, collision::RectangularEnvelop, spaceship::Spaceship, Blast, Direction,
+    Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const INNER_RADIUS: f32 = 100.0;
@@ -107,7 +107,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
     z: ALTITUDE,
 };
 const ACCELERATION: f32 = 0.1;
-const COLOR: Color = Color::ORANGE;
+const COLOR: Color = Color::GRAY;
 const HEALTH: usize = 10;
 
 pub const ATTACK_COLOR: Color = Color::RED;
@@ -154,10 +154,12 @@ const ATTACK_SOURCE: [Vec3; 8] = [
         z: ALTITUDE,
     },
 ];
-const BLAST_RADIUS: f32 = 0.4;
-const BLAST_VERTICES: usize = 8;
-const FIRE_RADIUS: f32 = 10.0;
-const FIRE_VERTICES: usize = 8;
+const BLAST_RADIUS: f32 = 15.0;
+const BLAST_VERTICES: usize = 32;
+const FIRE_RADIUS: f32 = 5.0;
+const FIRE_VERTICES: usize = 32;
+const IMPACT_RADIUS: f32 = 15.0;
+const IMPACT_VERTICES: usize = 32;
 
 pub fn create_triangle_list_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangle_list = Vec::new();
@@ -224,7 +226,7 @@ pub fn add_boss(
                         flip: false,
                     }))
                     .into(),
-                material: materials.add(Color::ORANGE.into()),
+                material: materials.add(COLOR.into()),
                 ..default()
             })
             .id();
@@ -341,10 +343,10 @@ pub fn attack_boss(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss: Query<&Transform, With<Boss>>,
+    query_boss: Query<(Entity, &Transform), With<Boss>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
-    if let Ok(boss_transform) = query_boss.get_single() {
+    if let Ok((boss, boss_transform)) = query_boss.get_single() {
         if let Ok(spaceship_transform) = query_spaceship.get_single() {
             let mut rng = rand::thread_rng();
             for canon_relative_position in ATTACK_SOURCE {
@@ -352,12 +354,33 @@ pub fn attack_boss(
                     let canon_absolute_position = boss_transform.translation
                         + canon_relative_position
                         + Vec3::from([0.0, 0.0, 1.0]);
+
+                    let blast = commands
+                        .spawn()
+                        .insert(Blast)
+                        .insert_bundle(MaterialMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: BLAST_RADIUS,
+                                    vertices: BLAST_VERTICES,
+                                }))
+                                .into(),
+                            // transform: transform.clone().with_scale(Vec3::splat(5.0)),
+                            transform: Transform::from_translation(canon_relative_position),
+                            // .with_scale(Vec3::splat(1.0)),
+                            material: materials.add(ATTACK_COLOR.into()),
+                            ..default()
+                        })
+                        .id();
+
+                    commands.entity(boss).push_children(&[blast]);
+
                     commands
                         .spawn()
                         .insert(Fire {
                             color: ATTACK_COLOR,
-                            impact_radius: BLAST_RADIUS,
-                            impact_vertices: BLAST_VERTICES,
+                            impact_radius: IMPACT_RADIUS,
+                            impact_vertices: IMPACT_VERTICES,
                         })
                         .insert(Enemy)
                         .insert(Velocity(

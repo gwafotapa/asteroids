@@ -78,13 +78,13 @@ pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 const ACCELERATION: f32 = 0.05;
 pub const ATTACK_SOURCE: Vec3 = B;
 const SPACESHIP_COLOR: Color = Color::BLUE;
-pub const ATTACK_COLOR: Color = Color::YELLOW_GREEN;
+pub const ATTACK_COLOR: Color = Color::YELLOW;
 const BLAST_RADIUS: f32 = 0.4;
 const BLAST_VERTICES: usize = 8;
-const FIRE_RADIUS: f32 = 2.0;
+const FIRE_RADIUS: f32 = 3.0;
 const FIRE_VERTICES: usize = 4;
-const IMPACT_RADIUS: f32 = 5.0;
-const IMPACT_VERTICES: usize = 8;
+const IMPACT_RADIUS: f32 = 12.0;
+const IMPACT_VERTICES: usize = 16;
 const FIRE_VELOCITY: Vec3 = Vec3 {
     x: 8.0,
     y: 0.0,

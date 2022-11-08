@@ -218,10 +218,10 @@ pub fn update_impacts(
 ) {
     for (mut transform, impact) in query.iter_mut() {
         // transform.scale -= Vec3::ONE;
-        transform.scale -= 0.5;
+        transform.scale -= 0.05;
         // println!("{}", transform.scale);
         // if transform.scale == Vec3::ONE {
-        if transform.scale.x < 0.25 {
+        if transform.scale.x < 0.05 {
             commands.entity(impact).despawn();
         }
     }
@@ -277,7 +277,8 @@ pub fn detect_collision_fire_boss(
                                     vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: fire_transform.clone().with_scale(Vec3::splat(5.0)),
+                            transform: *fire_transform,
+                            // .clone().with_scale(Vec3::splat(5.0)),
                             material: materials.add(fire.color.into()),
                             ..default()
                         });
@@ -395,7 +396,7 @@ pub fn detect_collision_fire_spaceship(
                                     vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: fire_transform.clone().with_scale(Vec3::splat(5.0)),
+                            transform: *fire_transform,
                             material: materials.add(fire.color.into()),
                             ..default()
                         });
