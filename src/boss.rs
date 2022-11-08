@@ -3,8 +3,8 @@ use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    asteroid::Asteroid, collision::RectangularEnvelop, spaceship::Spaceship, Direction, Fire,
-    Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asteroid::Asteroid, collision::RectangularEnvelop, spaceship::Spaceship, Direction, Enemy,
+    Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const INNER_RADIUS: f32 = 100.0;
@@ -111,7 +111,8 @@ const COLOR: Color = Color::ORANGE;
 const HEALTH: usize = 10;
 
 pub const ATTACK_COLOR: Color = Color::RED;
-const POSITIONS_OF_CANONS: [Vec3; 8] = [
+const FIRE_VELOCITY: f32 = 4.0;
+const ATTACK_SOURCE: [Vec3; 8] = [
     Vec3 {
         x: SIZE * SQRT_2,
         y: 0.0,
@@ -153,6 +154,10 @@ const POSITIONS_OF_CANONS: [Vec3; 8] = [
         z: ALTITUDE,
     },
 ];
+const BLAST_RADIUS: f32 = 0.4;
+const BLAST_VERTICES: usize = 8;
+const FIRE_RADIUS: f32 = 10.0;
+const FIRE_VERTICES: usize = 8;
 
 pub fn create_triangle_list_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangle_list = Vec::new();
@@ -197,6 +202,17 @@ pub fn add_boss(
                 ..default()
             })
             .id();
+
+        // for source in ATTACK_SOURCE {
+        //     commands.entity(boss).insert(Attack {
+        //         source,
+        //         color: ATTACK_COLOR,
+        //         blast_radius: BLAST_RADIUS,
+        //         blast_vertices: BLAST_VERTICES,
+        //         fire_radius: FIRE_RADIUS,
+        //         fire_vertices: FIRE_VERTICES,
+        //     });
+        // }
 
         let boss_part1 = commands
             .spawn()
@@ -278,6 +294,17 @@ pub fn add_boss_2(
                 ..default()
             });
 
+        // for source in ATTACK_SOURCE {
+        //     commands.entity(boss).insert(Attack {
+        //         source,
+        //         color: ATTACK_COLOR,
+        //         blast_radius: BLAST_RADIUS,
+        //         blast_vertices: BLAST_VERTICES,
+        //         fire_radius: FIRE_RADIUS,
+        //         fire_vertices: FIRE_VERTICES,
+        //     });
+        // }
+
         level.boss_spawned = true;
     }
 }
@@ -320,23 +347,28 @@ pub fn attack_boss(
     if let Ok(boss_transform) = query_boss.get_single() {
         if let Ok(spaceship_transform) = query_spaceship.get_single() {
             let mut rng = rand::thread_rng();
-            for canon_relative_position in POSITIONS_OF_CANONS {
+            for canon_relative_position in ATTACK_SOURCE {
                 if rng.gen_range(0..100) == 0 {
                     let canon_absolute_position = boss_transform.translation
                         + canon_relative_position
                         + Vec3::from([0.0, 0.0, 1.0]);
                     commands
                         .spawn()
-                        .insert(Fire)
+                        .insert(Fire {
+                            color: ATTACK_COLOR,
+                            impact_radius: BLAST_RADIUS,
+                            impact_vertices: BLAST_VERTICES,
+                        })
+                        .insert(Enemy)
                         .insert(Velocity(
                             (spaceship_transform.translation - canon_absolute_position).normalize()
-                                * 4.0,
+                                * FIRE_VELOCITY,
                         ))
                         .insert_bundle(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
-                                    radius: 10.0,
-                                    vertices: 8,
+                                    radius: FIRE_RADIUS,
+                                    vertices: FIRE_VERTICES,
                                 }))
                                 .into(),
                             transform: Transform::from_translation(canon_absolute_position),

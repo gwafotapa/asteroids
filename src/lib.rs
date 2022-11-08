@@ -26,7 +26,11 @@ const INITIAL_DISTANCE_TO_BOSS: usize = 0;
 pub struct Velocity(Vec3);
 
 #[derive(Component)]
-pub struct Fire;
+pub struct Fire {
+    color: Color,
+    impact_radius: f32,
+    impact_vertices: usize,
+}
 
 #[derive(Component)]
 pub struct Blast;
@@ -43,15 +47,18 @@ pub struct Level {
 #[derive(Component)]
 pub struct Health(usize);
 
+// #[derive(Component)]
+// pub struct Attack {
+//     source: Vec3,
+//     color: Color,
+//     blast_radius: f32,
+//     blast_vertices: usize,
+//     fire_radius: f32,
+//     fire_vertices: usize,
+// }
+
 #[derive(Component)]
-pub struct Attack {
-    source: Vec3,
-    color: Color,
-    blast_radius: f32,
-    blast_vertices: usize,
-    fire_radius: f32,
-    fire_vertices: usize,
-}
+pub struct Enemy;
 
 pub fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
@@ -114,7 +121,7 @@ pub fn keyboard_input(
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query: Query<(Entity, &mut Transform, &mut Velocity, &Attack), With<Spaceship>>,
+    mut query: Query<(Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
 ) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
@@ -124,7 +131,7 @@ pub fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((spaceship, mut transform, mut velocity, attack)) = query.get_single_mut() {
+    if let Ok((spaceship, mut transform, mut velocity)) = query.get_single_mut() {
         // // we can check multiple at once with `.any_*`
         // if keys.any_pressed([
         //     KeyCode::Left,
@@ -137,7 +144,7 @@ pub fn keyboard_input(
         //     KeyCode::L,
         // ]) {
         if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
-            spaceship::attack(commands, meshes, materials, spaceship, &transform, attack);
+            spaceship::attack(commands, meshes, materials, spaceship, &transform);
         }
         // Either the left or right shift are being held down
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {

@@ -1,8 +1,6 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 
-use crate::{
-    collision::RectangularEnvelop, Attack, Blast, Direction, Fire, Health, Velocity, ALTITUDE,
-};
+use crate::{collision::RectangularEnvelop, Blast, Direction, Fire, Health, Velocity, ALTITUDE};
 
 const HEALTH: usize = 10;
 
@@ -85,6 +83,13 @@ const BLAST_RADIUS: f32 = 0.4;
 const BLAST_VERTICES: usize = 8;
 const FIRE_RADIUS: f32 = 2.0;
 const FIRE_VERTICES: usize = 4;
+const IMPACT_RADIUS: f32 = 5.0;
+const IMPACT_VERTICES: usize = 8;
+const FIRE_VELOCITY: Vec3 = Vec3 {
+    x: 8.0,
+    y: 0.0,
+    z: 0.0,
+};
 
 #[derive(Component)]
 pub struct Spaceship;
@@ -172,14 +177,14 @@ pub fn spaceship(
             z: 0.0,
         }))
         .insert(RECTANGULAR_ENVELOP)
-        .insert(Attack {
-            source: ATTACK_SOURCE,
-            color: ATTACK_COLOR,
-            blast_radius: BLAST_RADIUS,
-            blast_vertices: BLAST_VERTICES,
-            fire_radius: FIRE_RADIUS,
-            fire_vertices: FIRE_VERTICES,
-        })
+        // .insert(Attack {
+        //     source: ATTACK_SOURCE,
+        //     color: ATTACK_COLOR,
+        //     blast_radius: BLAST_RADIUS,
+        //     blast_vertices: BLAST_VERTICES,
+        //     fire_radius: FIRE_RADIUS,
+        //     fire_vertices: FIRE_VERTICES,
+        // })
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
@@ -200,7 +205,7 @@ pub fn attack(
     mut materials: ResMut<Assets<ColorMaterial>>,
     spaceship: Entity,
     transform: &Transform,
-    attack: &Attack,
+    // attack: &Attack,
 ) {
     // let (spaceship, transform) = query.single();
 
@@ -210,14 +215,14 @@ pub fn attack(
         .insert_bundle(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
-                    radius: attack.blast_radius,
-                    vertices: attack.blast_vertices,
+                    radius: BLAST_RADIUS,
+                    vertices: BLAST_VERTICES,
                 }))
                 .into(),
             // transform: transform.clone().with_scale(Vec3::splat(5.0)),
-            transform: Transform::from_translation(attack.source),
+            transform: Transform::from_translation(ATTACK_SOURCE),
             // .with_scale(Vec3::splat(1.0)),
-            material: materials.add(attack.color.into()),
+            material: materials.add(ATTACK_COLOR.into()),
             ..default()
         })
         .id();
@@ -226,23 +231,23 @@ pub fn attack(
 
     commands
         .spawn()
-        .insert(Fire)
-        .insert(Velocity(Vec3 {
-            x: 4.0,
-            y: 0.0,
-            z: 0.0,
-        }))
+        .insert(Fire {
+            color: ATTACK_COLOR,
+            impact_radius: IMPACT_RADIUS,
+            impact_vertices: IMPACT_VERTICES,
+        })
+        .insert(Velocity(FIRE_VELOCITY))
         .insert_bundle(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
-                    radius: attack.fire_radius,
-                    vertices: attack.fire_vertices,
+                    radius: FIRE_RADIUS,
+                    vertices: FIRE_VERTICES,
                 }))
                 .into(),
             transform: Transform::from_translation(
-                transform.translation + attack.source * transform.scale,
+                transform.translation + ATTACK_SOURCE * transform.scale,
             ),
-            material: materials.add(attack.color.into()),
+            material: materials.add(ATTACK_COLOR.into()),
             ..default()
         });
 }

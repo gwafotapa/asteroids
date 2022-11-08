@@ -5,7 +5,7 @@ use crate::{
     asteroid::Asteroid,
     boss::{self, Boss},
     spaceship::{self, Spaceship},
-    Fire, Health, Velocity, ALTITUDE,
+    Enemy, Fire, Health, Velocity, ALTITUDE,
 };
 
 mod math;
@@ -24,7 +24,7 @@ pub struct Debris;
 
 pub fn detect_collision_spaceship_asteroid(
     mut commands: Commands,
-    spaceship_query: Query<(Entity, &Transform, &Velocity, &RectangularEnvelop)>,
+    spaceship_query: Query<(Entity, &Transform, &Velocity, &RectangularEnvelop), With<Spaceship>>,
     asteroid_query: Query<(&Transform, &Asteroid, &RectangularEnvelop)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -86,9 +86,9 @@ pub fn detect_collision_spaceship_asteroid(
     }
 }
 
-pub fn detect_collision_bullet_asteroid(
+pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<Fire>>,
+    fire_query: Query<(Entity, &Transform), With<Fire>>,
     mut asteroid_query: Query<(
         Entity,
         &Transform,
@@ -100,7 +100,7 @@ pub fn detect_collision_bullet_asteroid(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (bullet_entity, bullet_transform) in bullet_query.iter() {
+    for (fire_entity, fire_transform) in fire_query.iter() {
         for (
             asteroid_entity,
             asteroid_transform,
@@ -111,7 +111,7 @@ pub fn detect_collision_bullet_asteroid(
         ) in asteroid_query.iter_mut()
         {
             if math::rectangles_intersect(
-                bullet_transform.translation,
+                fire_transform.translation,
                 RectangularEnvelop {
                     half_x: 0.0,
                     half_y: 0.0,
@@ -119,7 +119,7 @@ pub fn detect_collision_bullet_asteroid(
                 asteroid_transform.translation,
                 *asteroid_envelop,
             ) {
-                if bullet_transform
+                if fire_transform
                     .translation
                     .distance(asteroid_transform.translation)
                     < asteroid.radius
@@ -134,12 +134,12 @@ pub fn detect_collision_bullet_asteroid(
                                     vertices: 8,
                                 }))
                                 .into(),
-                            transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
+                            transform: fire_transform.clone().with_scale(Vec3::splat(5.0)),
                             material: materials.add(spaceship::ATTACK_COLOR.into()),
                             ..default()
                         });
 
-                    commands.entity(bullet_entity).despawn();
+                    commands.entity(fire_entity).despawn();
 
                     asteroid_health.0 -= 1;
                     if asteroid_health.0 == 0 {
@@ -227,17 +227,17 @@ pub fn update_impacts(
     }
 }
 
-pub fn detect_collision_bullet_boss(
+pub fn detect_collision_fire_boss(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<Fire>>,
+    fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
     mut boss_query: Query<(Entity, &Transform, &mut Health, &RectangularEnvelop), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if let Ok((boss, boss_transform, mut boss_health, boss_envelop)) = boss_query.get_single_mut() {
-        for (bullet_entity, bullet_transform) in bullet_query.iter() {
+        for (fire, fire_entity, fire_transform) in fire_query.iter() {
             if math::rectangles_intersect(
-                bullet_transform.translation,
+                fire_transform.translation,
                 RectangularEnvelop {
                     half_x: 0.0,
                     half_y: 0.0,
@@ -260,7 +260,7 @@ pub fn detect_collision_bullet_boss(
                         *p1.unwrap(),
                         *p2.unwrap(),
                         *p3.unwrap(),
-                        bullet_transform.translation,
+                        fire_transform.translation,
                     );
                     p1 = iter_triangle.next();
                     p2 = iter_triangle.next();
@@ -273,16 +273,16 @@ pub fn detect_collision_bullet_boss(
                         .insert_bundle(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
-                                    radius: 4.0,
-                                    vertices: 8,
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(spaceship::ATTACK_COLOR.into()),
+                            transform: fire_transform.clone().with_scale(Vec3::splat(5.0)),
+                            material: materials.add(fire.color.into()),
                             ..default()
                         });
 
-                    commands.entity(bullet_entity).despawn();
+                    commands.entity(fire_entity).despawn();
 
                     boss_health.0 -= 1;
                     if boss_health.0 == 0 {
@@ -339,9 +339,9 @@ pub fn detect_collision_bullet_boss(
     }
 }
 
-pub fn detect_collision_bullet_spaceship(
+pub fn detect_collision_fire_spaceship(
     mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform), With<Fire>>,
+    fire_query: Query<(&Fire, Entity, &Transform), With<Enemy>>,
     mut spaceship_query: Query<
         (Entity, &Transform, &mut Health, &RectangularEnvelop),
         With<Spaceship>,
@@ -352,9 +352,9 @@ pub fn detect_collision_bullet_spaceship(
     if let Ok((spaceship, spaceship_transform, mut spaceship_health, spaceship_envelop)) =
         spaceship_query.get_single_mut()
     {
-        for (bullet_entity, bullet_transform) in bullet_query.iter() {
+        for (fire, fire_entity, fire_transform) in fire_query.iter() {
             if math::rectangles_intersect(
-                bullet_transform.translation,
+                fire_transform.translation,
                 RectangularEnvelop {
                     half_x: 0.0,
                     half_y: 0.0,
@@ -377,7 +377,7 @@ pub fn detect_collision_bullet_spaceship(
                         p1.unwrap(),
                         p2.unwrap(),
                         p3.unwrap(),
-                        bullet_transform.translation,
+                        fire_transform.translation,
                     );
                     p1 = iter_triangle.next();
                     p2 = iter_triangle.next();
@@ -391,16 +391,16 @@ pub fn detect_collision_bullet_spaceship(
                         .insert_bundle(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
-                                    radius: 4.0,
-                                    vertices: 8,
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: bullet_transform.clone().with_scale(Vec3::splat(5.0)),
-                            material: materials.add(boss::ATTACK_COLOR.into()),
+                            transform: fire_transform.clone().with_scale(Vec3::splat(5.0)),
+                            material: materials.add(fire.color.into()),
                             ..default()
                         });
 
-                    commands.entity(bullet_entity).despawn();
+                    commands.entity(fire_entity).despawn();
 
                     spaceship_health.0 -= 1;
                     if spaceship_health.0 == 0 {

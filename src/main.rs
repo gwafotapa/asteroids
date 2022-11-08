@@ -21,9 +21,9 @@ fn main() {
         .add_system(asteroid::asteroids)
         .add_system(keyboard_input)
         .add_system(collision::detect_collision_spaceship_asteroid)
-        // .add_system(update_bullets)
+        // .add_system(update_fires)
         .add_system(collision::update_impacts)
-        .add_system(collision::detect_collision_bullet_asteroid)
+        .add_system(collision::detect_collision_fire_asteroid)
         .add_system(collision::update_debris)
         .add_system(update_distance_to_boss)
         .add_system(boss::add_boss)
@@ -31,8 +31,8 @@ fn main() {
         .add_system(boss::move_boss)
         .add_system(boss::attack_boss)
         .add_system(update_fire)
-        .add_system(collision::detect_collision_bullet_boss)
-        .add_system(collision::detect_collision_bullet_spaceship)
+        .add_system(collision::detect_collision_fire_boss)
+        .add_system(collision::detect_collision_fire_spaceship)
         .add_system(despawn_blast)
         // .add_system_to_stage(
         //     CoreStage::PostUpdate,
