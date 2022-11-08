@@ -43,12 +43,6 @@ pub struct Level {
 #[derive(Component)]
 pub struct Health(usize);
 
-#[derive(Component, Clone, Copy)]
-pub struct RectangularEnvelop {
-    pub half_x: f32,
-    pub half_y: f32,
-}
-
 #[derive(Component)]
 pub struct Attack {
     source: Vec3,

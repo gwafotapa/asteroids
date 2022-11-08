@@ -1,7 +1,9 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
-use crate::{Health, Level, RectangularEnvelop, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{
+    collision::RectangularEnvelop, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+};
 
 const MAX_SPEED_OF_ASTEROIDS: usize = 5;
 const MAX_HEALTH_OF_ASTEROIDS: usize = 6;

@@ -1,6 +1,8 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
 
-use super::{Attack, Blast, Direction, Fire, Health, RectangularEnvelop, Velocity, ALTITUDE};
+use super::{
+    collision::RectangularEnvelop, Attack, Blast, Direction, Fire, Health, Velocity, ALTITUDE,
+};
 
 const HEALTH: usize = 10;
 

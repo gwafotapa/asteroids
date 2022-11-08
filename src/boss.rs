@@ -3,8 +3,8 @@ use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    asteroid::Asteroid, Direction, Health, Level, RectangularEnvelop, Spaceship, Velocity,
-    ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asteroid::Asteroid, collision::RectangularEnvelop, Direction, Health, Level, Spaceship,
+    Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const INNER_RADIUS: f32 = 100.0;
