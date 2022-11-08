@@ -60,6 +60,9 @@ pub struct Health(usize);
 #[derive(Component)]
 pub struct Enemy;
 
+#[derive(Component)]
+pub struct Debris;
+
 pub fn camera(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
 }

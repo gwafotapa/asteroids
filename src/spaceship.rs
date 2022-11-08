@@ -1,6 +1,9 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
+use rand::Rng;
 
-use crate::{collision::RectangularEnvelop, Blast, Direction, Fire, Health, Velocity, ALTITUDE};
+use crate::{
+    collision::RectangularEnvelop, Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
+};
 
 const HEALTH: usize = 10;
 
@@ -76,6 +79,16 @@ pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.05;
+const POSITION: Vec3 = Vec3 {
+    x: -300.0,
+    y: 0.0,
+    z: ALTITUDE,
+};
+const SCALE: Vec3 = Vec3 {
+    x: 10.0,
+    y: 10.0,
+    z: 1.0,
+};
 pub const ATTACK_SOURCE: Vec3 = B;
 const SPACESHIP_COLOR: Color = Color::BLUE;
 pub const ATTACK_COLOR: Color = Color::YELLOW;
@@ -188,11 +201,7 @@ pub fn spaceship(
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
-            transform: Transform::from_xyz(-300., 0., ALTITUDE).with_scale(Vec3 {
-                x: 10.0,
-                y: 10.0,
-                z: 1.0,
-            }),
+            transform: Transform::from_translation(POSITION).with_scale(SCALE),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             material: materials.add(SPACESHIP_COLOR.into()),
             ..default()
@@ -250,4 +259,43 @@ pub fn attack(
             material: materials.add(ATTACK_COLOR.into()),
             ..default()
         });
+}
+
+pub fn explode(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    transform: &Transform,
+    velocity: &Velocity,
+) {
+    let mut rng = rand::thread_rng();
+    for _ in 1..10 {
+        let debris_dx = rng.gen_range(-30.0..30.0);
+        let debris_x = transform.translation.x + debris_dx;
+        let debris_dy = rng.gen_range(-20.0..20.0);
+        let debris_y = transform.translation.y + debris_dy;
+
+        let dv = Vec3 {
+            x: rng.gen_range(-0.5..0.5),
+            y: rng.gen_range(-0.5..0.5),
+            z: 0.0,
+        };
+
+        commands
+            .spawn()
+            .insert(Debris)
+            .insert(Velocity(velocity.0 + dv))
+            .insert_bundle(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: 10.0,
+                        vertices: 4,
+                    }))
+                    .into(),
+                transform: Transform::from_xyz(debris_x, debris_y, ALTITUDE)
+                    .with_scale(Vec3::splat(4.0)),
+                material: materials.add(SPACESHIP_COLOR.into()),
+                ..default()
+            });
+    }
 }

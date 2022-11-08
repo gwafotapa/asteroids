@@ -5,7 +5,7 @@ use crate::{
     asteroid::Asteroid,
     boss::{self, Boss},
     spaceship::{self, Spaceship},
-    Enemy, Fire, Health, Velocity, ALTITUDE,
+    Debris, Enemy, Fire, Health, Velocity, ALTITUDE,
 };
 
 mod math;
@@ -19,15 +19,12 @@ pub struct RectangularEnvelop {
 #[derive(Component)]
 pub struct Impact;
 
-#[derive(Component)]
-pub struct Debris;
-
 pub fn detect_collision_spaceship_asteroid(
     mut commands: Commands,
     spaceship_query: Query<(Entity, &Transform, &Velocity, &RectangularEnvelop), With<Spaceship>>,
     asteroid_query: Query<(&Transform, &Asteroid, &RectangularEnvelop)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if let Ok((s_entity, s_transform, s_velocity, s_rectangular_envelop)) =
         spaceship_query.get_single()
@@ -47,37 +44,7 @@ pub fn detect_collision_spaceship_asteroid(
                         < asteroid.radius
                     {
                         commands.entity(s_entity).despawn();
-                        let mut rng = rand::thread_rng();
-                        for _ in 1..10 {
-                            let debris_dx = rng.gen_range(-30.0..30.0);
-                            let debris_x = s_transform.translation.x + debris_dx;
-                            let debris_dy = rng.gen_range(-20.0..20.0);
-                            let debris_y = s_transform.translation.y + debris_dy;
-
-                            let velocity = Vec3 {
-                                x: rng.gen_range(-0.5..0.5),
-                                y: rng.gen_range(-0.5..0.5),
-                                z: 0.0,
-                            };
-
-                            commands
-                                .spawn()
-                                .insert(Debris)
-                                .insert(Velocity(s_velocity.0 + velocity))
-                                .insert_bundle(MaterialMesh2dBundle {
-                                    mesh: meshes
-                                        .add(Mesh::from(shape::Circle {
-                                            radius: 10.0,
-                                            vertices: 4,
-                                        }))
-                                        .into(),
-                                    transform: Transform::from_xyz(debris_x, debris_y, ALTITUDE)
-                                        .with_scale(Vec3::splat(4.0)),
-                                    material: materials.add(Color::BLUE.into()),
-                                    ..default()
-                                });
-                        }
-
+                        spaceship::explode(commands, meshes, materials, s_transform, s_velocity);
                         return;
                     }
                 }
@@ -344,13 +311,19 @@ pub fn detect_collision_fire_spaceship(
     mut commands: Commands,
     fire_query: Query<(&Fire, Entity, &Transform), With<Enemy>>,
     mut spaceship_query: Query<
-        (Entity, &Transform, &mut Health, &RectangularEnvelop),
+        (
+            Entity,
+            &Transform,
+            &mut Health,
+            &RectangularEnvelop,
+            &Velocity,
+        ),
         With<Spaceship>,
     >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((spaceship, spaceship_transform, mut spaceship_health, spaceship_envelop)) =
+    if let Ok((spaceship, spaceship_transform, mut spaceship_health, spaceship_envelop, velocity)) =
         spaceship_query.get_single_mut()
     {
         for (fire, fire_entity, fire_transform) in fire_query.iter() {
@@ -406,6 +379,13 @@ pub fn detect_collision_fire_spaceship(
                     spaceship_health.0 -= 1;
                     if spaceship_health.0 == 0 {
                         commands.entity(spaceship).despawn_recursive();
+                        spaceship::explode(
+                            commands,
+                            meshes,
+                            materials,
+                            spaceship_transform,
+                            velocity,
+                        );
                         //                 commands.entity(asteroid_entity).despawn();
                         //                 let mut rng = rand::thread_rng();
                         //                 for _ in 1..asteroid.radius as usize {
