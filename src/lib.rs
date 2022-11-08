@@ -5,7 +5,6 @@ use bevy::prelude::*;
 pub mod asteroid;
 pub mod boss;
 pub mod collision;
-mod math;
 pub mod spaceship;
 pub mod star;
 

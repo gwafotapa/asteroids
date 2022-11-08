@@ -2,9 +2,11 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    asteroid::Asteroid, boss, boss::Boss, boss::Fire, math, spaceship, Health, RectangularEnvelop,
+    asteroid::Asteroid, boss, boss::Boss, boss::Fire, spaceship, Health, RectangularEnvelop,
     Spaceship, Velocity, ALTITUDE,
 };
+
+mod math;
 
 #[derive(Component)]
 pub struct Impact;
