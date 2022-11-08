@@ -163,23 +163,28 @@ const IMPACT_VERTICES: usize = 32;
 const ROTATION_SPEED: f32 = 0.01;
 
 pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
-    let mut triangle_list = Vec::new();
-    let mut iter = polygon.iter();
-    let mut p1 = iter.next();
-    let mut p2 = iter.next();
-    let p0 = p1;
-    while p2.is_some() {
-        triangle_list.push(center);
-        triangle_list.push(*p1.unwrap());
-        triangle_list.push(*p2.unwrap());
-        p1 = p2;
-        p2 = iter.next();
+    let mut triangles = Vec::new();
+    for (&a, &b) in polygon.iter().zip(polygon.iter().skip(1)) {
+        triangles.extend_from_slice(&[center, a, b]);
     }
-    triangle_list.push(center);
-    triangle_list.push(*p1.unwrap());
-    triangle_list.push(*p0.unwrap());
+    triangles
+    // let mut triangle_list = Vec::new();
+    // let mut iter = polygon.iter();
+    // let mut p1 = iter.next();
+    // let mut p2 = iter.next();
+    // let p0 = p1;
+    // while p2.is_some() {
+    //     triangle_list.push(center);
+    //     triangle_list.push(*p1.unwrap());
+    //     triangle_list.push(*p2.unwrap());
+    //     p1 = p2;
+    //     p2 = iter.next();
+    // }
+    // triangle_list.push(center);
+    // triangle_list.push(*p1.unwrap());
+    // triangle_list.push(*p0.unwrap());
 
-    triangle_list
+    // triangle_list
 }
 
 pub fn add_boss(
