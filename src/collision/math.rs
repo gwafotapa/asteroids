@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::RectangularEnvelop;
+use crate::collision::RectangularEnvelop;
 
 pub fn point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
     let denominator = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);

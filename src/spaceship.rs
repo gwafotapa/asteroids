@@ -2,7 +2,8 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::Rng;
 
 use crate::{
-    collision::RectangularEnvelop, Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
+    collision::{math::point_in_triangle_2d, RectangularEnvelop},
+    Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
 const HEALTH: usize = 10;
@@ -270,11 +271,22 @@ pub fn explode(
 ) {
     let mut rng = rand::thread_rng();
     for _ in 1..10 {
-        let debris_dx = rng.gen_range(-30.0..30.0);
-        let debris_x = transform.translation.x + debris_dx;
-        let debris_dy = rng.gen_range(-20.0..20.0);
-        let debris_y = transform.translation.y + debris_dy;
+        let mut debris;
+        'outer: loop {
+            debris = Vec3 {
+                x: rng.gen_range(E.x..B.x),
+                y: rng.gen_range(A.y..D.y),
+                z: 0.0,
+            };
+            let mut triangles = TRIANGLE_LIST.chunks(3);
+            while let Some(&[a, b, c]) = triangles.next() {
+                if point_in_triangle_2d(a, b, c, debris) {
+                    break 'outer;
+                }
+            }
+        }
 
+        let debris_translation = transform.translation + debris * transform.scale;
         let dv = Vec3 {
             x: rng.gen_range(-0.5..0.5),
             y: rng.gen_range(-0.5..0.5),
@@ -292,8 +304,7 @@ pub fn explode(
                         vertices: 4,
                     }))
                     .into(),
-                transform: Transform::from_xyz(debris_x, debris_y, ALTITUDE)
-                    .with_scale(Vec3::splat(4.0)),
+                transform: Transform::from_translation(debris_translation),
                 material: materials.add(SPACESHIP_COLOR.into()),
                 ..default()
             });

@@ -8,7 +8,7 @@ use crate::{
     Debris, Enemy, Fire, Health, Velocity, ALTITUDE,
 };
 
-mod math;
+pub mod math;
 
 #[derive(Component, Clone, Copy)]
 pub struct RectangularEnvelop {
@@ -148,8 +148,7 @@ pub fn detect_collision_fire_asteroid(
                                         debris_x,
                                         debris_y,
                                         ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                                    )
-                                    .with_scale(Vec3::splat(4.0)),
+                                    ),
                                     material: materials.add(Color::PURPLE.into()),
                                     ..default()
                                 });
@@ -168,12 +167,12 @@ pub fn update_debris(
 ) {
     for (mut transform, velocity, debris) in query.iter_mut() {
         transform.translation += velocity.0;
-        transform.scale -= 0.1;
+        transform.scale -= 0.01;
         // if transform.translation.x < -WINDOW_WIDTH / 2.0
         //     || transform.translation.x > WINDOW_WIDTH / 2.0
         //     || transform.translation.y < -WINDOW_HEIGHT / 2.0
         //     || transform.translation.y > WINDOW_HEIGHT / 2.0
-        if transform.scale.x < 0.05 {
+        if transform.scale.x < 0.005 {
             commands.entity(debris).despawn();
         }
     }
