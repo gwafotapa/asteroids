@@ -162,7 +162,7 @@ const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
 const ROTATION_SPEED: f32 = 0.01;
 
-pub fn create_triangle_list_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
+pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangle_list = Vec::new();
     let mut iter = polygon.iter();
     let mut p1 = iter.next();
@@ -266,7 +266,7 @@ pub fn add_boss_2(
     let mut level = level_query.single_mut();
     if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position = create_triangle_list_from_polygon(&POLYGON, Vec3::ZERO)
+        let vertices_position = triangles_from_polygon(&POLYGON, Vec3::ZERO)
             .into_iter()
             .map(|x| x.to_array())
             .collect::<Vec<_>>();

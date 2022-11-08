@@ -213,26 +213,17 @@ pub fn detect_collision_fire_boss(
                 boss_transform.translation,
                 *boss_envelop,
             ) {
-                let boss_polygon = boss::POLYGON.map(|x| x + boss_transform.translation);
-                let triangle_list = boss::create_triangle_list_from_polygon(
-                    &boss_polygon,
+                let triangles = boss::triangles_from_polygon(
+                    &boss::POLYGON.map(|x| x + boss_transform.translation),
                     boss_transform.translation,
                 );
-                let mut iter_triangle = triangle_list.iter();
+                let mut iter_triangles = triangles.chunks(3);
                 let mut collision = false;
-                let mut p1 = iter_triangle.next();
-                let mut p2 = iter_triangle.next();
-                let mut p3 = iter_triangle.next();
-                while !collision && p3.is_some() {
-                    collision = math::point_in_triangle_2d(
-                        *p1.unwrap(),
-                        *p2.unwrap(),
-                        *p3.unwrap(),
-                        fire_transform.translation,
-                    );
-                    p1 = iter_triangle.next();
-                    p2 = iter_triangle.next();
-                    p3 = iter_triangle.next();
+                while let Some(&[a, b, c]) = iter_triangles.next() {
+                    collision = math::point_in_triangle_2d(a, b, c, fire_transform.translation);
+                    if collision {
+                        break;
+                    }
                 }
                 if collision {
                     commands
