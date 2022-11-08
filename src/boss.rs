@@ -160,6 +160,7 @@ const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
 const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
+const ROTATION_SPEED: f32 = 0.01;
 
 pub fn create_triangle_list_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangle_list = Vec::new();
@@ -336,6 +337,7 @@ pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) 
             // _ => unreachable!(),
         };
         transform.translation += velocity.0;
+        transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), ROTATION_SPEED);
     }
 }
 
