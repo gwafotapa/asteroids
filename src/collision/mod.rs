@@ -38,7 +38,6 @@ pub fn detect_collision_spaceship_asteroid(
                 for point in spaceship::ENVELOP {
                     if a_transform
                         .translation
-                        // .distance((point + s_transform.translation) * s_transform.scale.x)
                         .distance(point * s_transform.scale + s_transform.translation)
                         < asteroid.radius
                     {
@@ -105,8 +104,6 @@ pub fn detect_collision_fire_asteroid(
                             ..default()
                         });
 
-                    // commands.entity(asteroid_entity).push_children(&[impact]);
-
                     commands.entity(fire_entity).despawn();
 
                     asteroid_health.0 -= 1;
@@ -171,7 +168,7 @@ pub fn detect_collision_fire_boss(
                     }
                 }
                 if collision {
-                    commands
+                    let impact = commands
                         .spawn()
                         .insert(Impact)
                         .insert_bundle(MaterialMesh2dBundle {
@@ -181,62 +178,25 @@ pub fn detect_collision_fire_boss(
                                     vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: *fire_transform,
-                            // .clone().with_scale(Vec3::splat(5.0)),
+                            transform: Transform::from_translation(
+                                boss_transform.rotation.inverse().mul_vec3(
+                                    fire_transform.translation - boss_transform.translation,
+                                ),
+                            ),
+
+                            // transform: *fire_transform,
                             material: materials.add(fire.color.into()),
                             ..default()
-                        });
+                        })
+                        .id();
 
+                    commands.entity(boss).add_child(impact);
                     commands.entity(fire_entity).despawn();
 
                     boss_health.0 -= 1;
                     if boss_health.0 == 0 {
                         commands.entity(boss).despawn_recursive();
                         boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
-                        //                 commands.entity(asteroid_entity).despawn();
-                        //                 let mut rng = rand::thread_rng();
-                        //                 for _ in 1..asteroid.radius as usize {
-                        //                     let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
-                        //                     let debris_x = asteroid_transform.translation.x + debris_dx;
-                        //                     let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
-                        //                     let debris_dy = rng.gen_range(-dy_max..dy_max);
-                        //                     let debris_y = asteroid_transform.translation.y + debris_dy;
-                        //                     // let z = rng.gen_range(
-                        //                     //     asteroid_transform.translation.z - asteroid.radius
-                        //                     //         ..asteroid_transform.translation.z + asteroid.radius,
-                        //                     // );
-
-                        //                     let velocity = Vec3 {
-                        //                         x: rng.gen_range(-0.5..0.5),
-                        //                         y: rng.gen_range(-0.5..0.5),
-                        //                         // z: rng.gen_range(-0.5..0.5),
-                        //                         z: 0.0,
-                        //                     };
-
-                        //                     commands
-                        //                         .spawn()
-                        //                         .insert(Debris)
-                        //                         .insert(Velocity(asteroid_velocity.0 + velocity))
-                        //                         // .insert(Velocity(asteroid_velocity.0 * 0.5))
-                        //                         .insert_bundle(MaterialMesh2dBundle {
-                        //                             mesh: meshes
-                        //                                 .add(Mesh::from(shape::Circle {
-                        //                                     radius: rng.gen_range(
-                        //                                         asteroid.radius / 100.0..asteroid.radius / 20.0,
-                        //                                     ),
-                        //                                     vertices: 8,
-                        //                                 }))
-                        //                                 .into(),
-                        //                             transform: Transform::from_xyz(
-                        //                                 debris_x,
-                        //                                 debris_y,
-                        //                                 ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                        //                             )
-                        //                             .with_scale(Vec3::splat(4.0)),
-                        //                             material: materials.add(Color::PURPLE.into()),
-                        //                             ..default()
-                        //                         });
-                        //                 }
                         break;
                     }
                 }
@@ -316,50 +276,6 @@ pub fn detect_collision_fire_spaceship(
                             spaceship_transform,
                             velocity,
                         );
-                        //                 commands.entity(asteroid_entity).despawn();
-                        //                 let mut rng = rand::thread_rng();
-                        //                 for _ in 1..asteroid.radius as usize {
-                        //                     let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
-                        //                     let debris_x = asteroid_transform.translation.x + debris_dx;
-                        //                     let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
-                        //                     let debris_dy = rng.gen_range(-dy_max..dy_max);
-                        //                     let debris_y = asteroid_transform.translation.y + debris_dy;
-                        //                     // let z = rng.gen_range(
-                        //                     //     asteroid_transform.translation.z - asteroid.radius
-                        //                     //         ..asteroid_transform.translation.z + asteroid.radius,
-                        //                     // );
-
-                        //                     let velocity = Vec3 {
-                        //                         x: rng.gen_range(-0.5..0.5),
-                        //                         y: rng.gen_range(-0.5..0.5),
-                        //                         // z: rng.gen_range(-0.5..0.5),
-                        //                         z: 0.0,
-                        //                     };
-
-                        //                     commands
-                        //                         .spawn()
-                        //                         .insert(Debris)
-                        //                         .insert(Velocity(asteroid_velocity.0 + velocity))
-                        //                         // .insert(Velocity(asteroid_velocity.0 * 0.5))
-                        //                         .insert_bundle(MaterialMesh2dBundle {
-                        //                             mesh: meshes
-                        //                                 .add(Mesh::from(shape::Circle {
-                        //                                     radius: rng.gen_range(
-                        //                                         asteroid.radius / 100.0..asteroid.radius / 20.0,
-                        //                                     ),
-                        //                                     vertices: 8,
-                        //                                 }))
-                        //                                 .into(),
-                        //                             transform: Transform::from_xyz(
-                        //                                 debris_x,
-                        //                                 debris_y,
-                        //                                 ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                        //                             )
-                        //                             .with_scale(Vec3::splat(4.0)),
-                        //                             material: materials.add(Color::PURPLE.into()),
-                        //                             ..default()
-                        //                         });
-                        //                 }
                         break;
                     }
                 }
@@ -390,10 +306,7 @@ pub fn update_impacts(
     mut query: Query<(&mut Transform, Entity), With<Impact>>,
 ) {
     for (mut transform, impact) in query.iter_mut() {
-        // transform.scale -= Vec3::ONE;
         transform.scale -= 0.05;
-        // println!("{}", transform.scale);
-        // if transform.scale == Vec3::ONE {
         if transform.scale.x < 0.05 {
             commands.entity(impact).despawn();
         }

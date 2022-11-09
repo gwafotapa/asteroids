@@ -127,7 +127,10 @@ const ROTATION_SPEED: f32 = 0.01;
 
 pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangles = Vec::new();
-    for (&a, &b) in polygon.iter().zip(polygon.iter().skip(1)) {
+    for (&a, &b) in polygon
+        .iter()
+        .zip(polygon.iter().skip(1).chain(polygon.iter().take(1)))
+    {
         triangles.extend_from_slice(&[center, a, b]);
     }
     triangles
