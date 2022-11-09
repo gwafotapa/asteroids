@@ -27,7 +27,7 @@ fn main() {
         .add_system(collision::update_debris)
         .add_system(update_distance_to_boss)
         // .add_system(boss::add_boss)
-        .add_system(boss::add_boss_2)
+        .add_system(boss::add_boss_parts)
         .add_system(boss::move_boss)
         .add_system(boss::attack_boss)
         .add_system(update_fire)

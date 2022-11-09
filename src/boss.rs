@@ -125,6 +125,23 @@ const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
 const ROTATION_SPEED: f32 = 0.01;
 
+const TRIANGLES: [[Vec3; 3]; 14] = [
+    [A1, A2, A3],
+    [A3, A4, A5],
+    [A5, A6, A7],
+    [A7, A8, A9],
+    [A9, A10, A11],
+    [A11, A12, A13],
+    [A13, A14, A15],
+    [A15, A0, A1],
+    [A1, A3, A15],
+    [A3, A13, A15],
+    [A3, A11, A13],
+    [A3, A5, A11],
+    [A5, A9, A11],
+    [A5, A7, A9],
+];
+
 pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
     let mut triangles = Vec::new();
     for (&a, &b) in polygon
@@ -134,26 +151,9 @@ pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
         triangles.extend_from_slice(&[center, a, b]);
     }
     triangles
-    // let mut triangle_list = Vec::new();
-    // let mut iter = polygon.iter();
-    // let mut p1 = iter.next();
-    // let mut p2 = iter.next();n
-    // let p0 = p1;
-    // while p2.is_some() {
-    //     triangle_list.push(center);
-    //     triangle_list.push(*p1.unwrap());
-    //     triangle_list.push(*p2.unwrap());
-    //     p1 = p2;
-    //     p2 = iter.next();
-    // }
-    // triangle_list.push(center);
-    // triangle_list.push(*p1.unwrap());
-    // triangle_list.push(*p0.unwrap());
-
-    // triangle_list
 }
 
-pub fn add_boss(
+pub fn add_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -177,56 +177,33 @@ pub fn add_boss(
             })
             .id();
 
-        // for source in ATTACK_SOURCE {
-        //     commands.entity(boss).insert(Attack {
-        //         source,
-        //         color: ATTACK_COLOR,
-        //         blast_radius: BLAST_RADIUS,
-        //         blast_vertices: BLAST_VERTICES,
-        //         fire_radius: FIRE_RADIUS,
-        //         fire_vertices: FIRE_VERTICES,
-        //     });
-        // }
-        let boss_part1 = commands
-            .spawn()
-            .insert(BossPart)
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Quad {
-                        size: (2.0 * INNER_RADIUS, 2.0 * INNER_RADIUS).into(),
-                        flip: false,
-                    }))
-                    .into(),
-                material: materials.add(COLOR.into()),
-                ..default()
-            })
-            .id();
+        for triangle in TRIANGLES {
+            let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+            let vertices_position = triangle.map(|x| x.to_array()).to_vec();
+            let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
+            let vertices_uv = vec![[0.0, 0.0]; 3];
 
-        let boss_part2 = commands
-            .spawn()
-            .insert(BossPart)
-            .insert_bundle(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Quad {
-                        size: (2.0 * INNER_RADIUS, 2.0 * INNER_RADIUS).into(),
-                        flip: false,
-                    }))
-                    .into(),
-                transform: Transform::identity().with_rotation(Quat::from_rotation_z(PI / 4.0)),
-                material: materials.add(COLOR.into()),
-                ..default()
-            })
-            .id();
+            mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
+            mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
+            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
-        commands
-            .entity(boss)
-            .push_children(&[boss_part1, boss_part2]);
+            let boss_part = commands
+                .spawn()
+                .insert(BossPart)
+                .insert_bundle(MaterialMesh2dBundle {
+                    mesh: meshes.add(mesh).into(),
+                    material: materials.add(COLOR.into()),
+                    ..default()
+                })
+                .id();
 
+            commands.entity(boss).add_child(boss_part);
+        }
         level.boss_spawned = true;
     }
 }
 
-pub fn add_boss_2(
+pub fn add_boss(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -240,6 +217,11 @@ pub fn add_boss_2(
             .into_iter()
             .map(|x| x.to_array())
             .collect::<Vec<_>>();
+        // let vertices_position = TRIANGLES
+        //     .iter()
+        //     .flatten()
+        //     .map(|x| x.to_array())
+        //     .collect::<Vec<_>>();
         let mut vertices_normal = Vec::new();
         let mut vertices_uv = Vec::new();
         for _ in &vertices_position {
@@ -266,17 +248,6 @@ pub fn add_boss_2(
                 material: materials.add(COLOR.into()),
                 ..default()
             });
-
-        // for source in ATTACK_SOURCE {
-        //     commands.entity(boss).insert(Attack {
-        //         source,
-        //         color: ATTACK_COLOR,
-        //         blast_radius: BLAST_RADIUS,
-        //         blast_vertices: BLAST_VERTICES,
-        //         fire_radius: FIRE_RADIUS,
-        //         fire_vertices: FIRE_VERTICES,
-        //     });
-        // }
 
         level.boss_spawned = true;
     }
@@ -350,15 +321,13 @@ pub fn attack_boss(
                                     vertices: BLAST_VERTICES,
                                 }))
                                 .into(),
-                            // transform: transform.clone().with_scale(Vec3::splat(5.0)),
                             transform: Transform::from_translation(canon_relative_position),
-                            // .with_scale(Vec3::splat(1.0)),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
                         })
                         .id();
 
-                    commands.entity(boss).push_children(&[blast]);
+                    commands.entity(boss).add_child(blast);
 
                     commands
                         .spawn()
