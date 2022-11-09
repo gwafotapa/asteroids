@@ -285,6 +285,7 @@ pub fn explode(
                 }
             }
         }
+        debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
         let debris_translation = transform.translation + debris * transform.scale;
         let dv = Vec3 {

@@ -1,11 +1,10 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
-use rand::Rng;
 
 use crate::{
     asteroid::{self, Asteroid},
     boss::{self, Boss},
     spaceship::{self, Spaceship},
-    Debris, Enemy, Fire, Health, Velocity, ALTITUDE,
+    Debris, Enemy, Fire, Health, Velocity,
 };
 
 pub mod math;
@@ -113,48 +112,14 @@ pub fn detect_collision_fire_asteroid(
                     asteroid_health.0 -= 1;
                     if asteroid_health.0 == 0 {
                         commands.entity(asteroid_entity).despawn();
-                        let mut rng = rand::thread_rng();
-                        for _ in 1..asteroid.radius as usize {
-                            let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
-                            let debris_x = asteroid_transform.translation.x + debris_dx;
-                            let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
-                            let debris_dy = rng.gen_range(-dy_max..dy_max);
-                            let debris_y = asteroid_transform.translation.y + debris_dy;
-                            // let z = rng.gen_range(
-                            //     asteroid_transform.translation.z - asteroid.radius
-                            //         ..asteroid_transform.translation.z + asteroid.radius,
-                            // );
-
-                            let velocity = Vec3 {
-                                x: rng.gen_range(-0.5..0.5),
-                                y: rng.gen_range(-0.5..0.5),
-                                // z: rng.gen_range(-0.5..0.5),
-                                z: 0.0,
-                            };
-
-                            commands
-                                .spawn()
-                                .insert(Debris)
-                                .insert(Velocity(asteroid_velocity.0 + velocity))
-                                // .insert(Velocity(asteroid_velocity.0 * 0.5))
-                                .insert_bundle(MaterialMesh2dBundle {
-                                    mesh: meshes
-                                        .add(Mesh::from(shape::Circle {
-                                            radius: rng.gen_range(
-                                                asteroid.radius / 100.0..asteroid.radius / 20.0,
-                                            ),
-                                            vertices: 8,
-                                        }))
-                                        .into(),
-                                    transform: Transform::from_xyz(
-                                        debris_x,
-                                        debris_y,
-                                        ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                                    ),
-                                    material: materials.add(asteroid::COLOR.into()),
-                                    ..default()
-                                });
-                        }
+                        asteroid::explode(
+                            &mut commands,
+                            &mut meshes,
+                            &mut materials,
+                            asteroid,
+                            asteroid_transform,
+                            asteroid_velocity,
+                        );
                     }
                     break;
                 }

@@ -19,91 +19,92 @@ pub struct Boss;
 #[derive(Component)]
 pub struct BossPart;
 
+const A0: Vec3 = Vec3 {
+    x: -OUTER_RADIUS,
+    y: 0.0,
+    z: 0.0,
+};
+const A1: Vec3 = Vec3 {
+    x: -INNER_RADIUS,
+    y: INNER_RADIUS - OUTER_RADIUS,
+    z: 0.0,
+};
+const A2: Vec3 = Vec3 {
+    x: -INNER_RADIUS,
+    y: -INNER_RADIUS,
+    z: 0.0,
+};
+const A3: Vec3 = Vec3 {
+    x: INNER_RADIUS - OUTER_RADIUS,
+    y: -INNER_RADIUS,
+    z: 0.0,
+};
+const A4: Vec3 = Vec3 {
+    x: 0.0,
+    y: -OUTER_RADIUS,
+    z: 0.0,
+};
+const A5: Vec3 = Vec3 {
+    x: OUTER_RADIUS - INNER_RADIUS,
+    y: -INNER_RADIUS,
+    z: 0.0,
+};
+const A6: Vec3 = Vec3 {
+    x: INNER_RADIUS,
+    y: -INNER_RADIUS,
+    z: 0.0,
+};
+const A7: Vec3 = Vec3 {
+    x: INNER_RADIUS,
+    y: INNER_RADIUS - OUTER_RADIUS,
+    z: 0.0,
+};
+const A8: Vec3 = Vec3 {
+    x: OUTER_RADIUS,
+    y: 0.0,
+    z: 0.0,
+};
+const A9: Vec3 = Vec3 {
+    x: INNER_RADIUS,
+    y: OUTER_RADIUS - INNER_RADIUS,
+    z: 0.0,
+};
+const A10: Vec3 = Vec3 {
+    x: INNER_RADIUS,
+    y: INNER_RADIUS,
+    z: 0.0,
+};
+const A11: Vec3 = Vec3 {
+    x: OUTER_RADIUS - INNER_RADIUS,
+    y: INNER_RADIUS,
+    z: 0.0,
+};
+const A12: Vec3 = Vec3 {
+    x: 0.0,
+    y: OUTER_RADIUS,
+    z: 0.0,
+};
+const A13: Vec3 = Vec3 {
+    x: INNER_RADIUS - OUTER_RADIUS,
+    y: INNER_RADIUS,
+    z: 0.0,
+};
+const A14: Vec3 = Vec3 {
+    x: -INNER_RADIUS,
+    y: INNER_RADIUS,
+    z: 0.0,
+};
+const A15: Vec3 = Vec3 {
+    x: -INNER_RADIUS,
+    y: OUTER_RADIUS - INNER_RADIUS,
+    z: 0.0,
+};
+
 /// Counter clockwise
 pub const POLYGON: [Vec3; 16] = [
-    Vec3 {
-        x: -OUTER_RADIUS,
-        y: 0.0,
-        z: 0.0,
-    },
-    Vec3 {
-        x: -INNER_RADIUS,
-        y: INNER_RADIUS - OUTER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: -INNER_RADIUS,
-        y: -INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: INNER_RADIUS - OUTER_RADIUS,
-        y: -INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: 0.0,
-        y: -OUTER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: OUTER_RADIUS - INNER_RADIUS,
-        y: -INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: INNER_RADIUS,
-        y: -INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: INNER_RADIUS,
-        y: INNER_RADIUS - OUTER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: OUTER_RADIUS,
-        y: 0.0,
-        z: 0.0,
-    },
-    Vec3 {
-        x: INNER_RADIUS,
-        y: OUTER_RADIUS - INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: INNER_RADIUS,
-        y: INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: OUTER_RADIUS - INNER_RADIUS,
-        y: INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: 0.0,
-        y: OUTER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: INNER_RADIUS - OUTER_RADIUS,
-        y: INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: -INNER_RADIUS,
-        y: INNER_RADIUS,
-        z: 0.0,
-    },
-    Vec3 {
-        x: -INNER_RADIUS,
-        y: OUTER_RADIUS - INNER_RADIUS,
-        z: 0.0,
-    },
+    A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15,
 ];
 
-const SIZE: f32 = 100.0;
 const INITIAL_POSITION: Vec3 = Vec3 {
     x: 300.0,
     y: 0.0,
@@ -115,48 +116,7 @@ const HEALTH: usize = 10;
 
 pub const ATTACK_COLOR: Color = Color::RED;
 const FIRE_VELOCITY: f32 = 4.0;
-const ATTACK_SOURCE: [Vec3; 8] = [
-    Vec3 {
-        x: SIZE * SQRT_2,
-        y: 0.0,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: -SIZE * SQRT_2,
-        y: 0.0,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: 0.0,
-        y: SIZE * SQRT_2,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: 0.0,
-        y: -SIZE * SQRT_2,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: SIZE,
-        y: SIZE,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: -SIZE,
-        y: -SIZE,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: SIZE,
-        y: -SIZE,
-        z: ALTITUDE,
-    },
-    Vec3 {
-        x: -SIZE,
-        y: SIZE,
-        z: ALTITUDE,
-    },
-];
+const ATTACK_SOURCE: [Vec3; 8] = [A0, A2, A4, A6, A8, A10, A12, A14];
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const FIRE_RADIUS: f32 = 5.0;
@@ -224,14 +184,13 @@ pub fn add_boss(
         //         fire_vertices: FIRE_VERTICES,
         //     });
         // }
-
         let boss_part1 = commands
             .spawn()
             .insert(BossPart)
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Quad {
-                        size: (200.0, 200.0).into(),
+                        size: (2.0 * INNER_RADIUS, 2.0 * INNER_RADIUS).into(),
                         flip: false,
                     }))
                     .into(),
@@ -246,7 +205,7 @@ pub fn add_boss(
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Quad {
-                        size: (2.0 * SIZE, 2.0 * SIZE).into(),
+                        size: (2.0 * INNER_RADIUS, 2.0 * INNER_RADIUS).into(),
                         flip: false,
                     }))
                     .into(),
@@ -362,8 +321,8 @@ pub fn attack_boss(
             for canon_relative_position in ATTACK_SOURCE {
                 if rng.gen_range(0..100) == 0 {
                     let canon_absolute_position = boss_transform.translation
-                        + boss_transform.rotation.mul_vec3(canon_relative_position)
-                        + Vec3::from([0.0, 0.0, 1.0]);
+                        + boss_transform.rotation.mul_vec3(canon_relative_position);
+                    // + Vec3::from([0.0, 0.0, 1.0]);
 
                     // Compute coordinates of vector from boss to spaceship
                     let vec_boss_spaceship =
@@ -453,6 +412,7 @@ pub fn explode(
                 }
             }
         }
+        debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
         let debris_translation = transform.translation + debris * transform.scale;
         let dv = Vec3 {

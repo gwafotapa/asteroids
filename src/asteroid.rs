@@ -2,7 +2,8 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    collision::RectangularEnvelop, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    collision::RectangularEnvelop, Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
 const MAX_SPEED: usize = 5;
@@ -57,5 +58,55 @@ pub fn asteroids(
         if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+pub fn explode(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    asteroid: &Asteroid,
+    transform: &Transform,
+    velocity: &Velocity,
+) {
+    let mut rng = rand::thread_rng();
+    for _ in 1..asteroid.radius as usize {
+        let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
+        let debris_x = transform.translation.x + debris_dx;
+        let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
+        let debris_dy = rng.gen_range(-dy_max..dy_max);
+        let debris_y = transform.translation.y + debris_dy;
+        // let z = rng.gen_range(
+        //     transform.translation.z - asteroid.radius
+        //         ..transform.translation.z + asteroid.radius,
+        // );
+
+        let dv = Vec3 {
+            x: rng.gen_range(-0.5..0.5),
+            y: rng.gen_range(-0.5..0.5),
+            // z: rng.gen_range(-0.5..0.5),
+            z: 0.0,
+        };
+
+        commands
+            .spawn()
+            .insert(Debris)
+            .insert(Velocity(velocity.0 + dv))
+            // .insert(Velocity(velocity.0 * 0.5))
+            .insert_bundle(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: rng.gen_range(asteroid.radius / 100.0..asteroid.radius / 20.0),
+                        vertices: 8,
+                    }))
+                    .into(),
+                transform: Transform::from_xyz(
+                    debris_x,
+                    debris_y,
+                    ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                ),
+                material: materials.add(COLOR.into()),
+                ..default()
+            });
     }
 }
