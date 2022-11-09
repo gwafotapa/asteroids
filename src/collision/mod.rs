@@ -166,11 +166,22 @@ pub fn detect_collision_fire_asteroid(
 pub fn detect_collision_fire_boss(
     mut commands: Commands,
     fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
-    mut boss_query: Query<(Entity, &Transform, &mut Health, &RectangularEnvelop), With<Boss>>,
+    mut boss_query: Query<
+        (
+            Entity,
+            &Transform,
+            &mut Health,
+            &RectangularEnvelop,
+            &Velocity,
+        ),
+        With<Boss>,
+    >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((boss, boss_transform, mut boss_health, boss_envelop)) = boss_query.get_single_mut() {
+    if let Ok((boss, boss_transform, mut boss_health, boss_envelop, boss_velocity)) =
+        boss_query.get_single_mut()
+    {
         for (fire, fire_entity, fire_transform) in fire_query.iter() {
             if math::rectangles_intersect(
                 fire_transform.translation,
@@ -216,6 +227,7 @@ pub fn detect_collision_fire_boss(
                     boss_health.0 -= 1;
                     if boss_health.0 == 0 {
                         commands.entity(boss).despawn_recursive();
+                        boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
                         //                 commands.entity(asteroid_entity).despawn();
                         //                 let mut rng = rand::thread_rng();
                         //                 for _ in 1..asteroid.radius as usize {

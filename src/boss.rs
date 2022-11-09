@@ -3,8 +3,11 @@ use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    asteroid::Asteroid, collision::RectangularEnvelop, spaceship::Spaceship, Blast, Direction,
-    Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asteroid::Asteroid,
+    collision::{math, RectangularEnvelop},
+    spaceship::Spaceship,
+    Blast, Debris, Direction, Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
 const INNER_RADIUS: f32 = 100.0;
@@ -421,5 +424,57 @@ pub fn attack_boss(
                 }
             }
         }
+    }
+}
+
+pub fn explode(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    transform: &Transform,
+    velocity: &Velocity,
+) {
+    let mut rng = rand::thread_rng();
+    for _ in 1..100 {
+        let mut debris;
+        'outer: loop {
+            let rho = rng.gen_range(0.0..OUTER_RADIUS);
+            let theta = rng.gen_range(0.0..2.0 * PI);
+            debris = Vec3 {
+                x: rho * theta.cos(),
+                y: rho * theta.sin(),
+                z: 0.0,
+            };
+            let triangles = triangles_from_polygon(&POLYGON, Vec3::ZERO);
+            let mut iter_triangles = triangles.chunks(3);
+            while let Some(&[a, b, c]) = iter_triangles.next() {
+                if math::point_in_triangle_2d(a, b, c, debris) {
+                    break 'outer;
+                }
+            }
+        }
+
+        let debris_translation = transform.translation + debris * transform.scale;
+        let dv = Vec3 {
+            x: rng.gen_range(-0.5..0.5),
+            y: rng.gen_range(-0.5..0.5),
+            z: 0.0,
+        };
+
+        commands
+            .spawn()
+            .insert(Debris)
+            .insert(Velocity(velocity.0 + dv))
+            .insert_bundle(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: 20.0,
+                        vertices: 8,
+                    }))
+                    .into(),
+                transform: Transform::from_translation(debris_translation),
+                material: materials.add(COLOR.into()),
+                ..default()
+            });
     }
 }
