@@ -10,38 +10,38 @@ const HEALTH: usize = 10;
 
 const O: Vec3 = Vec3::ZERO;
 const A: Vec3 = Vec3 {
-    x: -3.0,
-    y: -3.0,
+    x: -30.0,
+    y: -30.0,
     z: 0.0,
 };
 const B: Vec3 = Vec3 {
-    x: 3.0,
+    x: 30.0,
     y: 0.0,
     z: 0.0,
 };
 const C: Vec3 = Vec3 {
-    x: -2.0,
+    x: -20.0,
     y: 0.0,
     z: 0.0,
 };
 const D: Vec3 = Vec3 {
-    x: -3.0,
-    y: 3.0,
+    x: -30.0,
+    y: 30.0,
     z: 0.0,
 };
 const E: Vec3 = Vec3 {
-    x: -4.0,
-    y: -2.0,
+    x: -40.0,
+    y: -20.0,
     z: 0.0,
 };
 const F: Vec3 = Vec3 {
-    x: -3.0,
+    x: -30.0,
     y: 0.0,
     z: 0.0,
 };
 const G: Vec3 = Vec3 {
-    x: -4.0,
-    y: 2.0,
+    x: -40.0,
+    y: 20.0,
     z: 0.0,
 };
 const MIDPOINT_AB: Vec3 = Vec3 {
@@ -55,9 +55,10 @@ const MIDPOINT_DB: Vec3 = Vec3 {
     z: (D.z + B.z) / 2.0,
 };
 pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-const HIT_BOX: HitBox = HitBox {
-    half_x: 3.5 * 10.0,
-    half_y: 3.0 * 10.0,
+pub const TRIANGLES: [[Vec3; 3]; 4] = [[A, B, C], [D, C, B], [E, O, F], [G, F, O]];
+const HITBOX: HitBox = HitBox {
+    half_x: 35.0,
+    half_y: 30.0,
 };
 pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const TRIANGLELIST: [[f32; 3]; 6] = [
@@ -85,15 +86,10 @@ const POSITION: Vec3 = Vec3 {
     y: 0.0,
     z: ALTITUDE,
 };
-pub const SCALE: Vec3 = Vec3 {
-    x: 10.0,
-    y: 10.0,
-    z: 1.0,
-};
 pub const ATTACK_SOURCE: Vec3 = B;
 const SPACESHIP_COLOR: Color = Color::BLUE;
 pub const ATTACK_COLOR: Color = Color::YELLOW;
-const BLAST_RADIUS: f32 = 0.4;
+const BLAST_RADIUS: f32 = 4.0;
 const BLAST_VERTICES: usize = 8;
 const FIRE_RADIUS: f32 = 3.0;
 const FIRE_VERTICES: usize = 4;
@@ -164,7 +160,7 @@ pub fn spaceship(
 ) {
     let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
 
-    let v_pos = TRIANGLE_LIST.map(|x| (SCALE * x).to_array()).to_vec();
+    let v_pos = TRIANGLE_LIST.map(|x| x.to_array()).to_vec();
     let v_normals = vec![[0.0, 0.0, 1.0]; 12];
     let v_uvs = vec![[1.0, 1.0]; 12];
     spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
@@ -190,7 +186,10 @@ pub fn spaceship(
             y: 0.0,
             z: 0.0,
         }))
-        .insert(HIT_BOX)
+        .insert(Surface {
+            topology: Topology::Triangles(&TRIANGLES),
+            hitbox: HITBOX,
+        })
         // .insert(Attack {
         //     source: ATTACK_SOURCE,
         //     color: ATTACK_COLOR,

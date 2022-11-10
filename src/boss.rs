@@ -4,7 +4,7 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     asteroid::Asteroid,
-    collision::{math, HitBox},
+    collision::{math, HitBox, Surface, Topology},
     spaceship::Spaceship,
     Blast, Debris, Direction, Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
     WINDOW_WIDTH,
@@ -341,6 +341,13 @@ pub fn attack_boss(
                             (spaceship_transform.translation - canon_absolute_position).normalize()
                                 * FIRE_VELOCITY,
                         ))
+                        .insert(Surface {
+                            topology: Topology::Point,
+                            hitbox: HitBox {
+                                half_x: 0.0,
+                                half_y: 0.0,
+                            },
+                        })
                         .insert_bundle(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {

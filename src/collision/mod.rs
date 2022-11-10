@@ -5,6 +5,7 @@ use bevy::{prelude::*, render::primitives::Sphere, sprite::MaterialMesh2dBundle}
 use crate::{
     asteroid::{self, Asteroid},
     boss::{self, Boss, BossPart},
+    collision::math::point_in_triangle_2d,
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
 };
@@ -51,7 +52,9 @@ fn collision(
             transform1.translation == transform2.translation
         }
         (_, Topology::Circle(radius1), _, _, Topology::Circle(radius2), _) => unimplemented!(),
-        (_, Topology::Triangles(list1), _, _, Topology::Triangles(list2), _) => unimplemented!(),
+        (_, Topology::Triangles(triangles1), _, _, Topology::Triangles(triangles2), _) => {
+            unimplemented!()
+        }
         (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
         | (circle, Topology::Circle(radius), hitbox, point, Topology::Point, _) => {
             if point.translation.x < circle.translation.x - hitbox.half_x
@@ -64,10 +67,33 @@ fn collision(
                 point.translation.distance(circle.translation) < radius
             }
         }
-        (_, Topology::Point, _, _, Topology::Triangles(list), _)
-        | (_, Topology::Triangles(list), _, _, Topology::Point, _) => unimplemented!(),
-        (_, Topology::Circle(radius), _, _, Topology::Triangles(list), _)
-        | (_, Topology::Triangles(list), _, _, Topology::Circle(radius), _) => unimplemented!(),
+        (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
+        | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
+            if point.translation.x < triangles.translation.x - hitbox.half_x
+                || point.translation.x > triangles.translation.x + hitbox.half_x
+                || point.translation.y < triangles.translation.y - hitbox.half_y
+                || point.translation.y > triangles.translation.y + hitbox.half_y
+            {
+                false
+            } else {
+                // TODO
+                for &[a, b, c] in triangles_list.iter() {
+                    if point_in_triangle_2d(
+                        10.0 * a + triangles.translation,
+                        10.0 * b + triangles.translation,
+                        10.0 * c + triangles.translation,
+                        point.translation,
+                    ) {
+                        return true;
+                    }
+                }
+                false
+            }
+        }
+        (_, Topology::Circle(radius), _, _, Topology::Triangles(triangles), _)
+        | (_, Topology::Triangles(triangles), _, _, Topology::Circle(radius), _) => {
+            unimplemented!()
+        }
     }
 }
 
@@ -332,77 +358,56 @@ pub fn detect_collision_fire_boss_parts(
 
 pub fn detect_collision_fire_spaceship(
     mut commands: Commands,
-    fire_query: Query<(&Fire, Entity, &Transform), With<Enemy>>,
+    fire_query: Query<(&Fire, Entity, &Transform, &Surface), With<Enemy>>,
     mut spaceship_query: Query<
-        (Entity, &Transform, &mut Health, &HitBox, &Velocity),
+        (Entity, &Transform, &mut Health, &Velocity, &Surface),
         With<Spaceship>,
     >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((spaceship, spaceship_transform, mut spaceship_health, spaceship_envelop, velocity)) =
+    if let Ok((spaceship, spaceship_transform, mut spaceship_health, velocity, spaceship_surface)) =
         spaceship_query.get_single_mut()
     {
-        for (fire, fire_entity, fire_transform) in fire_query.iter() {
-            if math::rectangles_intersect(
-                fire_transform.translation,
-                HitBox {
-                    half_x: 0.0,
-                    half_y: 0.0,
-                },
-                spaceship_transform.translation,
-                HitBox {
-                    half_x: spaceship_envelop.half_x * spaceship_transform.scale.x,
-                    half_y: spaceship_envelop.half_y * spaceship_transform.scale.y,
-                },
+        for (fire, fire_entity, fire_transform, fire_surface) in fire_query.iter() {
+            if collision(
+                fire_transform,
+                fire_surface,
+                spaceship_transform,
+                spaceship_surface,
             ) {
-                let triangles = spaceship::TRIANGLE_LIST.map(|x| {
-                    (spaceship::SCALE * x)
-                        .mul_add(spaceship_transform.scale, spaceship_transform.translation)
-                });
-                let mut iter_triangles = triangles.chunks(3);
-                let mut collision = false;
-                while let Some(&[a, b, c]) = iter_triangles.next() {
-                    collision = math::point_in_triangle_2d(a, b, c, fire_transform.translation);
-                    if collision {
-                        break;
-                    }
-                }
+                let impact = commands
+                    .spawn()
+                    .insert(Impact)
+                    .insert_bundle(MaterialMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: fire.impact_radius,
+                                vertices: fire.impact_vertices,
+                            }))
+                            .into(),
+                        transform: Transform::from_translation(
+                            fire_transform.translation - spaceship_transform.translation,
+                        ),
+                        material: materials.add(fire.color.into()),
+                        ..default()
+                    })
+                    .id();
 
-                if collision {
-                    let impact = commands
-                        .spawn()
-                        .insert(Impact)
-                        .insert_bundle(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: fire.impact_radius,
-                                    vertices: fire.impact_vertices,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(
-                                fire_transform.translation - spaceship_transform.translation,
-                            ),
-                            material: materials.add(fire.color.into()),
-                            ..default()
-                        })
-                        .id();
+                commands.entity(spaceship).add_child(impact);
+                commands.entity(fire_entity).despawn();
 
-                    commands.entity(spaceship).add_child(impact);
-                    commands.entity(fire_entity).despawn();
-
-                    spaceship_health.0 -= 1;
-                    if spaceship_health.0 == 0 {
-                        spaceship::explode(
-                            commands,
-                            meshes,
-                            materials,
-                            spaceship,
-                            spaceship_transform,
-                            velocity,
-                        );
-                        break;
-                    }
+                spaceship_health.0 -= 1;
+                if spaceship_health.0 == 0 {
+                    spaceship::explode(
+                        commands,
+                        meshes,
+                        materials,
+                        spaceship,
+                        spaceship_transform,
+                        velocity,
+                    );
+                    break;
                 }
             }
         }
