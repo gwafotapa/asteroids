@@ -25,7 +25,7 @@ pub fn rectangles_intersect(
 
 // Determines if the circle of center o and radius r intersects the line segment [mn].
 // https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
-fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool {
+pub fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool {
     let mn = n - m;
     let om = m - o;
 
