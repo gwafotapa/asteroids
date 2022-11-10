@@ -22,3 +22,41 @@ pub fn rectangles_intersect(
 
     return intersect_x && intersect_y;
 }
+
+// Determines if the circle of center o and radius r intersects the line segment [mn].
+// https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
+fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool {
+    let mn = n - m;
+    let om = m - o;
+
+    let a = mn.dot(mn);
+    let b = 2.0 * om.dot(mn);
+    let c = om.dot(om) - r * r;
+
+    let delta = b * b - 4.0 * a * c;
+    if delta < 0.0 {
+        return false;
+    }
+
+    let t1 = (-b - delta.sqrt()) / (2.0 * a);
+    let t2 = (-b + delta.sqrt()) / (2.0 * a);
+
+    if (t1 >= 0.0 && t1 <= 1.0) {
+        // t1 is the intersection.
+        // Moreover, if t2 is another intersection, t1 is closer to point m than t2 since t1 < t2.
+        // Geometrically, line segment [mn] either impales or pokes the circle.
+        return true;
+    }
+
+    // Here t1 didn't intersect so we are either started inside the circle or completely past it
+    if (t2 >= 0.0 && t2 <= 1.0) {
+        // Geometrically, this is the called the "exit wound" case.
+        return true;
+    }
+
+    // No intersection.
+    // Line segment falls short or is past the circle or is completely inside.
+    false
+}
+
+fn circle_intersects_triangle() {}
