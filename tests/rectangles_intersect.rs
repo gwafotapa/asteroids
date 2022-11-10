@@ -1,74 +1,42 @@
 use asteroids::collision::{math::rectangles_intersect, HitBox};
 use bevy::prelude::*;
 
-const A: Vec3 = Vec3 {
-    x: -8.0,
-    y: 7.0,
-    z: 0.0,
-};
+const A: Vec2 = Vec2 { x: -8.0, y: 7.0 };
 const RECT_A: HitBox = HitBox {
     half_x: 2.0,
     half_y: 1.0,
 };
-const B: Vec3 = Vec3 {
-    x: -4.5,
-    y: 3.5,
-    z: 0.0,
-};
+const B: Vec2 = Vec2 { x: -4.5, y: 3.5 };
 const RECT_B: HitBox = HitBox {
     half_x: 2.5,
     half_y: 3.5,
 };
-const C: Vec3 = Vec3 {
-    x: -2.0,
-    y: 4.5,
-    z: 0.0,
-};
+const C: Vec2 = Vec2 { x: -2.0, y: 4.5 };
 const RECT_C: HitBox = HitBox {
     half_x: 1.0,
     half_y: 0.5,
 };
-const D: Vec3 = Vec3 {
-    x: -6.0,
-    y: -2.5,
-    z: 0.0,
-};
+const D: Vec2 = Vec2 { x: -6.0, y: -2.5 };
 const RECT_D: HitBox = HitBox {
     half_x: 2.0,
     half_y: 1.0,
 };
-const E: Vec3 = Vec3 {
-    x: -1.0,
-    y: -2.5,
-    z: 0.0,
-};
+const E: Vec2 = Vec2 { x: -1.0, y: -2.5 };
 const RECT_E: HitBox = HitBox {
     half_x: 3.0,
     half_y: 0.5,
 };
-const F: Vec3 = Vec3 {
-    x: -0.5,
-    y: -2.5,
-    z: 0.0,
-};
+const F: Vec2 = Vec2 { x: -0.5, y: -2.5 };
 const RECT_F: HitBox = HitBox {
     half_x: 0.5,
     half_y: 1.5,
 };
-const G: Vec3 = Vec3 {
-    x: 4.0,
-    y: 0.0,
-    z: 0.0,
-};
+const G: Vec2 = Vec2 { x: 4.0, y: 0.0 };
 const RECT_G: HitBox = HitBox {
     half_x: 1.0,
     half_y: 3.0,
 };
-const H: Vec3 = Vec3 {
-    x: 3.5,
-    y: 2.5,
-    z: 0.0,
-};
+const H: Vec2 = Vec2 { x: 3.5, y: 2.5 };
 const RECT_H: HitBox = HitBox {
     half_x: 2.5,
     half_y: 1.5,

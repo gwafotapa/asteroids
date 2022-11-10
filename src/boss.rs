@@ -389,7 +389,12 @@ pub fn explode(
             let triangles = triangles_from_polygon(&POLYGON, Vec3::ZERO);
             let mut iter_triangles = triangles.chunks(3);
             while let Some(&[a, b, c]) = iter_triangles.next() {
-                if math::point_in_triangle_2d(a, b, c, debris) {
+                if math::point_in_triangle(
+                    a.truncate(),
+                    b.truncate(),
+                    c.truncate(),
+                    debris.truncate(),
+                ) {
                     break 'outer;
                 }
             }

@@ -1,4 +1,4 @@
-use asteroids::collision::{math::circle_intersects_line_segment, HitBox};
+use asteroids::collision::math::circle_intersects_line_segment;
 use bevy::prelude::*;
 
 const A: Vec2 = Vec2 { x: -5.0, y: 1.0 };

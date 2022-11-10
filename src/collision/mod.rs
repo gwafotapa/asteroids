@@ -5,7 +5,7 @@ use bevy::{prelude::*, render::primitives::Sphere, sprite::MaterialMesh2dBundle}
 use crate::{
     asteroid::{self, Asteroid},
     boss::{self, Boss, BossPart},
-    collision::math::point_in_triangle_2d,
+    collision::math::point_in_triangle,
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
 };
@@ -77,14 +77,15 @@ fn collision(
                 false
             } else {
                 for &[a, b, c] in triangles_list.iter() {
-                    if point_in_triangle_2d(
-                        a,
-                        b,
-                        c,
+                    if point_in_triangle(
+                        a.truncate(),
+                        b.truncate(),
+                        c.truncate(),
                         triangles
                             .rotation
                             .inverse()
-                            .mul_vec3(point.translation - triangles.translation),
+                            .mul_vec3(point.translation - triangles.translation)
+                            .truncate(),
                     ) {
                         return true;
                     }
@@ -109,9 +110,9 @@ pub fn detect_collision_spaceship_asteroid(
     if let Ok((s_entity, s_transform, s_velocity, s_hit_box)) = spaceship_query.get_single() {
         for (a_transform, asteroid, a_hit_box) in asteroid_query.iter() {
             if math::rectangles_intersect(
-                s_transform.translation,
+                s_transform.translation.truncate(),
                 *s_hit_box,
-                a_transform.translation,
+                a_transform.translation.truncate(),
                 *a_hit_box,
             ) {
                 for point in spaceship::ENVELOP {
@@ -268,12 +269,12 @@ pub fn detect_collision_fire_boss_parts(
     {
         for (fire, fire_entity, fire_transform) in fire_query.iter() {
             if math::rectangles_intersect(
-                fire_transform.translation,
+                fire_transform.translation.truncate(),
                 HitBox {
                     half_x: 0.0,
                     half_y: 0.0,
                 },
-                boss_transform.translation,
+                boss_transform.translation.truncate(),
                 *boss_envelop,
             ) {
                 for child in boss_children.iter() {
@@ -286,7 +287,7 @@ pub fn detect_collision_fire_boss_parts(
                     // let mut iter_triangles = triangles.chunks(3);
                     // let mut collision = false;
                     // while let Some(&[a, b, c]) = iter_triangles.next() {
-                    //     collision = math::point_in_triangle_2d(a, b, c, fire_transform.translation);
+                    //     collision = math::point_in_triangle(a, b, c, fire_transform.translation);
                     //     if collision {
                     //         break;
                     //     }

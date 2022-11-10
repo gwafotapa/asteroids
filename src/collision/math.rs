@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::collision::HitBox;
 
-pub fn point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
+pub fn point_in_triangle(p1: Vec2, p2: Vec2, p3: Vec2, p: Vec2) -> bool {
     let denominator = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
     let a = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / denominator;
     let b = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / denominator;
@@ -12,9 +12,9 @@ pub fn point_in_triangle_2d(p1: Vec3, p2: Vec3, p3: Vec3, p: Vec3) -> bool {
 }
 
 pub fn rectangles_intersect(
-    center1: Vec3,
+    center1: Vec2,
     envelop1: HitBox,
-    center2: Vec3,
+    center2: Vec2,
     envelop2: HitBox,
 ) -> bool {
     let intersect_x = (center1.x - center2.x).abs() <= envelop1.half_x + envelop2.half_x;

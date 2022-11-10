@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::Rng;
 
 use crate::{
-    collision::{math::point_in_triangle_2d, HitBox, Surface, Topology},
+    collision::{math::point_in_triangle, HitBox, Surface, Topology},
     Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
@@ -289,7 +289,7 @@ pub fn explode(
             };
             let mut triangles = TRIANGLES.iter();
             while let Some(&[a, b, c]) = triangles.next() {
-                if point_in_triangle_2d(a, b, c, debris) {
+                if point_in_triangle(a.truncate(), b.truncate(), c.truncate(), debris.truncate()) {
                     break 'outer;
                 }
             }
