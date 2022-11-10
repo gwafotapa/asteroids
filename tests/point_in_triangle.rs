@@ -1,4 +1,4 @@
-use asteroids::*;
+use asteroids::collision::math::point_in_triangle_2d;
 use bevy::prelude::*;
 
 const O: Vec3 = Vec3::ZERO;

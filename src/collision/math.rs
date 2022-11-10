@@ -41,7 +41,7 @@ fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool {
     let t1 = (-b - delta.sqrt()) / (2.0 * a);
     let t2 = (-b + delta.sqrt()) / (2.0 * a);
 
-    if (t1 >= 0.0 && t1 <= 1.0) {
+    if t1 >= 0.0 && t1 <= 1.0 {
         // t1 is the intersection.
         // Moreover, if t2 is another intersection, t1 is closer to point m than t2 since t1 < t2.
         // Geometrically, line segment [mn] either impales or pokes the circle.
@@ -49,7 +49,7 @@ fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool {
     }
 
     // Here t1 didn't intersect so we are either started inside the circle or completely past it
-    if (t2 >= 0.0 && t2 <= 1.0) {
+    if t2 >= 0.0 && t2 <= 1.0 {
         // Geometrically, this is the called the "exit wound" case.
         return true;
     }
