@@ -54,7 +54,7 @@ const MIDPOINT_DB: Vec3 = Vec3 {
     y: (D.y + B.y) / 2.0,
     z: (D.z + B.z) / 2.0,
 };
-pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
+// pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
 pub const TRIANGLES: [[Vec3; 3]; 4] = [[A, B, C], [D, C, B], [E, O, F], [G, F, O]];
 const HITBOX: HitBox = HitBox {
     half_x: 35.0,
@@ -160,7 +160,7 @@ pub fn spaceship(
 ) {
     let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
 
-    let v_pos = TRIANGLE_LIST.map(|x| x.to_array()).to_vec();
+    let v_pos: Vec<[f32; 3]> = TRIANGLES.iter().flatten().map(|x| x.to_array()).collect();
     let v_normals = vec![[0.0, 0.0, 1.0]; 12];
     let v_uvs = vec![[1.0, 1.0]; 12];
     spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
@@ -287,7 +287,7 @@ pub fn explode(
                 y: rng.gen_range(A.y..D.y),
                 z: 0.0,
             };
-            let mut triangles = TRIANGLE_LIST.chunks(3);
+            let mut triangles = TRIANGLES.iter();
             while let Some(&[a, b, c]) = triangles.next() {
                 if point_in_triangle_2d(a, b, c, debris) {
                     break 'outer;
