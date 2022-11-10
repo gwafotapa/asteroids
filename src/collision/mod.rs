@@ -76,13 +76,15 @@ fn collision(
             {
                 false
             } else {
-                // TODO
                 for &[a, b, c] in triangles_list.iter() {
                     if point_in_triangle_2d(
-                        10.0 * a + triangles.translation,
-                        10.0 * b + triangles.translation,
-                        10.0 * c + triangles.translation,
-                        point.translation,
+                        a,
+                        b,
+                        c,
+                        triangles
+                            .rotation
+                            .inverse()
+                            .mul_vec3(point.translation - triangles.translation),
                     ) {
                         return true;
                     }
@@ -206,69 +208,47 @@ pub fn detect_collision_fire_asteroid(
 
 pub fn detect_collision_fire_boss(
     mut commands: Commands,
-    fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
-    mut boss_query: Query<(Entity, &Transform, &mut Health, &HitBox, &Velocity), With<Boss>>,
+    fire_query: Query<(&Fire, Entity, &Transform, &Surface), Without<Enemy>>,
+    mut boss_query: Query<(Entity, &Transform, &mut Health, &Velocity, &Surface), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((boss, boss_transform, mut boss_health, boss_envelop, boss_velocity)) =
+    if let Ok((boss, boss_transform, mut boss_health, boss_velocity, boss_surface)) =
         boss_query.get_single_mut()
     {
-        for (fire, fire_entity, fire_transform) in fire_query.iter() {
-            if math::rectangles_intersect(
-                fire_transform.translation,
-                HitBox {
-                    half_x: 0.0,
-                    half_y: 0.0,
-                },
-                boss_transform.translation,
-                *boss_envelop,
-            ) {
-                let triangles = boss::triangles_from_polygon(
-                    &boss::POLYGON
-                        .map(|x| boss_transform.rotation.mul_vec3(x) + boss_transform.translation),
-                    boss_transform.translation,
-                );
-                let mut iter_triangles = triangles.chunks(3);
-                let mut collision = false;
-                while let Some(&[a, b, c]) = iter_triangles.next() {
-                    collision = math::point_in_triangle_2d(a, b, c, fire_transform.translation);
-                    if collision {
-                        break;
-                    }
-                }
-                if collision {
-                    let impact = commands
-                        .spawn()
-                        .insert(Impact)
-                        .insert_bundle(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: fire.impact_radius,
-                                    vertices: fire.impact_vertices,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(
-                                boss_transform.rotation.inverse().mul_vec3(
-                                    fire_transform.translation - boss_transform.translation,
-                                ),
-                            ),
+        for (fire, fire_entity, fire_transform, fire_surface) in fire_query.iter() {
+            if collision(fire_transform, fire_surface, boss_transform, boss_surface) {
+                let impact = commands
+                    .spawn()
+                    .insert(Impact)
+                    .insert_bundle(MaterialMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: fire.impact_radius,
+                                vertices: fire.impact_vertices,
+                            }))
+                            .into(),
+                        transform: Transform::from_translation(
+                            boss_transform
+                                .rotation
+                                .inverse()
+                                .mul_vec3(fire_transform.translation - boss_transform.translation),
+                        ),
 
-                            // transform: *fire_transform,
-                            material: materials.add(fire.color.into()),
-                            ..default()
-                        })
-                        .id();
+                        // transform: *fire_transform,
+                        material: materials.add(fire.color.into()),
+                        ..default()
+                    })
+                    .id();
 
-                    commands.entity(boss).add_child(impact);
-                    commands.entity(fire_entity).despawn();
+                commands.entity(boss).add_child(impact);
+                commands.entity(fire_entity).despawn();
 
-                    boss_health.0 -= 1;
-                    if boss_health.0 == 0 {
-                        commands.entity(boss).despawn_recursive();
-                        boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
-                        break;
-                    }
+                boss_health.0 -= 1;
+                if boss_health.0 == 0 {
+                    commands.entity(boss).despawn_recursive();
+                    boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
+                    break;
                 }
             }
         }

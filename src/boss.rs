@@ -238,9 +238,12 @@ pub fn add_boss(
             .insert(Boss)
             .insert(Health(HEALTH))
             .insert(Velocity(Vec3::ZERO))
-            .insert(HitBox {
-                half_x: OUTER_RADIUS,
-                half_y: OUTER_RADIUS,
+            .insert(Surface {
+                topology: Topology::Triangles(&TRIANGLES),
+                hitbox: HitBox {
+                    half_x: OUTER_RADIUS,
+                    half_y: OUTER_RADIUS,
+                },
             })
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes.add(boss).into(),
