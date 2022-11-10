@@ -2,7 +2,8 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    collision::HitBox, Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    collision::{HitBox, Surface, Topology},
+    Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const MAX_SPEED: usize = 5;
@@ -35,9 +36,12 @@ pub fn asteroids(
             .insert(Asteroid { radius })
             .insert(Health(health))
             .insert(Velocity(velocity))
-            .insert(HitBox {
-                half_x: radius,
-                half_y: radius,
+            .insert(Surface {
+                topology: Topology::Circle(radius),
+                hitbox: HitBox {
+                    half_x: radius,
+                    half_y: radius,
+                },
             })
             .insert_bundle(MaterialMesh2dBundle {
                 mesh: meshes

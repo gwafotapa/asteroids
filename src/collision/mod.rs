@@ -1,4 +1,6 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use std::collections::linked_list;
+
+use bevy::{prelude::*, render::primitives::Sphere, sprite::MaterialMesh2dBundle};
 
 use crate::{
     asteroid::{self, Asteroid},
@@ -10,16 +12,16 @@ use crate::{
 pub mod math;
 
 #[derive(Clone, Copy)]
-enum Topology<'a> {
+pub enum Topology {
     Point,
-    Sphere(f32),
-    Triangles(&'a [[Vec3; 3]]),
+    Circle(f32),
+    Triangles(&'static [[Vec3; 3]]),
 }
 
 #[derive(Component, Clone, Copy)]
-struct Surface<'a> {
-    topology: Topology<'a>,
-    hit_box: HitBox,
+pub struct Surface {
+    pub topology: Topology,
+    pub hitbox: HitBox,
 }
 
 #[derive(Component, Clone, Copy)]
@@ -32,12 +34,41 @@ pub struct HitBox {
 pub struct Impact;
 
 fn collision(
-    transform_1: Transform,
-    surface_1: Surface,
-    transform_2: Transform,
-    surface_2: Surface,
+    transform1: &Transform,
+    surface1: &Surface,
+    transform2: &Transform,
+    surface2: &Surface,
 ) -> bool {
-    true
+    match (
+        transform1,
+        surface1.topology,
+        surface1.hitbox,
+        transform2,
+        surface2.topology,
+        surface2.hitbox,
+    ) {
+        (_, Topology::Point, _, _, Topology::Point, _) => {
+            transform1.translation == transform2.translation
+        }
+        (_, Topology::Circle(radius1), _, _, Topology::Circle(radius2), _) => unimplemented!(),
+        (_, Topology::Triangles(list1), _, _, Topology::Triangles(list2), _) => unimplemented!(),
+        (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
+        | (circle, Topology::Circle(radius), hitbox, point, Topology::Point, _) => {
+            if point.translation.x < circle.translation.x - hitbox.half_x
+                || point.translation.x > circle.translation.x + hitbox.half_x
+                || point.translation.y < circle.translation.y - hitbox.half_y
+                || point.translation.y > circle.translation.y + hitbox.half_y
+            {
+                false
+            } else {
+                point.translation.distance(circle.translation) < radius
+            }
+        }
+        (_, Topology::Point, _, _, Topology::Triangles(list), _)
+        | (_, Topology::Triangles(list), _, _, Topology::Point, _) => unimplemented!(),
+        (_, Topology::Circle(radius), _, _, Topology::Triangles(list), _)
+        | (_, Topology::Triangles(list), _, _, Topology::Circle(radius), _) => unimplemented!(),
+    }
 }
 
 pub fn detect_collision_spaceship_asteroid(
@@ -73,73 +104,64 @@ pub fn detect_collision_spaceship_asteroid(
 
 pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
-    fire_query: Query<(Entity, &Fire, &Transform)>,
+    fire_query: Query<(Entity, &Fire, &Transform, &Surface)>,
     mut asteroid_query: Query<(
         Entity,
         &Transform,
         &Asteroid,
         &mut Health,
         &Velocity,
-        &HitBox,
+        &Surface,
     )>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (fire_entity, fire, fire_transform) in fire_query.iter() {
+    for (fire_entity, fire, fire_transform, fire_surface) in fire_query.iter() {
         for (
             asteroid_entity,
             asteroid_transform,
             asteroid,
             mut asteroid_health,
             asteroid_velocity,
-            asteroid_envelop,
+            asteroid_surface,
         ) in asteroid_query.iter_mut()
         {
-            if math::rectangles_intersect(
-                fire_transform.translation,
-                HitBox {
-                    half_x: 0.0,
-                    half_y: 0.0,
-                },
-                asteroid_transform.translation,
-                *asteroid_envelop,
+            if collision(
+                fire_transform,
+                fire_surface,
+                asteroid_transform,
+                asteroid_surface,
             ) {
-                if fire_transform
-                    .translation
-                    .distance(asteroid_transform.translation)
-                    < asteroid.radius
-                {
-                    commands
-                        .spawn()
-                        .insert(Impact)
-                        .insert_bundle(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: fire.impact_radius,
-                                    vertices: fire.impact_vertices,
-                                }))
-                                .into(),
-                            transform: *fire_transform,
-                            material: materials.add(fire.color.into()),
-                            ..default()
-                        });
+                commands
+                    .spawn()
+                    .insert(Impact)
+                    .insert_bundle(MaterialMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: fire.impact_radius,
+                                vertices: fire.impact_vertices,
+                            }))
+                            .into(),
+                        transform: *fire_transform,
+                        material: materials.add(fire.color.into()),
+                        ..default()
+                    });
 
-                    commands.entity(fire_entity).despawn();
+                commands.entity(fire_entity).despawn();
 
-                    asteroid_health.0 -= 1;
-                    if asteroid_health.0 == 0 {
-                        commands.entity(asteroid_entity).despawn();
-                        asteroid::explode(
-                            &mut commands,
-                            &mut meshes,
-                            &mut materials,
-                            asteroid,
-                            asteroid_transform,
-                            asteroid_velocity,
-                        );
-                    }
-                    break;
+                asteroid_health.0 -= 1;
+                if asteroid_health.0 == 0 {
+                    commands.entity(asteroid_entity).despawn();
+                    asteroid::explode(
+                        &mut commands,
+                        &mut meshes,
+                        &mut materials,
+                        asteroid,
+                        asteroid_transform,
+                        asteroid_velocity,
+                    );
                 }
+                break;
             }
         }
     }

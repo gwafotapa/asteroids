@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::Rng;
 
 use crate::{
-    collision::{math::point_in_triangle_2d, HitBox},
+    collision::{math::point_in_triangle_2d, HitBox, Surface, Topology},
     Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
@@ -247,6 +247,13 @@ pub fn attack(
             impact_vertices: IMPACT_VERTICES,
         })
         .insert(Velocity(FIRE_VELOCITY))
+        .insert(Surface {
+            topology: Topology::Point,
+            hitbox: HitBox {
+                half_x: 0.0,
+                half_y: 0.0,
+            },
+        })
         .insert_bundle(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
