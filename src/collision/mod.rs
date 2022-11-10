@@ -93,7 +93,14 @@ pub fn detect_collision_spaceship_asteroid(
                         < asteroid.radius
                     {
                         commands.entity(s_entity).despawn();
-                        spaceship::explode(commands, meshes, materials, s_transform, s_velocity);
+                        spaceship::explode(
+                            commands,
+                            meshes,
+                            materials,
+                            s_entity,
+                            s_transform,
+                            s_velocity,
+                        );
                         return;
                     }
                 }
@@ -142,7 +149,6 @@ pub fn detect_collision_fire_asteroid(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        // transform: *fire_transform,
                         transform: Transform::from_translation(
                             fire_transform.translation - asteroid_transform.translation,
                         ),
@@ -156,12 +162,12 @@ pub fn detect_collision_fire_asteroid(
 
                 asteroid_health.0 -= 1;
                 if asteroid_health.0 == 0 {
-                    commands.entity(asteroid_entity).despawn();
                     asteroid::explode(
                         &mut commands,
                         &mut meshes,
                         &mut materials,
                         asteroid,
+                        asteroid_entity,
                         asteroid_transform,
                         asteroid_velocity,
                     );
@@ -350,8 +356,10 @@ pub fn detect_collision_fire_spaceship(
                     half_y: spaceship_envelop.half_y * spaceship_transform.scale.y,
                 },
             ) {
-                let triangles = spaceship::TRIANGLE_LIST
-                    .map(|x| x.mul_add(spaceship_transform.scale, spaceship_transform.translation));
+                let triangles = spaceship::TRIANGLE_LIST.map(|x| {
+                    (spaceship::SCALE * x)
+                        .mul_add(spaceship_transform.scale, spaceship_transform.translation)
+                });
                 let mut iter_triangles = triangles.chunks(3);
                 let mut collision = false;
                 while let Some(&[a, b, c]) = iter_triangles.next() {
@@ -362,7 +370,7 @@ pub fn detect_collision_fire_spaceship(
                 }
 
                 if collision {
-                    commands
+                    let impact = commands
                         .spawn()
                         .insert(Impact)
                         .insert_bundle(MaterialMesh2dBundle {
@@ -372,20 +380,24 @@ pub fn detect_collision_fire_spaceship(
                                     vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: *fire_transform,
+                            transform: Transform::from_translation(
+                                fire_transform.translation - spaceship_transform.translation,
+                            ),
                             material: materials.add(fire.color.into()),
                             ..default()
-                        });
+                        })
+                        .id();
 
+                    commands.entity(spaceship).add_child(impact);
                     commands.entity(fire_entity).despawn();
 
                     spaceship_health.0 -= 1;
                     if spaceship_health.0 == 0 {
-                        commands.entity(spaceship).despawn();
                         spaceship::explode(
                             commands,
                             meshes,
                             materials,
+                            spaceship,
                             spaceship_transform,
                             velocity,
                         );

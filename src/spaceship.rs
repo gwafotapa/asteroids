@@ -56,8 +56,8 @@ const MIDPOINT_DB: Vec3 = Vec3 {
 };
 pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
 const HIT_BOX: HitBox = HitBox {
-    half_x: 3.5,
-    half_y: 3.0,
+    half_x: 3.5 * 10.0,
+    half_y: 3.0 * 10.0,
 };
 pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const TRIANGLELIST: [[f32; 3]; 6] = [
@@ -85,7 +85,7 @@ const POSITION: Vec3 = Vec3 {
     y: 0.0,
     z: ALTITUDE,
 };
-const SCALE: Vec3 = Vec3 {
+pub const SCALE: Vec3 = Vec3 {
     x: 10.0,
     y: 10.0,
     z: 1.0,
@@ -164,9 +164,9 @@ pub fn spaceship(
 ) {
     let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
 
-    let v_pos = TRIANGLE_LIST.map(|x| x.to_array()).to_vec();
-    let v_normals = vec![[0., 0., 1.]; 12];
-    let v_uvs = vec![[1., 1.]; 12];
+    let v_pos = TRIANGLE_LIST.map(|x| (SCALE * x).to_array()).to_vec();
+    let v_normals = vec![[0.0, 0.0, 1.0]; 12];
+    let v_uvs = vec![[1.0, 1.0]; 12];
     spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
     spaceship.insert_attribute(Mesh::ATTRIBUTE_NORMAL, v_normals);
     spaceship.insert_attribute(Mesh::ATTRIBUTE_UV_0, v_uvs);
@@ -202,7 +202,7 @@ pub fn spaceship(
         .insert_bundle(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
-            transform: Transform::from_translation(POSITION).with_scale(SCALE),
+            transform: Transform::from_translation(POSITION),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             material: materials.add(SPACESHIP_COLOR.into()),
             ..default()
@@ -273,9 +273,12 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    entity: Entity,
     transform: &Transform,
     velocity: &Velocity,
 ) {
+    commands.entity(entity).despawn();
+
     let mut rng = rand::thread_rng();
     for _ in 1..10 {
         let mut debris;

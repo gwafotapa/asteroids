@@ -69,9 +69,12 @@ pub fn explode(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     asteroid: &Asteroid,
+    entity: Entity,
     transform: &Transform,
     velocity: &Velocity,
 ) {
+    commands.entity(entity).despawn();
+
     let mut rng = rand::thread_rng();
     for _ in 1..asteroid.radius as usize {
         let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);

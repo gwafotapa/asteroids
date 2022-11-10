@@ -20,7 +20,7 @@ pub enum Direction {
 const ALTITUDE: f32 = 500.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
 pub const WINDOW_HEIGHT: f32 = 600.0;
-const INITIAL_DISTANCE_TO_BOSS: usize = 10000;
+const INITIAL_DISTANCE_TO_BOSS: usize = 00000;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
@@ -201,14 +201,14 @@ pub fn update_fire(
     mut commands: Commands,
     mut query: Query<(&mut Transform, &Velocity, Entity), With<Fire>>,
 ) {
-    for (mut transform, velocity, bullet) in query.iter_mut() {
+    for (mut transform, velocity, fire) in query.iter_mut() {
         transform.translation += velocity.0;
         if transform.translation.x > WINDOW_WIDTH / 2.0
             || transform.translation.x < -WINDOW_WIDTH / 2.0
             || transform.translation.y > WINDOW_HEIGHT / 2.0
             || transform.translation.y < -WINDOW_HEIGHT / 2.0
         {
-            commands.entity(bullet).despawn();
+            commands.entity(fire).despawn();
         }
     }
 }
