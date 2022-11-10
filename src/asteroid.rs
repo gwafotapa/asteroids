@@ -2,8 +2,7 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    collision::RectangularEnvelop, Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
-    WINDOW_WIDTH,
+    collision::HitBox, Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const MAX_SPEED: usize = 5;
@@ -36,7 +35,7 @@ pub fn asteroids(
             .insert(Asteroid { radius })
             .insert(Health(health))
             .insert(Velocity(velocity))
-            .insert(RectangularEnvelop {
+            .insert(HitBox {
                 half_x: radius,
                 half_y: radius,
             })

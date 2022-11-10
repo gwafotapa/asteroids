@@ -2,15 +2,28 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use crate::{
     asteroid::{self, Asteroid},
-    boss::{self, Boss},
+    boss::{self, Boss, BossPart},
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
 };
 
 pub mod math;
 
+#[derive(Clone, Copy)]
+enum Topology<'a> {
+    Point,
+    Sphere(f32),
+    Triangles(&'a [[Vec3; 3]]),
+}
+
 #[derive(Component, Clone, Copy)]
-pub struct RectangularEnvelop {
+struct Surface<'a> {
+    topology: Topology<'a>,
+    hit_box: HitBox,
+}
+
+#[derive(Component, Clone, Copy)]
+pub struct HitBox {
     pub half_x: f32,
     pub half_y: f32,
 }
@@ -18,22 +31,29 @@ pub struct RectangularEnvelop {
 #[derive(Component)]
 pub struct Impact;
 
+fn collision(
+    transform_1: Transform,
+    surface_1: Surface,
+    transform_2: Transform,
+    surface_2: Surface,
+) -> bool {
+    true
+}
+
 pub fn detect_collision_spaceship_asteroid(
     mut commands: Commands,
-    spaceship_query: Query<(Entity, &Transform, &Velocity, &RectangularEnvelop), With<Spaceship>>,
-    asteroid_query: Query<(&Transform, &Asteroid, &RectangularEnvelop)>,
+    spaceship_query: Query<(Entity, &Transform, &Velocity, &HitBox), With<Spaceship>>,
+    asteroid_query: Query<(&Transform, &Asteroid, &HitBox)>,
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((s_entity, s_transform, s_velocity, s_rectangular_envelop)) =
-        spaceship_query.get_single()
-    {
-        for (a_transform, asteroid, a_rectangular_envelop) in asteroid_query.iter() {
+    if let Ok((s_entity, s_transform, s_velocity, s_hit_box)) = spaceship_query.get_single() {
+        for (a_transform, asteroid, a_hit_box) in asteroid_query.iter() {
             if math::rectangles_intersect(
                 s_transform.translation,
-                *s_rectangular_envelop,
+                *s_hit_box,
                 a_transform.translation,
-                *a_rectangular_envelop,
+                *a_hit_box,
             ) {
                 for point in spaceship::ENVELOP {
                     if a_transform
@@ -60,7 +80,7 @@ pub fn detect_collision_fire_asteroid(
         &Asteroid,
         &mut Health,
         &Velocity,
-        &RectangularEnvelop,
+        &HitBox,
     )>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -77,7 +97,7 @@ pub fn detect_collision_fire_asteroid(
         {
             if math::rectangles_intersect(
                 fire_transform.translation,
-                RectangularEnvelop {
+                HitBox {
                     half_x: 0.0,
                     half_y: 0.0,
                 },
@@ -128,16 +148,7 @@ pub fn detect_collision_fire_asteroid(
 pub fn detect_collision_fire_boss(
     mut commands: Commands,
     fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
-    mut boss_query: Query<
-        (
-            Entity,
-            &Transform,
-            &mut Health,
-            &RectangularEnvelop,
-            &Velocity,
-        ),
-        With<Boss>,
-    >,
+    mut boss_query: Query<(Entity, &Transform, &mut Health, &HitBox, &Velocity), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -147,7 +158,7 @@ pub fn detect_collision_fire_boss(
         for (fire, fire_entity, fire_transform) in fire_query.iter() {
             if math::rectangles_intersect(
                 fire_transform.translation,
-                RectangularEnvelop {
+                HitBox {
                     half_x: 0.0,
                     half_y: 0.0,
                 },
@@ -205,17 +216,92 @@ pub fn detect_collision_fire_boss(
     }
 }
 
+pub fn detect_collision_fire_boss_parts(
+    mut commands: Commands,
+    fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
+    mut boss_query: Query<(Entity, &Transform, &HitBox, &Velocity, &Children), With<Boss>>,
+    mut boss_parts_query: Query<&Health>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    if let Ok((boss, boss_transform, boss_envelop, boss_velocity, boss_children)) =
+        boss_query.get_single_mut()
+    {
+        for (fire, fire_entity, fire_transform) in fire_query.iter() {
+            if math::rectangles_intersect(
+                fire_transform.translation,
+                HitBox {
+                    half_x: 0.0,
+                    half_y: 0.0,
+                },
+                boss_transform.translation,
+                *boss_envelop,
+            ) {
+                for child in boss_children.iter() {
+                    // let triangles = boss::triangles_from_polygon(
+                    //     &boss::POLYGON.map(|x| {
+                    //         boss_transform.rotation.mul_vec3(x) + boss_transform.translation
+                    //     }),
+                    //     boss_transform.translation,
+                    // );
+                    // let mut iter_triangles = triangles.chunks(3);
+                    // let mut collision = false;
+                    // while let Some(&[a, b, c]) = iter_triangles.next() {
+                    //     collision = math::point_in_triangle_2d(a, b, c, fire_transform.translation);
+                    //     if collision {
+                    //         break;
+                    //     }
+                    // }
+                    // if collision {
+                    //     let impact = commands
+                    //         .spawn()
+                    //         .insert(Impact)
+                    //         .insert_bundle(MaterialMesh2dBundle {
+                    //             mesh: meshes
+                    //                 .add(Mesh::from(shape::Circle {
+                    //                     radius: fire.impact_radius,
+                    //                     vertices: fire.impact_vertices,
+                    //                 }))
+                    //                 .into(),
+                    //             transform: Transform::from_translation(
+                    //                 boss_transform.rotation.inverse().mul_vec3(
+                    //                     fire_transform.translation - boss_transform.translation,
+                    //                 ),
+                    //             ),
+
+                    //             // transform: *fire_transform,
+                    //             material: materials.add(fire.color.into()),
+                    //             ..default()
+                    //         })
+                    //         .id();
+
+                    //     commands.entity(boss).add_child(impact);
+                    //     commands.entity(fire_entity).despawn();
+
+                    //     boss_health.0 -= 1;
+                    //     if boss_health.0 == 0 {
+                    //         commands.entity(boss).despawn_recursive();
+                    //         boss::explode(
+                    //             commands,
+                    //             meshes,
+                    //             materials,
+                    //             boss_transform,
+                    //             boss_velocity,
+                    //         );
+                    //         break;
+                    //     }
+                    // }
+                }
+            }
+        }
+    }
+}
+
 pub fn detect_collision_fire_spaceship(
     mut commands: Commands,
     fire_query: Query<(&Fire, Entity, &Transform), With<Enemy>>,
     mut spaceship_query: Query<
-        (
-            Entity,
-            &Transform,
-            &mut Health,
-            &RectangularEnvelop,
-            &Velocity,
-        ),
+        (Entity, &Transform, &mut Health, &HitBox, &Velocity),
         With<Spaceship>,
     >,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -227,12 +313,12 @@ pub fn detect_collision_fire_spaceship(
         for (fire, fire_entity, fire_transform) in fire_query.iter() {
             if math::rectangles_intersect(
                 fire_transform.translation,
-                RectangularEnvelop {
+                HitBox {
                     half_x: 0.0,
                     half_y: 0.0,
                 },
                 spaceship_transform.translation,
-                RectangularEnvelop {
+                HitBox {
                     half_x: spaceship_envelop.half_x * spaceship_transform.scale.x,
                     half_y: spaceship_envelop.half_y * spaceship_transform.scale.y,
                 },

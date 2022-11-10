@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::Rng;
 
 use crate::{
-    collision::{math::point_in_triangle_2d, RectangularEnvelop},
+    collision::{math::point_in_triangle_2d, HitBox},
     Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
@@ -55,7 +55,7 @@ const MIDPOINT_DB: Vec3 = Vec3 {
     z: (D.z + B.z) / 2.0,
 };
 pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-const RECTANGULAR_ENVELOP: RectangularEnvelop = RectangularEnvelop {
+const HIT_BOX: HitBox = HitBox {
     half_x: 3.5,
     half_y: 3.0,
 };
@@ -190,7 +190,7 @@ pub fn spaceship(
             y: 0.0,
             z: 0.0,
         }))
-        .insert(RECTANGULAR_ENVELOP)
+        .insert(HIT_BOX)
         // .insert(Attack {
         //     source: ATTACK_SOURCE,
         //     color: ATTACK_COLOR,

@@ -4,7 +4,7 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     asteroid::Asteroid,
-    collision::{math, RectangularEnvelop},
+    collision::{math, HitBox},
     spaceship::Spaceship,
     Blast, Debris, Direction, Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
     WINDOW_WIDTH,
@@ -165,9 +165,8 @@ pub fn add_boss_parts(
         let boss = commands
             .spawn()
             .insert(Boss)
-            .insert(Health(HEALTH))
             .insert(Velocity(Vec3::ZERO))
-            .insert(RectangularEnvelop {
+            .insert(HitBox {
                 half_x: OUTER_RADIUS,
                 half_y: OUTER_RADIUS,
             })
@@ -190,6 +189,7 @@ pub fn add_boss_parts(
             let boss_part = commands
                 .spawn()
                 .insert(BossPart)
+                .insert(Health(HEALTH))
                 .insert_bundle(MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
                     material: materials.add(COLOR.into()),
@@ -238,7 +238,7 @@ pub fn add_boss(
             .insert(Boss)
             .insert(Health(HEALTH))
             .insert(Velocity(Vec3::ZERO))
-            .insert(RectangularEnvelop {
+            .insert(HitBox {
                 half_x: OUTER_RADIUS,
                 half_y: OUTER_RADIUS,
             })
