@@ -132,7 +132,7 @@ pub fn detect_collision_fire_asteroid(
                 asteroid_transform,
                 asteroid_surface,
             ) {
-                commands
+                let impact = commands
                     .spawn()
                     .insert(Impact)
                     .insert_bundle(MaterialMesh2dBundle {
@@ -142,11 +142,16 @@ pub fn detect_collision_fire_asteroid(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        transform: *fire_transform,
+                        // transform: *fire_transform,
+                        transform: Transform::from_translation(
+                            fire_transform.translation - asteroid_transform.translation,
+                        ),
                         material: materials.add(fire.color.into()),
                         ..default()
-                    });
+                    })
+                    .id();
 
+                commands.entity(asteroid_entity).add_child(impact);
                 commands.entity(fire_entity).despawn();
 
                 asteroid_health.0 -= 1;
