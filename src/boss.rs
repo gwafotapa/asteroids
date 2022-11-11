@@ -106,7 +106,7 @@ pub const POLYGON: [Vec3; 16] = [
 ];
 
 const INITIAL_POSITION: Vec3 = Vec3 {
-    x: 300.0,
+    x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
     y: 0.0,
     z: ALTITUDE,
 };

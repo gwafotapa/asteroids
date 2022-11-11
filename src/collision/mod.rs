@@ -49,7 +49,21 @@ fn collision(
         (_, Topology::Point, _, _, Topology::Point, _) => {
             transform1.translation == transform2.translation
         }
-        (_, Topology::Circle(radius1), _, _, Topology::Circle(radius2), _) => unimplemented!(),
+        (
+            circle1,
+            Topology::Circle(radius1),
+            hitbox1,
+            circle2,
+            Topology::Circle(radius2),
+            hitbox2,
+        ) => {
+            rectangles_intersect(
+                circle1.translation.truncate(),
+                hitbox1,
+                circle2.translation.truncate(),
+                hitbox2,
+            ) && circle1.translation.distance(circle2.translation) < radius1 + radius2
+        }
         (_, Topology::Triangles(triangles1), _, _, Topology::Triangles(triangles2), _) => {
             unimplemented!()
         }
