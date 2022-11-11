@@ -346,6 +346,41 @@ pub fn detect_collision_fire_spaceship(
     }
 }
 
+pub fn detect_collision_asteroid_asteroid(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<(&Transform, &Surface, Entity, &Asteroid, &Velocity)>,
+) {
+    for (i, (transform1, surface1, entity1, asteroid1, velocity1)) in query.iter().enumerate() {
+        for (transform2, surface2, entity2, asteroid2, velocity2) in query.iter().skip(i + 1) {
+            if collision(transform1, surface1, transform2, surface2) {
+                if asteroid1.radius < asteroid2.radius {
+                    asteroid::explode(
+                        &mut commands,
+                        &mut meshes,
+                        &mut materials,
+                        asteroid1,
+                        entity1,
+                        transform1,
+                        velocity1,
+                    );
+                } else {
+                    asteroid::explode(
+                        &mut commands,
+                        &mut meshes,
+                        &mut materials,
+                        asteroid2,
+                        entity2,
+                        transform2,
+                        velocity2,
+                    );
+                }
+            }
+        }
+    }
+}
+
 pub fn update_debris(
     mut commands: Commands,
     mut query: Query<(&mut Transform, &Velocity, Entity), With<Debris>>,

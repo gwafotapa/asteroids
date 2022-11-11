@@ -20,6 +20,7 @@ fn main() {
         .add_system(star::update_stars)
         .add_system(asteroid::asteroids)
         .add_system(keyboard_input)
+        .add_system(collision::detect_collision_asteroid_asteroid)
         .add_system(collision::detect_collision_spaceship_asteroid)
         // .add_system(update_fires)
         .add_system(collision::update_impacts)
