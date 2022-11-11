@@ -5,7 +5,7 @@ use bevy::{prelude::*, render::primitives::Sphere, sprite::MaterialMesh2dBundle}
 use crate::{
     asteroid::{self, Asteroid},
     boss::{self, Boss, BossPart},
-    collision::math::point_in_triangle,
+    collision::math::{circle_intersects_triangle, point_in_triangle, rectangles_intersect},
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
 };
@@ -93,9 +93,42 @@ fn collision(
                 false
             }
         }
-        (_, Topology::Circle(radius), _, _, Topology::Triangles(triangles), _)
-        | (_, Topology::Triangles(triangles), _, _, Topology::Circle(radius), _) => {
-            unimplemented!()
+        (
+            circle_transform,
+            Topology::Circle(radius),
+            circle_hitbox,
+            triangles_transform,
+            Topology::Triangles(triangles),
+            triangles_hitbox,
+        )
+        | (
+            triangles_transform,
+            Topology::Triangles(triangles),
+            triangles_hitbox,
+            circle_transform,
+            Topology::Circle(radius),
+            circle_hitbox,
+        ) => {
+            if !rectangles_intersect(
+                circle_transform.translation.truncate(),
+                circle_hitbox,
+                triangles_transform.translation.truncate(),
+                triangles_hitbox,
+            ) {
+                return false;
+            }
+            for triangle in triangles {
+                if circle_intersects_triangle(
+                    triangle[0].truncate(),
+                    triangle[1].truncate(),
+                    triangle[2].truncate(),
+                    circle_transform.translation.truncate(),
+                    radius,
+                ) {
+                    return true;
+                }
+            }
+            false
         }
     }
 }

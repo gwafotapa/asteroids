@@ -13,12 +13,12 @@ pub fn point_in_triangle(p1: Vec2, p2: Vec2, p3: Vec2, p: Vec2) -> bool {
 
 pub fn rectangles_intersect(
     center1: Vec2,
-    envelop1: HitBox,
+    hitbox1: HitBox,
     center2: Vec2,
-    envelop2: HitBox,
+    hitbox2: HitBox,
 ) -> bool {
-    let intersect_x = (center1.x - center2.x).abs() <= envelop1.half_x + envelop2.half_x;
-    let intersect_y = (center1.y - center2.y).abs() <= envelop1.half_y + envelop2.half_y;
+    let intersect_x = (center1.x - center2.x).abs() <= hitbox1.half_x + hitbox2.half_x;
+    let intersect_y = (center1.y - center2.y).abs() <= hitbox1.half_y + hitbox2.half_y;
 
     return intersect_x && intersect_y;
 }
@@ -59,4 +59,10 @@ pub fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool
     false
 }
 
-fn circle_intersects_triangle() {}
+// Determines if the cirlce of center o and radius r intersects the triangle abc
+// without accounting for the scenarios where circle contains triangle or triangle contains circle.
+pub fn circle_intersects_triangle(a: Vec2, b: Vec2, c: Vec2, o: Vec2, r: f32) -> bool {
+    circle_intersects_line_segment(a, b, o, r)
+        || circle_intersects_line_segment(b, c, o, r)
+        || circle_intersects_line_segment(c, a, o, r)
+}
