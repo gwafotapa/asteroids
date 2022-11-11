@@ -1,10 +1,8 @@
-use std::collections::linked_list;
-
-use bevy::{prelude::*, render::primitives::Sphere, sprite::MaterialMesh2dBundle};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use crate::{
     asteroid::{self, Asteroid},
-    boss::{self, Boss, BossPart},
+    boss::{self, Boss},
     collision::math::{circle_intersects_triangle, point_in_triangle, rectangles_intersect},
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
@@ -122,7 +120,8 @@ fn collision(
                     triangle[0].truncate(),
                     triangle[1].truncate(),
                     triangle[2].truncate(),
-                    circle_transform.translation.truncate(),
+                    circle_transform.translation.truncate()
+                        - triangles_transform.translation.truncate(),
                     radius,
                 ) {
                     return true;
@@ -134,38 +133,24 @@ fn collision(
 }
 
 pub fn detect_collision_spaceship_asteroid(
-    mut commands: Commands,
-    spaceship_query: Query<(Entity, &Transform, &Velocity, &HitBox), With<Spaceship>>,
-    asteroid_query: Query<(&Transform, &Asteroid, &HitBox)>,
+    commands: Commands,
+    spaceship_query: Query<(Entity, &Transform, &Velocity, &Surface), With<Spaceship>>,
+    asteroid_query: Query<(&Transform, &Surface), With<Asteroid>>,
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((s_entity, s_transform, s_velocity, s_hit_box)) = spaceship_query.get_single() {
-        for (a_transform, asteroid, a_hit_box) in asteroid_query.iter() {
-            if math::rectangles_intersect(
-                s_transform.translation.truncate(),
-                *s_hit_box,
-                a_transform.translation.truncate(),
-                *a_hit_box,
-            ) {
-                for point in spaceship::ENVELOP {
-                    if a_transform
-                        .translation
-                        .distance(point * s_transform.scale + s_transform.translation)
-                        < asteroid.radius
-                    {
-                        commands.entity(s_entity).despawn();
-                        spaceship::explode(
-                            commands,
-                            meshes,
-                            materials,
-                            s_entity,
-                            s_transform,
-                            s_velocity,
-                        );
-                        return;
-                    }
-                }
+    if let Ok((s_entity, s_transform, s_velocity, s_surface)) = spaceship_query.get_single() {
+        for (a_transform, a_surface) in asteroid_query.iter() {
+            if collision(s_transform, s_surface, a_transform, a_surface) {
+                spaceship::explode(
+                    commands,
+                    meshes,
+                    materials,
+                    s_entity,
+                    s_transform,
+                    s_velocity,
+                );
+                return;
             }
         }
     }
@@ -283,87 +268,6 @@ pub fn detect_collision_fire_boss(
                     commands.entity(boss).despawn_recursive();
                     boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
                     break;
-                }
-            }
-        }
-    }
-}
-
-pub fn detect_collision_fire_boss_parts(
-    mut commands: Commands,
-    fire_query: Query<(&Fire, Entity, &Transform), Without<Enemy>>,
-    mut boss_query: Query<(Entity, &Transform, &HitBox, &Velocity, &Children), With<Boss>>,
-    mut boss_parts_query: Query<&Health>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    if let Ok((boss, boss_transform, boss_envelop, boss_velocity, boss_children)) =
-        boss_query.get_single_mut()
-    {
-        for (fire, fire_entity, fire_transform) in fire_query.iter() {
-            if math::rectangles_intersect(
-                fire_transform.translation.truncate(),
-                HitBox {
-                    half_x: 0.0,
-                    half_y: 0.0,
-                },
-                boss_transform.translation.truncate(),
-                *boss_envelop,
-            ) {
-                for child in boss_children.iter() {
-                    // let triangles = boss::triangles_from_polygon(
-                    //     &boss::POLYGON.map(|x| {
-                    //         boss_transform.rotation.mul_vec3(x) + boss_transform.translation
-                    //     }),
-                    //     boss_transform.translation,
-                    // );
-                    // let mut iter_triangles = triangles.chunks(3);
-                    // let mut collision = false;
-                    // while let Some(&[a, b, c]) = iter_triangles.next() {
-                    //     collision = math::point_in_triangle(a, b, c, fire_transform.translation);
-                    //     if collision {
-                    //         break;
-                    //     }
-                    // }
-                    // if collision {
-                    //     let impact = commands
-                    //         .spawn()
-                    //         .insert(Impact)
-                    //         .insert_bundle(MaterialMesh2dBundle {
-                    //             mesh: meshes
-                    //                 .add(Mesh::from(shape::Circle {
-                    //                     radius: fire.impact_radius,
-                    //                     vertices: fire.impact_vertices,
-                    //                 }))
-                    //                 .into(),
-                    //             transform: Transform::from_translation(
-                    //                 boss_transform.rotation.inverse().mul_vec3(
-                    //                     fire_transform.translation - boss_transform.translation,
-                    //                 ),
-                    //             ),
-
-                    //             // transform: *fire_transform,
-                    //             material: materials.add(fire.color.into()),
-                    //             ..default()
-                    //         })
-                    //         .id();
-
-                    //     commands.entity(boss).add_child(impact);
-                    //     commands.entity(fire_entity).despawn();
-
-                    //     boss_health.0 -= 1;
-                    //     if boss_health.0 == 0 {
-                    //         commands.entity(boss).despawn_recursive();
-                    //         boss::explode(
-                    //             commands,
-                    //             meshes,
-                    //             materials,
-                    //             boss_transform,
-                    //             boss_velocity,
-                    //         );
-                    //         break;
-                    //     }
-                    // }
                 }
             }
         }

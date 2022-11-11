@@ -59,7 +59,7 @@ pub fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool
     false
 }
 
-// Determines if the cirlce of center o and radius r intersects the triangle abc
+// Determines if the circle of center o and radius r intersects the triangle abc
 // without accounting for the scenarios where circle contains triangle or triangle contains circle.
 pub fn circle_intersects_triangle(a: Vec2, b: Vec2, c: Vec2, o: Vec2, r: f32) -> bool {
     circle_intersects_line_segment(a, b, o, r)
