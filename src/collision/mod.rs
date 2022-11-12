@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use crate::{
     asteroid::{self, Asteroid},
-    boss::{self, Boss},
+    boss::{self, Boss, BossPart},
     collision::math::{circle_intersects_triangle, point_in_triangle, rectangles_intersect},
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
@@ -10,11 +10,14 @@ use crate::{
 
 pub mod math;
 
+pub type Triangle = [Vec3; 3];
+
 #[derive(Clone, Copy)]
 pub enum Topology {
     Point,
     Circle(f32),
-    Triangles(&'static [[Vec3; 3]]),
+    // Triangles(Vec<Triangle>),
+    Triangles(&'static [Triangle]),
 }
 
 #[derive(Component, Clone, Copy)]
@@ -282,6 +285,66 @@ pub fn detect_collision_fire_boss(
                     commands.entity(boss).despawn_recursive();
                     boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
                     break;
+                }
+            }
+        }
+    }
+}
+
+pub fn detect_collision_fire_boss_parts(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    q_fire: Query<(&Fire, Entity, &Transform, &Surface), Without<Enemy>>,
+    mut q_boss: Query<(Entity, &Transform, &Velocity), With<Boss>>,
+    mut q_boss_part: Query<
+        (Entity, &GlobalTransform, &Velocity, &Surface, &mut Health),
+        With<BossPart>,
+    >,
+) {
+    if let Ok((b_entity, b_transform, b_velocity)) = q_boss.get_single_mut() {
+        for (fire, f_entity, f_transform, f_surface) in q_fire.iter() {
+            for (bp_entity, bp_transform, bp_velocity, bp_surface, mut bp_health) in
+                q_boss_part.iter_mut()
+            {
+                if collision(
+                    f_transform,
+                    f_surface,
+                    &bp_transform.compute_transform(),
+                    bp_surface,
+                ) {
+                    let impact = commands
+                        .spawn()
+                        .insert(Impact)
+                        .insert_bundle(MaterialMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(
+                                b_transform
+                                    .rotation
+                                    .inverse()
+                                    .mul_vec3(f_transform.translation - b_transform.translation),
+                            ),
+
+                            // transform: *fire_transform,
+                            material: materials.add(fire.color.into()),
+                            ..default()
+                        })
+                        .id();
+
+                    commands.entity(b_entity).add_child(impact);
+                    commands.entity(f_entity).despawn();
+
+                    bp_health.0 -= 1;
+                    if bp_health.0 == 0 {
+                        commands.entity(bp_entity).despawn();
+                        // boss::explode(commands, meshes, materials, boss_transform, boss_velocity);
+                        break;
+                    }
                 }
             }
         }

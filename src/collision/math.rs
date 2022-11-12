@@ -67,3 +67,15 @@ pub fn circle_intersects_triangle(a: Vec2, b: Vec2, c: Vec2, o: Vec2, r: f32) ->
         || circle_intersects_line_segment(c, a, o, r)
         || point_in_triangle(a, b, c, o)
 }
+
+pub fn triangle_hitbox(a: Vec2, b: Vec2, c: Vec2) -> HitBox {
+    let x1 = a.x.min(b.x).min(c.x);
+    let x2 = a.x.max(b.x).max(c.x);
+    let y1 = a.y.min(b.y).min(c.y);
+    let y2 = a.y.max(b.y).max(c.y);
+
+    HitBox {
+        half_x: x2 - x1,
+        half_y: y2 - y1,
+    }
+}
