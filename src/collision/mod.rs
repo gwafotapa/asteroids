@@ -28,6 +28,8 @@ pub struct Surface {
 
 #[derive(Component, Clone, Copy)]
 pub struct HitBox {
+    pub center_x: f32,
+    pub center_y: f32,
     pub half_x: f32,
     pub half_y: f32,
 }
@@ -84,10 +86,10 @@ fn collision(
         }
         (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
         | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
-            if point.translation.x < triangles.translation.x - hitbox.half_x
-                || point.translation.x > triangles.translation.x + hitbox.half_x
-                || point.translation.y < triangles.translation.y - hitbox.half_y
-                || point.translation.y > triangles.translation.y + hitbox.half_y
+            if point.translation.x < triangles.translation.x + hitbox.center_x - hitbox.half_x
+                || point.translation.x > triangles.translation.x + hitbox.center_x + hitbox.half_x
+                || point.translation.y < triangles.translation.y + hitbox.center_y - hitbox.half_y
+                || point.translation.y > triangles.translation.y + hitbox.center_y + hitbox.half_y
             {
                 false
             } else {
@@ -124,6 +126,7 @@ fn collision(
             Topology::Circle(radius),
             circle_hitbox,
         ) => {
+            panic!("need to test hiboxes of all triangles and take care of rotated triangles");
             if !rectangles_intersect(
                 circle_transform.translation.truncate(),
                 circle_hitbox,
@@ -297,16 +300,11 @@ pub fn detect_collision_fire_boss_parts(
     mut materials: ResMut<Assets<ColorMaterial>>,
     q_fire: Query<(&Fire, Entity, &Transform, &Surface), Without<Enemy>>,
     mut q_boss: Query<(Entity, &Transform, &Velocity), With<Boss>>,
-    mut q_boss_part: Query<
-        (Entity, &GlobalTransform, &Velocity, &Surface, &mut Health),
-        With<BossPart>,
-    >,
+    mut q_boss_part: Query<(Entity, &GlobalTransform, &Surface, &mut Health), With<BossPart>>,
 ) {
     if let Ok((b_entity, b_transform, b_velocity)) = q_boss.get_single_mut() {
         for (fire, f_entity, f_transform, f_surface) in q_fire.iter() {
-            for (bp_entity, bp_transform, bp_velocity, bp_surface, mut bp_health) in
-                q_boss_part.iter_mut()
-            {
+            for (bp_entity, bp_transform, bp_surface, mut bp_health) in q_boss_part.iter_mut() {
                 if collision(
                     f_transform,
                     f_surface,
@@ -336,7 +334,7 @@ pub fn detect_collision_fire_boss_parts(
                         })
                         .id();
 
-                    commands.entity(b_entity).add_child(impact);
+                    commands.entity(bp_entity).add_child(impact);
                     commands.entity(f_entity).despawn();
 
                     bp_health.0 -= 1;

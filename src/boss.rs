@@ -145,10 +145,9 @@ pub struct Attack(Vec3);
 //     [A5, A7, A9],
 // ];
 
-const EDGES: usize = 8;
-
 // There are 8 egdes.
 // Each edge is a triangle and constitutes a whole part of the boss.
+const EDGES: usize = 8;
 const EDGES_TRIANGLES: [[Triangle; 1]; EDGES] = [
     [[A1, A2, A3]],
     [[A3, A4, A5]],
@@ -161,7 +160,8 @@ const EDGES_TRIANGLES: [[Triangle; 1]; EDGES] = [
 ];
 
 // The body is a collection of 6 triangles. It is a single part of the boss.
-const BODY_TRIANGLES: [[Vec3; 3]; 6] = [
+const CORE_PARTS: usize = 6;
+const CORE_TRIANGLES: [[Vec3; 3]; CORE_PARTS] = [
     [A1, A3, A15],
     [A3, A13, A15],
     [A3, A11, A13],
@@ -206,13 +206,13 @@ pub fn add_boss_parts(
 
         // Build body
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position: Vec<[f32; 3]> = BODY_TRIANGLES
+        let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
             .iter()
             .flatten()
             .map(|x| x.to_array())
             .collect();
-        let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
-        let vertices_uv = vec![[0.0, 0.0]; 3];
+        let vertices_normal = vec![[0.0, 0.0, 1.0]; 3 * CORE_PARTS];
+        let vertices_uv = vec![[0.0, 0.0]; 3 * CORE_PARTS];
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
@@ -228,8 +228,10 @@ pub fn add_boss_parts(
                 ..default()
             })
             .insert(Surface {
-                topology: Topology::Triangles(&BODY_TRIANGLES),
+                topology: Topology::Triangles(&CORE_TRIANGLES),
                 hitbox: HitBox {
+                    center_x: 0.0,
+                    center_y: 0.0,
                     half_x: INNER_RADIUS,
                     half_y: INNER_RADIUS,
                 },
@@ -424,6 +426,8 @@ pub fn attack_boss(
                         .insert(Surface {
                             topology: Topology::Point,
                             hitbox: HitBox {
+                                center_x: 0.0,
+                                center_y: 0.0,
                                 half_x: 0.0,
                                 half_y: 0.0,
                             },

@@ -12,13 +12,15 @@ pub fn point_in_triangle(p1: Vec2, p2: Vec2, p3: Vec2, p: Vec2) -> bool {
 }
 
 pub fn rectangles_intersect(
-    center1: Vec2,
+    position1: Vec2,
     hitbox1: HitBox,
-    center2: Vec2,
+    position2: Vec2,
     hitbox2: HitBox,
 ) -> bool {
-    let intersect_x = (center1.x - center2.x).abs() <= hitbox1.half_x + hitbox2.half_x;
-    let intersect_y = (center1.y - center2.y).abs() <= hitbox1.half_y + hitbox2.half_y;
+    let intersect_x = (hitbox1.center_x + position1.x - hitbox2.center_x - position2.x).abs()
+        <= hitbox1.half_x + hitbox2.half_x;
+    let intersect_y = (hitbox1.center_y + position1.y - hitbox2.center_y - position2.y).abs()
+        <= hitbox1.half_y + hitbox2.half_y;
 
     return intersect_x && intersect_y;
 }
@@ -75,7 +77,9 @@ pub fn triangle_hitbox(a: Vec2, b: Vec2, c: Vec2) -> HitBox {
     let y2 = a.y.max(b.y).max(c.y);
 
     HitBox {
-        half_x: x2 - x1,
-        half_y: y2 - y1,
+        center_x: (x1 + x2) / 2.0,
+        center_y: (y1 + y2) / 2.0,
+        half_x: (x2 - x1) / 2.0,
+        half_y: (y2 - y1) / 2.0,
     }
 }
