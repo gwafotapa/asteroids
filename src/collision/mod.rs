@@ -18,7 +18,6 @@ pub type Triangle = [Vec3; 3];
 pub enum Topology {
     Point,
     Circle(f32),
-    // Triangles(Vec<Triangle>),
     Triangles(&'static [Triangle]),
 }
 
@@ -78,10 +77,6 @@ fn collision(
         }
         (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
         | (circle, Topology::Circle(radius), hitbox, point, Topology::Point, _) => {
-            // if point.translation().x < circle.translation().x - hitbox.half_x
-            //     || point.translation().x > circle.translation().x + hitbox.half_x
-            //     || point.translation().y < circle.translation().y - hitbox.half_y
-            //     || point.translation().y > circle.translation().y + hitbox.half_y
             if !point_in_rectangle(
                 point.translation().truncate(),
                 circle.translation().truncate(),
@@ -95,10 +90,6 @@ fn collision(
         }
         (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
         | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
-            // if point.translation().x < triangles.translation().x - hitbox.half_x
-            //     || point.translation().x > triangles.translation().x + hitbox.half_x
-            //     || point.translation().y < triangles.translation().y - hitbox.half_y
-            //     || point.translation().y > triangles.translation().y + hitbox.half_y
             if !point_in_rectangle(
                 point.translation().truncate(),
                 triangles.translation().truncate(),
@@ -113,7 +104,6 @@ fn collision(
                     triangles
                         .to_scale_rotation_translation()
                         .1
-                        // .rotation
                         .inverse()
                         .mul_vec3(point.translation() - triangles.translation())
                         .truncate(),
@@ -210,6 +200,7 @@ pub fn detect_collision_fire_asteroid(
         &mut Health,
         &Velocity,
         &Surface,
+        // Option<&Children>,
     )>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -222,6 +213,7 @@ pub fn detect_collision_fire_asteroid(
             mut asteroid_health,
             asteroid_velocity,
             asteroid_surface,
+            // asteroid_children,
         ) in asteroid_query.iter_mut()
         {
             if collision(
@@ -230,9 +222,12 @@ pub fn detect_collision_fire_asteroid(
                 asteroid_transform,
                 asteroid_surface,
             ) {
-                let impact = commands
+                commands.entity(fire_entity).despawn();
+
+                commands
                     .spawn_empty()
                     .insert(Impact)
+                    // .insert(Velocity(asteroid_velocity.0))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -240,29 +235,29 @@ pub fn detect_collision_fire_asteroid(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        transform: Transform::from_translation(
-                            fire_transform.translation() - asteroid_transform.translation(),
-                        ),
+                        transform: Transform::from_translation(fire_transform.translation()),
                         material: materials.add(fire.color.into()),
                         ..default()
-                    })
-                    .id();
-
-                commands.entity(asteroid_entity).add_child(impact);
-                commands.entity(fire_entity).despawn();
+                    });
 
                 asteroid_health.0 -= 1;
-                if asteroid_health.0 == 0 {
-                    asteroid::explode(
-                        &mut commands,
-                        &mut meshes,
-                        &mut materials,
-                        asteroid,
-                        asteroid_entity,
-                        asteroid_transform,
-                        asteroid_velocity,
-                    );
-                }
+                // let mut impact_translation = fire_transform.translation();
+                // if asteroid_health.0 == 0 {
+                // asteroid::explode(
+                //     &mut commands,
+                //     &mut meshes,
+                //     &mut materials,
+                //     asteroid,
+                //     asteroid_entity,
+                //     asteroid_transform,
+                //     asteroid_velocity,
+                //     // asteroid_children,
+                // );
+                // } else {
+                //     impact_translation -= asteroid_transform.translation();
+                //     commands.entity(asteroid_entity).add_child(impact);
+                // }
+
                 break;
             }
         }
@@ -284,6 +279,7 @@ pub fn detect_collision_fire_boss(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
+                    // .insert(Velocity(boss_velocity.0))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -291,23 +287,23 @@ pub fn detect_collision_fire_boss(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        transform: Transform::from_translation(
-                            boss_transform
-                                .to_scale_rotation_translation()
-                                .1
-                                .inverse()
-                                .mul_vec3(
-                                    fire_transform.translation() - boss_transform.translation(),
-                                ),
-                        ),
-
+                        // transform: Transform::from_translation(
+                        //     boss_transform
+                        //         .to_scale_rotation_translation()
+                        //         .1
+                        //         .inverse()
+                        //         .mul_vec3(
+                        //             fire_transform.translation() - boss_transform.translation(),
+                        //         ),
+                        // ),
+                        transform: Transform::from_translation(fire_transform.translation()),
                         // transform: *fire_transform,
                         material: materials.add(fire.color.into()),
                         ..default()
                     })
                     .id();
 
-                commands.entity(boss).add_child(impact);
+                // commands.entity(boss).add_child(impact);
                 commands.entity(fire_entity).despawn();
 
                 boss_health.0 -= 1;
@@ -336,6 +332,7 @@ pub fn detect_collision_fire_boss_parts(
                     let impact = commands
                         .spawn_empty()
                         .insert(Impact)
+                        // .insert(Velocity(b_velocity.0))
                         .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
@@ -343,24 +340,23 @@ pub fn detect_collision_fire_boss_parts(
                                     vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(
-                                bp_transform
-                                    .to_scale_rotation_translation()
-                                    .1
-                                    .inverse()
-                                    .mul_vec3(
-                                        f_transform.translation() - bp_transform.translation(),
-                                    ),
-                                // bp_transform.transform_point(f_transform.translation()),
-                            ),
-
+                            // transform: Transform::from_translation(
+                            //     bp_transform
+                            //         .to_scale_rotation_translation()
+                            //         .1
+                            //         .inverse()
+                            //         .mul_vec3(
+                            //             f_transform.translation() - bp_transform.translation(),
+                            //         ),
+                            // ),
+                            transform: Transform::from_translation(f_transform.translation()),
                             // transform: *fire_transform,
                             material: materials.add(fire.color.into()),
                             ..default()
                         })
                         .id();
 
-                    commands.entity(bp_entity).add_child(impact);
+                    // commands.entity(bp_entity).add_child(impact);
                     commands.entity(f_entity).despawn();
 
                     bp_health.0 -= 1;
@@ -405,15 +401,16 @@ pub fn detect_collision_fire_spaceship(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        transform: Transform::from_translation(
-                            fire_transform.translation() - spaceship_transform.translation(),
-                        ),
+                        // transform: Transform::from_translation(
+                        //     fire_transform.translation() - spaceship_transform.translation(),
+                        // ),
+                        transform: Transform::from_translation(fire_transform.translation()),
                         material: materials.add(fire.color.into()),
                         ..default()
                     })
                     .id();
 
-                commands.entity(spaceship).add_child(impact);
+                // commands.entity(spaceship).add_child(impact);
                 commands.entity(fire_entity).despawn();
 
                 spaceship_health.0 -= 1;
@@ -434,36 +431,37 @@ pub fn detect_collision_fire_spaceship(
 }
 
 pub fn detect_collision_asteroid_asteroid(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(&GlobalTransform, &Surface, Entity, &Asteroid, &Velocity)>,
+    mut query: Query<(
+        &GlobalTransform,
+        &Surface,
+        Entity,
+        &Asteroid,
+        &Velocity,
+        &mut Health,
+        Option<&Children>,
+    )>,
 ) {
-    for (i, (transform1, surface1, entity1, asteroid1, velocity1)) in query.iter().enumerate() {
-        for (transform2, surface2, entity2, asteroid2, velocity2) in query.iter().skip(i + 1) {
-            if collision(transform1, surface1, transform2, surface2) {
-                if asteroid1.radius < asteroid2.radius {
-                    asteroid::explode(
-                        &mut commands,
-                        &mut meshes,
-                        &mut materials,
-                        asteroid1,
-                        entity1,
-                        transform1,
-                        velocity1,
-                    );
-                } else {
-                    asteroid::explode(
-                        &mut commands,
-                        &mut meshes,
-                        &mut materials,
-                        asteroid2,
-                        entity2,
-                        transform2,
-                        velocity2,
-                    );
+    let mut i = 0;
+    loop {
+        let mut iter = query.iter_mut().skip(i);
+        if let Some((transform1, surface1, entity1, asteroid1, velocity1, mut health1, children1)) =
+            iter.next()
+        {
+            for (transform2, surface2, entity2, asteroid2, velocity2, mut health2, children2) in
+                iter
+            {
+                if collision(transform1, surface1, transform2, surface2) {
+                    if asteroid1.radius < asteroid2.radius {
+                        health1.0 = 0;
+                        break;
+                    } else {
+                        health2.0 = 0;
+                    }
                 }
             }
+            i += 1;
+        } else {
+            break;
         }
     }
 }
@@ -490,8 +488,10 @@ pub fn update_impacts(
     mut query: Query<(&mut Transform, Entity), With<Impact>>,
 ) {
     for (mut transform, impact) in query.iter_mut() {
-        transform.scale -= 0.05;
+        // transform.translation += velocity.0;
+        transform.scale -= 0.1;
         if transform.scale.x < 0.05 {
+            // commands.entity(parent.get()).remove_children(&[impact]);
             commands.entity(impact).despawn();
         }
     }

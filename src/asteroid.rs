@@ -23,7 +23,7 @@ pub fn asteroids(
 ) {
     let mut rng = rand::thread_rng();
 
-    if level_query.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
+    if level_query.single().distance_to_boss > 0 && rng.gen_range(0..10) == 0 {
         let health = rng.gen_range(1..MAX_HEALTH + 1);
         let radius = (health * 20) as f32;
         let speed = rng.gen_range(1..MAX_SPEED + 1) as f32;
@@ -65,54 +65,63 @@ pub fn asteroids(
 }
 
 pub fn explode(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-    asteroid: &Asteroid,
-    entity: Entity,
-    transform: &GlobalTransform,
-    velocity: &Velocity,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query: Query<(&Asteroid, Entity, &GlobalTransform, &Velocity, &Health)>,
+    // children: Option<&Children>,
 ) {
-    commands.entity(entity).despawn();
+    for (asteroid, a_entity, a_transform, a_velocity, a_health) in query.iter() {
+        if a_health.0 > 0 {
+            continue;
+        }
 
-    let mut rng = rand::thread_rng();
-    for _ in 1..asteroid.radius as usize {
-        let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
-        let debris_x = transform.translation().x + debris_dx;
-        let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
-        let debris_dy = rng.gen_range(-dy_max..dy_max);
-        let debris_y = transform.translation().y + debris_dy;
-        // let z = rng.gen_range(
-        //     transform.translation.z - asteroid.radius
-        //         ..transform.translation.z + asteroid.radius,
-        // );
+        commands.entity(a_entity).despawn();
 
-        let dv = Vec3 {
-            x: rng.gen_range(-0.5..0.5),
-            y: rng.gen_range(-0.5..0.5),
-            // z: rng.gen_range(-0.5..0.5),
-            z: 0.0,
-        };
+        // if let Some(children) = children {
+        //     for child in children {
+        //         commands.entity(*child).remove::<Parent>();
+        //     }
+        // }
+        let mut rng = rand::thread_rng();
+        for _ in 1..asteroid.radius as usize {
+            let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
+            let debris_x = a_transform.translation().x + debris_dx;
+            let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
+            let debris_dy = rng.gen_range(-dy_max..dy_max);
+            let debris_y = a_transform.translation().y + debris_dy;
+            // let z = rng.gen_range(
+            //     transform.translation.z - asteroid.radius
+            //         ..transform.translation.z + asteroid.radius,
+            // );
 
-        commands
-            .spawn_empty()
-            .insert(Debris)
-            .insert(Velocity(velocity.0 + dv))
-            // .insert(Velocity(velocity.0 * 0.5))
-            .insert(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius: rng.gen_range(asteroid.radius / 100.0..asteroid.radius / 20.0),
-                        vertices: 8,
-                    }))
-                    .into(),
-                transform: Transform::from_xyz(
-                    debris_x,
-                    debris_y,
-                    ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                ),
-                material: materials.add(COLOR.into()),
-                ..default()
-            });
+            let dv = Vec3 {
+                x: rng.gen_range(-0.5..0.5),
+                y: rng.gen_range(-0.5..0.5),
+                // z: rng.gen_range(-0.5..0.5),
+                z: 0.0,
+            };
+
+            commands
+                .spawn_empty()
+                .insert(Debris)
+                .insert(Velocity(a_velocity.0 + dv))
+                // .insert(Velocity(velocity.0 * 0.5))
+                .insert(MaterialMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: rng.gen_range(asteroid.radius / 100.0..asteroid.radius / 20.0),
+                            vertices: 8,
+                        }))
+                        .into(),
+                    transform: Transform::from_xyz(
+                        debris_x,
+                        debris_y,
+                        ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                    ),
+                    material: materials.add(COLOR.into()),
+                    ..default()
+                });
+        }
     }
 }

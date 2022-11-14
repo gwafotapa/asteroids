@@ -110,7 +110,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
     y: 0.0,
     z: ALTITUDE,
 };
-const ACCELERATION: f32 = 0.1;
+const ACCELERATION: f32 = 0.01;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const HEALTH: usize = 10;
 
@@ -123,7 +123,7 @@ const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
 const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
-const ROTATION_SPEED: f32 = 0.01;
+const ROTATION_SPEED: f32 = 0.0;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
