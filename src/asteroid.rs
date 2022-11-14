@@ -32,7 +32,7 @@ pub fn asteroids(
         let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
         commands
-            .spawn()
+            .spawn_empty()
             .insert(Asteroid { radius })
             .insert(Health(health))
             .insert(Velocity(velocity))
@@ -45,7 +45,7 @@ pub fn asteroids(
                     half_y: radius,
                 },
             })
-            .insert_bundle(MaterialMesh2dBundle {
+            .insert(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
                         radius,
@@ -72,7 +72,7 @@ pub fn explode(
     materials: &mut ResMut<Assets<ColorMaterial>>,
     asteroid: &Asteroid,
     entity: Entity,
-    transform: &Transform,
+    transform: &GlobalTransform,
     velocity: &Velocity,
 ) {
     commands.entity(entity).despawn();
@@ -80,10 +80,10 @@ pub fn explode(
     let mut rng = rand::thread_rng();
     for _ in 1..asteroid.radius as usize {
         let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
-        let debris_x = transform.translation.x + debris_dx;
+        let debris_x = transform.translation().x + debris_dx;
         let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
         let debris_dy = rng.gen_range(-dy_max..dy_max);
-        let debris_y = transform.translation.y + debris_dy;
+        let debris_y = transform.translation().y + debris_dy;
         // let z = rng.gen_range(
         //     transform.translation.z - asteroid.radius
         //         ..transform.translation.z + asteroid.radius,
@@ -97,11 +97,11 @@ pub fn explode(
         };
 
         commands
-            .spawn()
+            .spawn_empty()
             .insert(Debris)
             .insert(Velocity(velocity.0 + dv))
             // .insert(Velocity(velocity.0 * 0.5))
-            .insert_bundle(MaterialMesh2dBundle {
+            .insert(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
                         radius: rng.gen_range(asteroid.radius / 100.0..asteroid.radius / 20.0),

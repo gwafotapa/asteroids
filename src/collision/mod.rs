@@ -38,9 +38,9 @@ pub struct HitBox {
 pub struct Impact;
 
 fn collision(
-    transform1: &Transform,
+    transform1: &GlobalTransform,
     surface1: &Surface,
-    transform2: &Transform,
+    transform2: &GlobalTransform,
     surface2: &Surface,
 ) -> bool {
     match (
@@ -52,7 +52,7 @@ fn collision(
         surface2.hitbox,
     ) {
         (_, Topology::Point, _, _, Topology::Point, _) => {
-            transform1.translation == transform2.translation
+            transform1.translation() == transform2.translation()
         }
         (
             circle1,
@@ -63,33 +63,36 @@ fn collision(
             hitbox2,
         ) => {
             rectangles_intersect(
-                circle1.translation.truncate(),
+                circle1.translation().truncate(),
                 hitbox1,
-                circle2.translation.truncate(),
+                circle2.translation().truncate(),
                 hitbox2,
-            ) && circle1.translation.distance(circle2.translation) < radius1 + radius2
+            ) && circle1.translation().distance(circle2.translation()) < radius1 + radius2
         }
         (_, Topology::Triangles(triangles1), _, _, Topology::Triangles(triangles2), _) => {
             unimplemented!()
         }
         (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
         | (circle, Topology::Circle(radius), hitbox, point, Topology::Point, _) => {
-            if point.translation.x < circle.translation.x - hitbox.half_x
-                || point.translation.x > circle.translation.x + hitbox.half_x
-                || point.translation.y < circle.translation.y - hitbox.half_y
-                || point.translation.y > circle.translation.y + hitbox.half_y
+            if point.translation().x < circle.translation().x - hitbox.half_x
+                || point.translation().x > circle.translation().x + hitbox.half_x
+                || point.translation().y < circle.translation().y - hitbox.half_y
+                || point.translation().y > circle.translation().y + hitbox.half_y
             {
                 false
             } else {
-                point.translation.distance(circle.translation) < radius
+                point.translation().distance(circle.translation()) < radius
             }
         }
         (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
         | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
-            if point.translation.x < triangles.translation.x + hitbox.center_x - hitbox.half_x
-                || point.translation.x > triangles.translation.x + hitbox.center_x + hitbox.half_x
-                || point.translation.y < triangles.translation.y + hitbox.center_y - hitbox.half_y
-                || point.translation.y > triangles.translation.y + hitbox.center_y + hitbox.half_y
+            if point.translation().x < triangles.translation().x + hitbox.center_x - hitbox.half_x
+                || point.translation().x
+                    > triangles.translation().x + hitbox.center_x + hitbox.half_x
+                || point.translation().y
+                    < triangles.translation().y + hitbox.center_y - hitbox.half_y
+                || point.translation().y
+                    > triangles.translation().y + hitbox.center_y + hitbox.half_y
             {
                 false
             } else {
@@ -99,9 +102,11 @@ fn collision(
                         b.truncate(),
                         c.truncate(),
                         triangles
-                            .rotation
+                            .to_scale_rotation_translation()
+                            .1
+                            // .rotation
                             .inverse()
-                            .mul_vec3(point.translation - triangles.translation)
+                            .mul_vec3(point.translation() - triangles.translation())
                             .truncate(),
                     ) {
                         return true;
@@ -128,9 +133,9 @@ fn collision(
         ) => {
             panic!("need to test hiboxes of all triangles and take care of rotated triangles");
             if !rectangles_intersect(
-                circle_transform.translation.truncate(),
+                circle_transform.translation().truncate(),
                 circle_hitbox,
-                triangles_transform.translation.truncate(),
+                triangles_transform.translation().truncate(),
                 triangles_hitbox,
             ) {
                 return false;
@@ -140,8 +145,8 @@ fn collision(
                     triangle[0].truncate(),
                     triangle[1].truncate(),
                     triangle[2].truncate(),
-                    circle_transform.translation.truncate()
-                        - triangles_transform.translation.truncate(),
+                    circle_transform.translation().truncate()
+                        - triangles_transform.translation().truncate(),
                     radius,
                 ) {
                     return true;
@@ -154,8 +159,8 @@ fn collision(
 
 pub fn detect_collision_spaceship_asteroid(
     commands: Commands,
-    spaceship_query: Query<(Entity, &Transform, &Velocity, &Surface), With<Spaceship>>,
-    asteroid_query: Query<(&Transform, &Surface), With<Asteroid>>,
+    spaceship_query: Query<(Entity, &GlobalTransform, &Velocity, &Surface), With<Spaceship>>,
+    asteroid_query: Query<(&GlobalTransform, &Surface), With<Asteroid>>,
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -178,10 +183,10 @@ pub fn detect_collision_spaceship_asteroid(
 
 pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
-    fire_query: Query<(Entity, &Fire, &Transform, &Surface)>,
+    fire_query: Query<(Entity, &Fire, &GlobalTransform, &Surface)>,
     mut asteroid_query: Query<(
         Entity,
-        &Transform,
+        &GlobalTransform,
         &Asteroid,
         &mut Health,
         &Velocity,
@@ -207,9 +212,9 @@ pub fn detect_collision_fire_asteroid(
                 asteroid_surface,
             ) {
                 let impact = commands
-                    .spawn()
+                    .spawn_empty()
                     .insert(Impact)
-                    .insert_bundle(MaterialMesh2dBundle {
+                    .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
                                 radius: fire.impact_radius,
@@ -217,7 +222,7 @@ pub fn detect_collision_fire_asteroid(
                             }))
                             .into(),
                         transform: Transform::from_translation(
-                            fire_transform.translation - asteroid_transform.translation,
+                            fire_transform.translation() - asteroid_transform.translation(),
                         ),
                         material: materials.add(fire.color.into()),
                         ..default()
@@ -247,8 +252,8 @@ pub fn detect_collision_fire_asteroid(
 
 pub fn detect_collision_fire_boss(
     mut commands: Commands,
-    fire_query: Query<(&Fire, Entity, &Transform, &Surface), Without<Enemy>>,
-    mut boss_query: Query<(Entity, &Transform, &mut Health, &Velocity, &Surface), With<Boss>>,
+    fire_query: Query<(&Fire, Entity, &GlobalTransform, &Surface), Without<Enemy>>,
+    mut boss_query: Query<(Entity, &GlobalTransform, &mut Health, &Velocity, &Surface), With<Boss>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -258,9 +263,9 @@ pub fn detect_collision_fire_boss(
         for (fire, fire_entity, fire_transform, fire_surface) in fire_query.iter() {
             if collision(fire_transform, fire_surface, boss_transform, boss_surface) {
                 let impact = commands
-                    .spawn()
+                    .spawn_empty()
                     .insert(Impact)
-                    .insert_bundle(MaterialMesh2dBundle {
+                    .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
                                 radius: fire.impact_radius,
@@ -269,9 +274,12 @@ pub fn detect_collision_fire_boss(
                             .into(),
                         transform: Transform::from_translation(
                             boss_transform
-                                .rotation
+                                .to_scale_rotation_translation()
+                                .1
                                 .inverse()
-                                .mul_vec3(fire_transform.translation - boss_transform.translation),
+                                .mul_vec3(
+                                    fire_transform.translation() - boss_transform.translation(),
+                                ),
                         ),
 
                         // transform: *fire_transform,
@@ -298,23 +306,18 @@ pub fn detect_collision_fire_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    q_fire: Query<(&Fire, Entity, &Transform, &Surface), Without<Enemy>>,
-    mut q_boss: Query<(Entity, &Transform, &Velocity), With<Boss>>,
+    q_fire: Query<(&Fire, Entity, &GlobalTransform, &Surface), Without<Enemy>>,
+    mut q_boss: Query<(Entity, &GlobalTransform, &Velocity), With<Boss>>,
     mut q_boss_part: Query<(Entity, &GlobalTransform, &Surface, &mut Health), With<BossPart>>,
 ) {
     if let Ok((b_entity, b_transform, b_velocity)) = q_boss.get_single_mut() {
         for (fire, f_entity, f_transform, f_surface) in q_fire.iter() {
             for (bp_entity, bp_transform, bp_surface, mut bp_health) in q_boss_part.iter_mut() {
-                if collision(
-                    f_transform,
-                    f_surface,
-                    &bp_transform.compute_transform(),
-                    bp_surface,
-                ) {
+                if collision(f_transform, f_surface, bp_transform, bp_surface) {
                     let impact = commands
-                        .spawn()
+                        .spawn_empty()
                         .insert(Impact)
-                        .insert_bundle(MaterialMesh2dBundle {
+                        .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
                                     radius: fire.impact_radius,
@@ -322,10 +325,14 @@ pub fn detect_collision_fire_boss_parts(
                                 }))
                                 .into(),
                             transform: Transform::from_translation(
-                                b_transform
-                                    .rotation
+                                bp_transform
+                                    .to_scale_rotation_translation()
+                                    .1
                                     .inverse()
-                                    .mul_vec3(f_transform.translation - b_transform.translation),
+                                    .mul_vec3(
+                                        f_transform.translation() - bp_transform.translation(),
+                                    ),
+                                // bp_transform.transform_point(f_transform.translation()),
                             ),
 
                             // transform: *fire_transform,
@@ -351,9 +358,9 @@ pub fn detect_collision_fire_boss_parts(
 
 pub fn detect_collision_fire_spaceship(
     mut commands: Commands,
-    fire_query: Query<(&Fire, Entity, &Transform, &Surface), With<Enemy>>,
+    fire_query: Query<(&Fire, Entity, &GlobalTransform, &Surface), With<Enemy>>,
     mut spaceship_query: Query<
-        (Entity, &Transform, &mut Health, &Velocity, &Surface),
+        (Entity, &GlobalTransform, &mut Health, &Velocity, &Surface),
         With<Spaceship>,
     >,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -370,9 +377,9 @@ pub fn detect_collision_fire_spaceship(
                 spaceship_surface,
             ) {
                 let impact = commands
-                    .spawn()
+                    .spawn_empty()
                     .insert(Impact)
-                    .insert_bundle(MaterialMesh2dBundle {
+                    .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
                                 radius: fire.impact_radius,
@@ -380,7 +387,7 @@ pub fn detect_collision_fire_spaceship(
                             }))
                             .into(),
                         transform: Transform::from_translation(
-                            fire_transform.translation - spaceship_transform.translation,
+                            fire_transform.translation() - spaceship_transform.translation(),
                         ),
                         material: materials.add(fire.color.into()),
                         ..default()
@@ -411,7 +418,7 @@ pub fn detect_collision_asteroid_asteroid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(&Transform, &Surface, Entity, &Asteroid, &Velocity)>,
+    query: Query<(&GlobalTransform, &Surface, Entity, &Asteroid, &Velocity)>,
 ) {
     for (i, (transform1, surface1, entity1, asteroid1, velocity1)) in query.iter().enumerate() {
         for (transform2, surface2, entity2, asteroid2, velocity2) in query.iter().skip(i + 1) {

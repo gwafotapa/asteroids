@@ -180,7 +180,7 @@ pub fn spaceship(
     // spaceship.set_indices(Some(Indices::U32(indices)));
 
     commands
-        .spawn()
+        .spawn_empty()
         .insert(Spaceship)
         .insert(Health(HEALTH))
         .insert(Velocity(Vec3 {
@@ -200,7 +200,7 @@ pub fn spaceship(
         //     fire_radius: FIRE_RADIUS,
         //     fire_vertices: FIRE_VERTICES,
         // })
-        .insert_bundle(ColorMesh2dBundle {
+        .insert(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: meshes.add(spaceship).into(),
             transform: Transform::from_translation(POSITION),
@@ -221,9 +221,9 @@ pub fn attack(
     // let (spaceship, transform) = query.single();
 
     let blast = commands
-        .spawn()
+        .spawn_empty()
         .insert(Blast)
-        .insert_bundle(MaterialMesh2dBundle {
+        .insert(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
                     radius: BLAST_RADIUS,
@@ -241,7 +241,7 @@ pub fn attack(
     commands.entity(spaceship).push_children(&[blast]);
 
     commands
-        .spawn()
+        .spawn_empty()
         .insert(Fire {
             color: ATTACK_COLOR,
             impact_radius: IMPACT_RADIUS,
@@ -257,7 +257,7 @@ pub fn attack(
                 half_y: 0.0,
             },
         })
-        .insert_bundle(MaterialMesh2dBundle {
+        .insert(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
                     radius: FIRE_RADIUS,
@@ -277,7 +277,7 @@ pub fn explode(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     entity: Entity,
-    transform: &Transform,
+    transform: &GlobalTransform,
     velocity: &Velocity,
 ) {
     commands.entity(entity).despawn();
@@ -300,7 +300,8 @@ pub fn explode(
         }
         debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
-        let debris_translation = transform.translation + debris * transform.scale;
+        let debris_translation =
+            transform.translation() + debris * transform.to_scale_rotation_translation().0;
         let dv = Vec3 {
             x: rng.gen_range(-0.5..0.5),
             y: rng.gen_range(-0.5..0.5),
@@ -308,10 +309,10 @@ pub fn explode(
         };
 
         commands
-            .spawn()
+            .spawn_empty()
             .insert(Debris)
             .insert(Velocity(velocity.0 + dv))
-            .insert_bundle(MaterialMesh2dBundle {
+            .insert(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
                         radius: 10.0,

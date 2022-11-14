@@ -22,10 +22,10 @@ pub fn setup_stars(
             let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
             commands
-                .spawn()
+                .spawn_empty()
                 .insert(Star)
                 .insert(Velocity(Vec3::from([-(speed as f32), 0., 0.])))
-                .insert_bundle(MaterialMesh2dBundle {
+                .insert(MaterialMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {
                             radius: 1.0,
@@ -56,10 +56,10 @@ pub fn add_stars(
     let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
     commands
-        .spawn()
+        .spawn_empty()
         .insert(Star)
         .insert(Velocity(velocity))
-        .insert_bundle(MaterialMesh2dBundle {
+        .insert(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
                     radius: 1.0,

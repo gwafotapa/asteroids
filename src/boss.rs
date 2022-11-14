@@ -170,6 +170,25 @@ const CORE_TRIANGLES: [[Vec3; 3]; CORE_PARTS] = [
     [A5, A7, A9],
 ];
 
+const C1: Vec3 = Vec3 {
+    x: OUTER_RADIUS - INNER_RADIUS,
+    y: 0.0,
+    z: 0.0,
+};
+
+const C2: Vec3 = Vec3 {
+    x: 0.0,
+    y: OUTER_RADIUS - INNER_RADIUS,
+    z: 0.0,
+};
+
+const C3: Vec3 = Vec3 {
+    x: INNER_RADIUS - OUTER_RADIUS,
+    y: 0.0,
+    z: 0.0,
+};
+
+const EDGE: [Triangle; 1] = [[C1, C2, C3]];
 // pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
 //     let mut triangles = Vec::new();
 //     for (&a, &b) in polygon
@@ -191,20 +210,20 @@ pub fn add_boss_parts(
     let mut level = level_query.single_mut();
     if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
         let boss = commands
-            .spawn()
+            .spawn_empty()
             .insert(Boss)
             .insert(Velocity(Vec3::ZERO))
             // .insert(HitBox {
             //     half_x: OUTER_RADIUS,
             //     half_y: OUTER_RADIUS,
             // })
-            .insert_bundle(SpatialBundle {
+            .insert(SpatialBundle {
                 transform: Transform::from_translation(INITIAL_POSITION),
                 ..default()
             })
             .id();
 
-        // Build body
+        // Build core
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
         let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
             .iter()
@@ -219,10 +238,10 @@ pub fn add_boss_parts(
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
         let boss_body = commands
-            .spawn()
+            .spawn_empty()
             .insert(BossPart)
             .insert(Health(HEALTH))
-            .insert_bundle(MaterialMesh2dBundle {
+            .insert(MaterialMesh2dBundle {
                 mesh: meshes.add(mesh).into(),
                 material: materials.add(COLOR.into()),
                 ..default()
@@ -244,11 +263,12 @@ pub fn add_boss_parts(
         // for triangle in EDGES_TRIANGLES {
         for i in 0..EDGES {
             let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-            let vertices_position: Vec<[f32; 3]> = EDGES_TRIANGLES[i]
-                .iter()
-                .flatten()
-                .map(|x| x.to_array())
-                .collect();
+            // let vertices_position: Vec<[f32; 3]> = EDGES_TRIANGLES[i]
+            //     .iter()
+            //     .flatten()
+            //     .map(|x| x.to_array())
+            //     .collect();
+            let vertices_position = vec![C1.to_array(), C2.to_array(), C3.to_array()];
             let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
             let vertices_uv = vec![[0.0, 0.0]; 3];
 
@@ -257,23 +277,40 @@ pub fn add_boss_parts(
             mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
             let boss_edge = commands
-                .spawn()
+                .spawn_empty()
                 .insert(BossPart)
                 .insert(Health(HEALTH))
-                .insert_bundle(MaterialMesh2dBundle {
+                .insert(MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
+                    transform: Transform::from_xyz(
+                        INNER_RADIUS * (i as f32 * PI / 4.0).cos(),
+                        INNER_RADIUS * (i as f32 * PI / 4.0).sin(),
+                        0.0,
+                    )
+                    .with_rotation(Quat::from_axis_angle(
+                        Vec3::from([0.0, 0.0, 1.0]),
+                        (i + 6) as f32 * PI / 4.0,
+                    )),
                     material: materials.add(COLOR.into()),
                     ..default()
                 })
                 .insert(Surface {
-                    topology: Topology::Triangles(&EDGES_TRIANGLES[i]),
-                    hitbox: math::triangle_hitbox(
-                        EDGES_TRIANGLES[i][0][0].truncate(),
-                        EDGES_TRIANGLES[i][0][1].truncate(),
-                        EDGES_TRIANGLES[i][0][2].truncate(),
-                    ),
+                    // topology: Topology::Triangles(&EDGES_TRIANGLES[i]),
+                    // hitbox: math::triangle_hitbox(
+                    //     EDGES_TRIANGLES[i][0][0].truncate(),
+                    //     EDGES_TRIANGLES[i][0][1].truncate(),
+                    //     EDGES_TRIANGLES[i][0][2].truncate(),
+                    // ),
+                    topology: Topology::Triangles(&EDGE),
+                    hitbox: HitBox {
+                        center_x: 0.0,
+                        center_y: 0.0,
+                        half_x: OUTER_RADIUS - INNER_RADIUS,
+                        half_y: OUTER_RADIUS - INNER_RADIUS,
+                    },
                 })
-                .insert(Attack(EDGES_TRIANGLES[i][0][1]))
+                // .insert(Attack(EDGES_TRIANGLES[i][0][1]))
+                .insert(Attack(C2))
                 .id();
 
             commands.entity(boss).add_child(boss_edge);
@@ -290,7 +327,7 @@ pub fn add_boss_parts(
 //     asteroid_query: Query<&Asteroid>,
 // ) {
 //     let mut level = level_query.single_mut();
-//     if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
+//     if !level.boss.spawn_emptyed && level.distance_to_boss == 0 && asteroid_query.is_empty() {
 //         let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
 //         let vertices_position = triangles_from_polygon(&POLYGON, Vec3::ZERO)
 //             .into_iter()
@@ -313,7 +350,7 @@ pub fn add_boss_parts(
 //         boss.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
 //         commands
-//             .spawn()
+//             .spawn_empty()
 //             .insert(Boss)
 //             .insert(Health(HEALTH))
 //             .insert(Velocity(Vec3::ZERO))
@@ -324,14 +361,14 @@ pub fn add_boss_parts(
 //                     half_y: OUTER_RADIUS,
 //                 },
 //             })
-//             .insert_bundle(MaterialMesh2dBundle {
+//             .insert(MaterialMesh2dBundle {
 //                 mesh: meshes.add(boss).into(),
 //                 transform: Transform::from_translation(INITIAL_POSITION),
 //                 material: materials.add(COLOR.into()),
 //                 ..default()
 //             });
 
-//         level.boss_spawned = true;
+//         level.boss.spawn_emptyed = true;
 //     }
 // }
 
@@ -394,9 +431,9 @@ pub fn attack_boss(
                     }
 
                     let blast = commands
-                        .spawn()
+                        .spawn_empty()
                         .insert(Blast)
-                        .insert_bundle(MaterialMesh2dBundle {
+                        .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
                                     radius: BLAST_RADIUS,
@@ -412,7 +449,7 @@ pub fn attack_boss(
                     commands.entity(boss).add_child(blast);
 
                     commands
-                        .spawn()
+                        .spawn_empty()
                         .insert(Fire {
                             color: ATTACK_COLOR,
                             impact_radius: IMPACT_RADIUS,
@@ -432,7 +469,7 @@ pub fn attack_boss(
                                 half_y: 0.0,
                             },
                         })
-                        .insert_bundle(MaterialMesh2dBundle {
+                        .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
                                     radius: FIRE_RADIUS,
@@ -480,9 +517,9 @@ pub fn attack_boss_parts(
                     }
 
                     let blast = commands
-                        .spawn()
+                        .spawn_empty()
                         .insert(Blast)
-                        .insert_bundle(MaterialMesh2dBundle {
+                        .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
                                     radius: BLAST_RADIUS,
@@ -498,7 +535,7 @@ pub fn attack_boss_parts(
                     commands.entity(boss_part).add_child(blast);
 
                     //                 commands
-                    //                     .spawn()
+                    //                     .spawn_empty()
                     //                     .insert(Fire {
                     //                         color: ATTACK_COLOR,
                     //                         impact_radius: IMPACT_RADIUS,
@@ -516,7 +553,7 @@ pub fn attack_boss_parts(
                     //                             half_y: 0.0,
                     //                         },
                     //                     })
-                    //                     .insert_bundle(MaterialMesh2dBundle {
+                    //                     .insert(MaterialMesh2dBundle {
                     //                         mesh: meshes
                     //                             .add(Mesh::from(shape::Circle {
                     //                                 radius: FIRE_RADIUS,
@@ -524,7 +561,7 @@ pub fn attack_boss_parts(
                     //                             }))
                     //                             .into(),
                     //                         transform: Transform::from_translation(canon_absolute_position),
-                    //                         material: materials.add(ATTACK_COLOR.into()),
+                    //                         material: materials.addA(TTACK_COLOR.into()),
                     //                         ..default()
                     //                     });
                 }
@@ -537,7 +574,7 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    transform: &Transform,
+    transform: &GlobalTransform,
     velocity: &Velocity,
 ) {
     // let mut rng = rand::thread_rng();
@@ -574,10 +611,10 @@ pub fn explode(
     //     };
 
     //     commands
-    //         .spawn()
+    //         .spawn_empty()
     //         .insert(Debris)
     //         .insert(Velocity(velocity.0 + dv))
-    //         .insert_bundle(MaterialMesh2dBundle {
+    //         .insert(MaterialMesh2dBundle {
     //             mesh: meshes
     //                 .add(Mesh::from(shape::Circle {
     //                     radius: 20.0,

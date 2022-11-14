@@ -3,14 +3,17 @@ use bevy::prelude::*;
 
 fn main() {
     App::new()
-        .insert_resource(WindowDescriptor {
-            title: "Asteroids".to_string(),
-            width: WINDOW_WIDTH,
-            height: WINDOW_HEIGHT,
-            ..default()
-        })
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Asteroids".to_string(),
+                width: WINDOW_WIDTH,
+                height: WINDOW_HEIGHT,
+                // present_mode: PresentMode::AutoVsync,
+                ..default()
+            },
+            ..default()
+        }))
         .add_startup_system(camera)
         .add_startup_system(spaceship::spaceship)
         .add_startup_system(setup_level)

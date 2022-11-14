@@ -64,12 +64,12 @@ pub struct Enemy;
 pub struct Debris;
 
 pub fn camera(mut commands: Commands) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
-        .spawn_bundle(
+        .spawn(
             // Create a TextBundle that has a Text with a single section.
             TextBundle::from_section(
                 // Accepts a `String` or any type that converts into a `String`, such as `&str`
