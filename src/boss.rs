@@ -564,12 +564,11 @@ pub fn attack_boss_parts(
     }
 }
 
-pub fn explode(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    transform: &GlobalTransform,
-    velocity: &Velocity,
+pub fn explode(// mut commands: Commands,
+    // mut meshes: ResMut<Assets<Mesh>>,
+    // mut materials: ResMut<Assets<ColorMaterial>>,
+    // transform: &GlobalTransform,
+    // velocity: &Velocity,
 ) {
     // let mut rng = rand::thread_rng();
     // for _ in 1..100 {
