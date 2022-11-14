@@ -3,7 +3,9 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use crate::{
     asteroid::{self, Asteroid},
     boss::{self, Boss, BossPart},
-    collision::math::{circle_intersects_triangle, point_in_triangle, rectangles_intersect},
+    collision::math::{
+        circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
+    },
     spaceship::{self, Spaceship},
     Debris, Enemy, Fire, Health, Velocity,
 };
@@ -76,25 +78,33 @@ fn collision(
         }
         (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
         | (circle, Topology::Circle(radius), hitbox, point, Topology::Point, _) => {
-            if point.translation().x < circle.translation().x - hitbox.half_x
-                || point.translation().x > circle.translation().x + hitbox.half_x
-                || point.translation().y < circle.translation().y - hitbox.half_y
-                || point.translation().y > circle.translation().y + hitbox.half_y
-            {
-                false
-            } else {
+            // if point.translation().x < circle.translation().x - hitbox.half_x
+            //     || point.translation().x > circle.translation().x + hitbox.half_x
+            //     || point.translation().y < circle.translation().y - hitbox.half_y
+            //     || point.translation().y > circle.translation().y + hitbox.half_y
+            if point_in_rectangle(
+                point.translation().truncate(),
+                circle.translation().truncate(),
+                hitbox.half_x,
+                hitbox.half_y,
+            ) {
                 point.translation().distance(circle.translation()) < radius
+            } else {
+                false
             }
         }
         (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
         | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
-            if point.translation().x < triangles.translation().x - hitbox.half_x
-                || point.translation().x > triangles.translation().x + hitbox.half_x
-                || point.translation().y < triangles.translation().y - hitbox.half_y
-                || point.translation().y > triangles.translation().y + hitbox.half_y
-            {
-                false
-            } else {
+            // if point.translation().x < triangles.translation().x - hitbox.half_x
+            //     || point.translation().x > triangles.translation().x + hitbox.half_x
+            //     || point.translation().y < triangles.translation().y - hitbox.half_y
+            //     || point.translation().y > triangles.translation().y + hitbox.half_y
+            if point_in_rectangle(
+                point.translation().truncate(),
+                triangles.translation().truncate(),
+                hitbox.half_x,
+                hitbox.half_y,
+            ) {
                 for &[a, b, c] in triangles_list.iter() {
                     if point_in_triangle(
                         triangles
@@ -111,8 +121,9 @@ fn collision(
                         return true;
                     }
                 }
-                false
             }
+
+            false
         }
         (
             circle_transform,
@@ -130,7 +141,7 @@ fn collision(
             Topology::Circle(radius),
             circle_hitbox,
         ) => {
-            panic!("need to test hiboxes of all triangles and take care of rotated triangles");
+            // panic!("need to test hiboxes of all triangles and take care of rotated triangles");
             if !rectangles_intersect(
                 circle_transform.translation().truncate(),
                 circle_hitbox,
