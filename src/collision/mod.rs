@@ -28,8 +28,6 @@ pub struct Surface {
 
 #[derive(Component, Clone, Copy)]
 pub struct HitBox {
-    pub center_x: f32,
-    pub center_y: f32,
     pub half_x: f32,
     pub half_y: f32,
 }
@@ -90,13 +88,10 @@ fn collision(
         }
         (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
         | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
-            if point.translation().x < triangles.translation().x + hitbox.center_x - hitbox.half_x
-                || point.translation().x
-                    > triangles.translation().x + hitbox.center_x + hitbox.half_x
-                || point.translation().y
-                    < triangles.translation().y + hitbox.center_y - hitbox.half_y
-                || point.translation().y
-                    > triangles.translation().y + hitbox.center_y + hitbox.half_y
+            if point.translation().x < triangles.translation().x - hitbox.half_x
+                || point.translation().x > triangles.translation().x + hitbox.half_x
+                || point.translation().y < triangles.translation().y - hitbox.half_y
+                || point.translation().y > triangles.translation().y + hitbox.half_y
             {
                 false
             } else {

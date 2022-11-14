@@ -39,8 +39,6 @@ pub fn asteroids(
             .insert(Surface {
                 topology: Topology::Circle(radius),
                 hitbox: HitBox {
-                    center_x: 0.0,
-                    center_y: 0.0,
                     half_x: radius,
                     half_y: radius,
                 },

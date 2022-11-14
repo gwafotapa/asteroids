@@ -23,10 +23,8 @@ pub fn rectangles_intersect(
     position2: Vec2,
     hitbox2: HitBox,
 ) -> bool {
-    let intersect_x = (hitbox1.center_x + position1.x - hitbox2.center_x - position2.x).abs()
-        <= hitbox1.half_x + hitbox2.half_x;
-    let intersect_y = (hitbox1.center_y + position1.y - hitbox2.center_y - position2.y).abs()
-        <= hitbox1.half_y + hitbox2.half_y;
+    let intersect_x = (position1.x - position2.x).abs() <= hitbox1.half_x + hitbox2.half_x;
+    let intersect_y = (position1.y - position2.y).abs() <= hitbox1.half_y + hitbox2.half_y;
 
     return intersect_x && intersect_y;
 }

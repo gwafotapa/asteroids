@@ -57,9 +57,7 @@ const MIDPOINT_DB: Vec3 = Vec3 {
 // pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
 pub const TRIANGLES: [[Vec3; 3]; 4] = [[A, B, C], [D, C, B], [E, O, F], [G, F, O]];
 const HITBOX: HitBox = HitBox {
-    center_x: -0.5,
-    center_y: 0.0,
-    half_x: 35.0,
+    half_x: 40.0,
     half_y: 30.0,
 };
 pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
@@ -251,8 +249,6 @@ pub fn attack(
         .insert(Surface {
             topology: Topology::Point,
             hitbox: HitBox {
-                center_x: 0.0,
-                center_y: 0.0,
                 half_x: 0.0,
                 half_y: 0.0,
             },

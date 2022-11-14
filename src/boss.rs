@@ -249,8 +249,6 @@ pub fn add_boss_parts(
             .insert(Surface {
                 topology: Topology::Triangles(&CORE_TRIANGLES),
                 hitbox: HitBox {
-                    center_x: 0.0,
-                    center_y: 0.0,
                     half_x: INNER_RADIUS,
                     half_y: INNER_RADIUS,
                 },
@@ -303,8 +301,6 @@ pub fn add_boss_parts(
                     // ),
                     topology: Topology::Triangles(&EDGE),
                     hitbox: HitBox {
-                        center_x: 0.0,
-                        center_y: 0.0,
                         half_x: OUTER_RADIUS - INNER_RADIUS,
                         half_y: OUTER_RADIUS - INNER_RADIUS,
                     },
@@ -463,8 +459,6 @@ pub fn attack_boss(
                         .insert(Surface {
                             topology: Topology::Point,
                             hitbox: HitBox {
-                                center_x: 0.0,
-                                center_y: 0.0,
                                 half_x: 0.0,
                                 half_y: 0.0,
                             },
