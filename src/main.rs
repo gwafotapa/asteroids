@@ -39,6 +39,7 @@ fn main() {
         // .add_system(collision::detect_collision_fire_boss)
         .add_system(collision::detect_collision_fire_boss_parts)
         .add_system(collision::detect_collision_fire_spaceship)
+        .add_system(spaceship::explode)
         .add_system(asteroid::explode)
         .add_system(despawn_blast)
         // .add_system_to_stage(

@@ -68,7 +68,7 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query: Query<(&Asteroid, Entity, &GlobalTransform, &Velocity, &Health)>,
+    query: Query<(&Asteroid, Entity, &GlobalTransform, &Velocity, &Health)>,
     // children: Option<&Children>,
 ) {
     for (asteroid, a_entity, a_transform, a_velocity, a_health) in query.iter() {

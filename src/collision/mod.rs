@@ -167,23 +167,13 @@ fn collision(
 }
 
 pub fn detect_collision_spaceship_asteroid(
-    commands: Commands,
-    spaceship_query: Query<(Entity, &GlobalTransform, &Velocity, &Surface), With<Spaceship>>,
+    mut spaceship_query: Query<(&GlobalTransform, &Surface, &mut Health), With<Spaceship>>,
     asteroid_query: Query<(&GlobalTransform, &Surface), With<Asteroid>>,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((s_entity, s_transform, s_velocity, s_surface)) = spaceship_query.get_single() {
+    if let Ok((s_transform, s_surface, mut s_health)) = spaceship_query.get_single_mut() {
         for (a_transform, a_surface) in asteroid_query.iter() {
             if collision(s_transform, s_surface, a_transform, a_surface) {
-                spaceship::explode(
-                    commands,
-                    meshes,
-                    materials,
-                    s_entity,
-                    s_transform,
-                    s_velocity,
-                );
+                s_health.0 = 0;
                 return;
             }
         }
@@ -415,14 +405,6 @@ pub fn detect_collision_fire_spaceship(
 
                 spaceship_health.0 -= 1;
                 if spaceship_health.0 == 0 {
-                    spaceship::explode(
-                        commands,
-                        meshes,
-                        materials,
-                        spaceship,
-                        spaceship_transform,
-                        velocity,
-                    );
                     break;
                 }
             }

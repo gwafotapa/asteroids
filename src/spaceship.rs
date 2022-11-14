@@ -272,52 +272,61 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    entity: Entity,
-    transform: &GlobalTransform,
-    velocity: &Velocity,
+    query: Query<(Entity, &Health, &GlobalTransform, &Velocity)>,
 ) {
-    commands.entity(entity).despawn();
+    if let Ok((spaceship, s_health, s_transform, s_velocity)) = query.get_single() {
+        if s_health.0 > 0 {
+            return;
+        }
 
-    let mut rng = rand::thread_rng();
-    for _ in 1..10 {
-        let mut debris;
-        'outer: loop {
-            debris = Vec3 {
-                x: rng.gen_range(E.x..B.x),
-                y: rng.gen_range(A.y..D.y),
-                z: 0.0,
-            };
-            let mut triangles = TRIANGLES.iter();
-            while let Some(&[a, b, c]) = triangles.next() {
-                if point_in_triangle(debris.truncate(), a.truncate(), b.truncate(), c.truncate()) {
-                    break 'outer;
+        commands.entity(spaceship).despawn();
+
+        let mut rng = rand::thread_rng();
+        for _ in 1..10 {
+            let mut debris;
+            'outer: loop {
+                debris = Vec3 {
+                    x: rng.gen_range(E.x..B.x),
+                    y: rng.gen_range(A.y..D.y),
+                    z: 0.0,
+                };
+                let mut triangles = TRIANGLES.iter();
+                while let Some(&[a, b, c]) = triangles.next() {
+                    if point_in_triangle(
+                        debris.truncate(),
+                        a.truncate(),
+                        b.truncate(),
+                        c.truncate(),
+                    ) {
+                        break 'outer;
+                    }
                 }
             }
+            debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+
+            let debris_translation =
+                s_transform.translation() + debris * s_transform.to_scale_rotation_translation().0;
+            let dv = Vec3 {
+                x: rng.gen_range(-0.5..0.5),
+                y: rng.gen_range(-0.5..0.5),
+                z: 0.0,
+            };
+
+            commands
+                .spawn_empty()
+                .insert(Debris)
+                .insert(Velocity(s_velocity.0 + dv))
+                .insert(MaterialMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: 10.0,
+                            vertices: 4,
+                        }))
+                        .into(),
+                    transform: Transform::from_translation(debris_translation),
+                    material: materials.add(SPACESHIP_COLOR.into()),
+                    ..default()
+                });
         }
-        debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-
-        let debris_translation =
-            transform.translation() + debris * transform.to_scale_rotation_translation().0;
-        let dv = Vec3 {
-            x: rng.gen_range(-0.5..0.5),
-            y: rng.gen_range(-0.5..0.5),
-            z: 0.0,
-        };
-
-        commands
-            .spawn_empty()
-            .insert(Debris)
-            .insert(Velocity(velocity.0 + dv))
-            .insert(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius: 10.0,
-                        vertices: 4,
-                    }))
-                    .into(),
-                transform: Transform::from_translation(debris_translation),
-                material: materials.add(SPACESHIP_COLOR.into()),
-                ..default()
-            });
     }
 }
