@@ -62,16 +62,16 @@ fn collision(
             Topology::Circle(radius2),
             hitbox2,
         ) => {
-            if rectangles_intersect(
+            if !rectangles_intersect(
                 circle1.translation().truncate(),
                 hitbox1,
                 circle2.translation().truncate(),
                 hitbox2,
             ) {
-                circle1.translation().distance(circle2.translation()) < radius1 + radius2
-            } else {
-                false
+                return false;
             }
+
+            circle1.translation().distance(circle2.translation()) < radius1 + radius2
         }
         (_, Topology::Triangles(triangles1), _, _, Topology::Triangles(triangles2), _) => {
             unimplemented!()
@@ -82,16 +82,16 @@ fn collision(
             //     || point.translation().x > circle.translation().x + hitbox.half_x
             //     || point.translation().y < circle.translation().y - hitbox.half_y
             //     || point.translation().y > circle.translation().y + hitbox.half_y
-            if point_in_rectangle(
+            if !point_in_rectangle(
                 point.translation().truncate(),
                 circle.translation().truncate(),
                 hitbox.half_x,
                 hitbox.half_y,
             ) {
-                point.translation().distance(circle.translation()) < radius
-            } else {
-                false
+                return false;
             }
+
+            point.translation().distance(circle.translation()) < radius
         }
         (point, Topology::Point, _, triangles, Topology::Triangles(triangles_list), hitbox)
         | (triangles, Topology::Triangles(triangles_list), hitbox, point, Topology::Point, _) => {
@@ -99,27 +99,29 @@ fn collision(
             //     || point.translation().x > triangles.translation().x + hitbox.half_x
             //     || point.translation().y < triangles.translation().y - hitbox.half_y
             //     || point.translation().y > triangles.translation().y + hitbox.half_y
-            if point_in_rectangle(
+            if !point_in_rectangle(
                 point.translation().truncate(),
                 triangles.translation().truncate(),
                 hitbox.half_x,
                 hitbox.half_y,
             ) {
-                for &[a, b, c] in triangles_list.iter() {
-                    if point_in_triangle(
-                        triangles
-                            .to_scale_rotation_translation()
-                            .1
-                            // .rotation
-                            .inverse()
-                            .mul_vec3(point.translation() - triangles.translation())
-                            .truncate(),
-                        a.truncate(),
-                        b.truncate(),
-                        c.truncate(),
-                    ) {
-                        return true;
-                    }
+                return false;
+            }
+
+            for &[a, b, c] in triangles_list.iter() {
+                if point_in_triangle(
+                    triangles
+                        .to_scale_rotation_translation()
+                        .1
+                        // .rotation
+                        .inverse()
+                        .mul_vec3(point.translation() - triangles.translation())
+                        .truncate(),
+                    a.truncate(),
+                    b.truncate(),
+                    c.truncate(),
+                ) {
+                    return true;
                 }
             }
 
@@ -141,7 +143,6 @@ fn collision(
             Topology::Circle(radius),
             circle_hitbox,
         ) => {
-            // panic!("need to test hiboxes of all triangles and take care of rotated triangles");
             if !rectangles_intersect(
                 circle_transform.translation().truncate(),
                 circle_hitbox,
@@ -150,18 +151,26 @@ fn collision(
             ) {
                 return false;
             }
+
             for triangle in triangles {
                 if circle_intersects_triangle(
                     triangle[0].truncate(),
                     triangle[1].truncate(),
                     triangle[2].truncate(),
-                    circle_transform.translation().truncate()
-                        - triangles_transform.translation().truncate(),
+                    triangles_transform
+                        .to_scale_rotation_translation()
+                        .1
+                        .inverse()
+                        .mul_vec3(
+                            circle_transform.translation() - triangles_transform.translation(),
+                        )
+                        .truncate(),
                     radius,
                 ) {
                     return true;
                 }
             }
+
             false
         }
     }
