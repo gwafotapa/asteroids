@@ -62,12 +62,16 @@ fn collision(
             Topology::Circle(radius2),
             hitbox2,
         ) => {
-            rectangles_intersect(
+            if rectangles_intersect(
                 circle1.translation().truncate(),
                 hitbox1,
                 circle2.translation().truncate(),
                 hitbox2,
-            ) && circle1.translation().distance(circle2.translation()) < radius1 + radius2
+            ) {
+                circle1.translation().distance(circle2.translation()) < radius1 + radius2
+            } else {
+                false
+            }
         }
         (_, Topology::Triangles(triangles1), _, _, Topology::Triangles(triangles2), _) => {
             unimplemented!()
@@ -98,9 +102,6 @@ fn collision(
             } else {
                 for &[a, b, c] in triangles_list.iter() {
                     if point_in_triangle(
-                        a.truncate(),
-                        b.truncate(),
-                        c.truncate(),
                         triangles
                             .to_scale_rotation_translation()
                             .1
@@ -108,6 +109,9 @@ fn collision(
                             .inverse()
                             .mul_vec3(point.translation() - triangles.translation())
                             .truncate(),
+                        a.truncate(),
+                        b.truncate(),
+                        c.truncate(),
                     ) {
                         return true;
                     }

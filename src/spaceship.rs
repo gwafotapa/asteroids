@@ -293,7 +293,7 @@ pub fn explode(
             };
             let mut triangles = TRIANGLES.iter();
             while let Some(&[a, b, c]) = triangles.next() {
-                if point_in_triangle(a.truncate(), b.truncate(), c.truncate(), debris.truncate()) {
+                if point_in_triangle(debris.truncate(), a.truncate(), b.truncate(), c.truncate()) {
                     break 'outer;
                 }
             }
