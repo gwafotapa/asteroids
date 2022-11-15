@@ -219,6 +219,7 @@ pub fn detect_collision_fire_asteroid(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
+                    .insert(Health(1))
                     // .insert(Velocity(a_velocity.0))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
@@ -284,6 +285,7 @@ pub fn detect_collision_fire_boss(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
+                    .insert(Health(1))
                     // .insert(Velocity(b_velocity.0))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
@@ -341,6 +343,7 @@ pub fn detect_collision_fire_boss_parts(
                     let impact = commands
                         .spawn_empty()
                         .insert(Impact)
+                        .insert(Health(1))
                         // .insert(Velocity(b_velocity.0))
                         .insert(MaterialMesh2dBundle {
                             mesh: meshes
@@ -400,6 +403,7 @@ pub fn detect_collision_fire_spaceship(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
+                    .insert(Health(1))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -477,14 +481,28 @@ pub fn update_debris(
 
 pub fn update_impacts(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Transform), With<Impact>>,
+    mut query: Query<(Entity, &mut Health, &mut Transform, Option<&Parent>), With<Impact>>,
 ) {
-    for (impact, mut transform) in query.iter_mut() {
+    for (entity, mut health, mut transform, parent) in query.iter_mut() {
         // transform.translation += velocity.0;
         transform.scale -= 0.1;
-        if transform.scale.x < 0.05 {
-            // commands.entity(parent.get()).remove_children(&[impact]);
-            commands.entity(impact).despawn();
+        health.0 -= 1;
+        // if transform.scale.x < 0.05 {
+        if health.0 <= 0 {
+            if let Some(parent) = parent {
+                commands.entity(parent.get()).remove_children(&[entity]);
+                // commands.entity(entity).remove::<Parent>();
+                // } else {
+                //     commands.entity(entity).despawn();
+            }
+        }
+    }
+}
+
+pub fn despawn_impacts(mut commands: Commands, query: Query<(Entity, &Health), With<Impact>>) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn();
         }
     }
 }
