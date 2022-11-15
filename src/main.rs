@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 fn main() {
     static DESPAWN: &str = "despawn";
-    static REMOVE_COMPONENTS: &str = "remove components";
+    static CLEANUP: &str = "cleanup";
 
     App::new()
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
@@ -17,12 +17,8 @@ fn main() {
             },
             ..default()
         }))
-        .add_stage_after(
-            CoreStage::Update,
-            REMOVE_COMPONENTS,
-            SystemStage::single_threaded(),
-        )
-        .add_stage_after(REMOVE_COMPONENTS, DESPAWN, SystemStage::single_threaded())
+        .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::single_threaded())
+        .add_stage_after(CLEANUP, DESPAWN, SystemStage::single_threaded())
         .add_startup_system(camera)
         .add_startup_system(spaceship::spaceship)
         .add_startup_system(setup_level)
@@ -49,7 +45,7 @@ fn main() {
         .add_system(collision::detect_collision_fire_spaceship)
         .add_system(spaceship::explode)
         .add_system(despawn_blast)
-        .add_system_to_stage(REMOVE_COMPONENTS, asteroid::explode)
+        .add_system_to_stage(CLEANUP, asteroid::explode)
         .add_system_to_stage(DESPAWN, asteroid::despawn)
         .add_system_to_stage(DESPAWN, collision::despawn_impacts)
         .add_system_to_stage(DESPAWN, despawn_fire)

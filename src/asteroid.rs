@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    collision::{HitBox, Surface, Topology},
+    collision::{HitBox, Impact, Surface, Topology},
     Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
@@ -68,7 +68,7 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(
+    query_asteroid: Query<(
         &Asteroid,
         Option<&Children>,
         Entity,
@@ -76,8 +76,9 @@ pub fn explode(
         &Velocity,
         &Health,
     )>,
+    mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    for (asteroid, children, entity, transform, velocity, health) in query.iter() {
+    for (asteroid, children, entity, transform, velocity, health) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }
@@ -85,6 +86,10 @@ pub fn explode(
         if let Some(children) = children {
             for child in children {
                 commands.entity(*child).remove::<Parent>();
+                query_impact
+                    .get_component_mut::<Transform>(*child)
+                    .unwrap()
+                    .translation += transform.translation();
             }
         }
 
