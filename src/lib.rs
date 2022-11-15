@@ -45,7 +45,7 @@ pub struct Level {
 }
 
 #[derive(Component)]
-pub struct Health(usize);
+pub struct Health(i32);
 
 // #[derive(Component)]
 // pub struct Attack {
@@ -197,18 +197,23 @@ pub fn keyboard_input(
 //     }
 // }
 
-pub fn update_fire(
-    mut commands: Commands,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<Fire>>,
-) {
-    for (mut transform, velocity, fire) in query.iter_mut() {
+pub fn move_fire(mut query: Query<(&mut Health, &mut Transform, &Velocity), With<Fire>>) {
+    for (mut health, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;
         if transform.translation.x > WINDOW_WIDTH / 2.0
             || transform.translation.x < -WINDOW_WIDTH / 2.0
             || transform.translation.y > WINDOW_HEIGHT / 2.0
             || transform.translation.y < -WINDOW_HEIGHT / 2.0
         {
-            commands.entity(fire).despawn();
+            health.0 = 0;
+        }
+    }
+}
+
+pub fn despawn_fire(mut commands: Commands, query: Query<(Entity, &Health), With<Fire>>) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn();
         }
     }
 }

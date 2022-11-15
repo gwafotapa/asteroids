@@ -7,7 +7,7 @@ use crate::{
 };
 
 const MAX_SPEED: usize = 5;
-const MAX_HEALTH: usize = 6;
+const MAX_HEALTH: i32 = 6;
 pub const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 
 #[derive(Component)]

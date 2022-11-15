@@ -184,18 +184,24 @@ pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_fire: Query<(Entity, &Fire, &GlobalTransform, &Surface)>,
-    mut query_asteroid: Query<(
-        &Asteroid,
-        // Option<&Children>,
-        Entity,
-        &GlobalTransform,
-        &mut Health,
-        &Surface,
-        &Velocity,
-    )>,
+    mut query_fire: Query<
+        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
+        Without<Asteroid>,
+    >,
+    mut query_asteroid: Query<
+        (
+            &Asteroid,
+            // Option<&Children>,
+            Entity,
+            &GlobalTransform,
+            &mut Health,
+            &Surface,
+            &Velocity,
+        ),
+        // Without<Fire>,
+    >,
 ) {
-    for (f_entity, fire, f_transform, f_surface) in query_fire.iter() {
+    for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
         for (
             asteroid,
             // a_children,
@@ -207,9 +213,10 @@ pub fn detect_collision_fire_asteroid(
         ) in query_asteroid.iter_mut()
         {
             if collision(f_transform, f_surface, a_transform, a_surface) {
-                commands.entity(f_entity).despawn();
+                a_health.0 -= 1;
+                f_health.0 -= 1;
 
-                commands
+                let impact = commands
                     .spawn_empty()
                     .insert(Impact)
                     // .insert(Velocity(a_velocity.0))
@@ -220,12 +227,14 @@ pub fn detect_collision_fire_asteroid(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        transform: Transform::from_translation(f_transform.translation()),
+                        transform: Transform::from_translation(
+                            f_transform.translation() - a_transform.translation(),
+                        ),
                         material: materials.add(fire.color.into()),
                         ..default()
-                    });
+                    })
+                    .id();
 
-                a_health.0 -= 1;
                 // let mut impact_translation = f_transform.translation();
                 // if a_health.0 == 0 {
                 // asteroid::explode(
@@ -240,7 +249,7 @@ pub fn detect_collision_fire_asteroid(
                 // );
                 // } else {
                 //     impact_translation -= a_transform.translation();
-                //     commands.entity(a_entity).add_child(impact);
+                commands.entity(a_entity).add_child(impact);
                 // }
 
                 break;
@@ -253,14 +262,25 @@ pub fn detect_collision_fire_boss(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_fire: Query<(Entity, &Fire, &GlobalTransform, &Surface), Without<Enemy>>,
+    mut query_fire: Query<
+        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
+        (Without<Boss>, Without<Enemy>),
+    >,
     mut query_boss: Query<(Entity, &GlobalTransform, &mut Health, &Surface, &Velocity), With<Boss>>,
 ) {
     if let Ok((boss, b_transform, mut b_health, b_surface, b_velocity)) =
         query_boss.get_single_mut()
     {
-        for (f_entity, fire, f_transform, f_surface) in query_fire.iter() {
+        for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
             if collision(f_transform, f_surface, b_transform, b_surface) {
+                b_health.0 -= 1;
+                f_health.0 -= 1;
+
+                if b_health.0 == 0 {
+                    commands.entity(boss).despawn_recursive();
+                    // boss::explode(commands, meshes, materials, b_transform, b_velocity);
+                    break;
+                }
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
@@ -289,14 +309,6 @@ pub fn detect_collision_fire_boss(
                     .id();
 
                 // commands.entity(boss).add_child(impact);
-                commands.entity(f_entity).despawn();
-
-                b_health.0 -= 1;
-                if b_health.0 == 0 {
-                    commands.entity(boss).despawn_recursive();
-                    // boss::explode(commands, meshes, materials, b_transform, b_velocity);
-                    break;
-                }
             }
         }
     }
@@ -306,15 +318,26 @@ pub fn detect_collision_fire_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_fire: Query<(Entity, &Fire, &GlobalTransform, &Surface), Without<Enemy>>,
+    mut query_fire: Query<
+        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
+        (Without<BossPart>, Without<Enemy>),
+    >,
     mut query_boss: Query<(Entity, &GlobalTransform, &Velocity), With<Boss>>,
     mut query_boss_parts: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<BossPart>>,
 ) {
     if let Ok((b_entity, b_transform, b_velocity)) = query_boss.get_single_mut() {
-        for (f_entity, fire, f_transform, f_surface) in query_fire.iter() {
+        for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
             for (bp_entity, bp_transform, mut bp_health, bp_surface) in query_boss_parts.iter_mut()
             {
                 if collision(f_transform, f_surface, bp_transform, bp_surface) {
+                    f_health.0 -= 1;
+                    bp_health.0 -= 1;
+
+                    if bp_health.0 == 0 {
+                        commands.entity(bp_entity).despawn();
+                        // boss::explode(commands, meshes, materials, b_transform, b_velocity);
+                        break;
+                    }
                     let impact = commands
                         .spawn_empty()
                         .insert(Impact)
@@ -343,14 +366,6 @@ pub fn detect_collision_fire_boss_parts(
                         .id();
 
                     // commands.entity(bp_entity).add_child(impact);
-                    commands.entity(f_entity).despawn();
-
-                    bp_health.0 -= 1;
-                    if bp_health.0 == 0 {
-                        commands.entity(bp_entity).despawn();
-                        // boss::explode(commands, meshes, materials, b_transform, b_velocity);
-                        break;
-                    }
                 }
             }
         }
@@ -361,7 +376,10 @@ pub fn detect_collision_fire_spaceship(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_fire: Query<(Entity, &Fire, &GlobalTransform, &Surface), With<Enemy>>,
+    mut query_fire: Query<
+        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
+        (With<Enemy>, Without<Spaceship>),
+    >,
     mut query_spaceship: Query<
         (Entity, &GlobalTransform, &mut Health, &Velocity, &Surface),
         With<Spaceship>,
@@ -370,8 +388,15 @@ pub fn detect_collision_fire_spaceship(
     if let Ok((spaceship, s_transform, mut s_health, velocity, s_surface)) =
         query_spaceship.get_single_mut()
     {
-        for (f_entity, fire, f_transform, f_surface) in query_fire.iter() {
+        for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
             if collision(f_transform, f_surface, s_transform, s_surface) {
+                f_health.0 -= 1;
+                s_health.0 -= 1;
+
+                if s_health.0 == 0 {
+                    break;
+                }
+
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
@@ -392,12 +417,6 @@ pub fn detect_collision_fire_spaceship(
                     .id();
 
                 // commands.entity(spaceship).add_child(impact);
-                commands.entity(f_entity).despawn();
-
-                s_health.0 -= 1;
-                if s_health.0 == 0 {
-                    break;
-                }
             }
         }
     }

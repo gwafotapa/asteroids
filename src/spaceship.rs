@@ -6,7 +6,7 @@ use crate::{
     Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
-const HEALTH: usize = 10;
+const HEALTH: i32 = 10;
 
 const O: Vec3 = Vec3::ZERO;
 const A: Vec3 = Vec3 {
@@ -245,6 +245,7 @@ pub fn attack(
             impact_radius: IMPACT_RADIUS,
             impact_vertices: IMPACT_VERTICES,
         })
+        .insert(Health(1))
         .insert(Velocity(FIRE_VELOCITY))
         .insert(Surface {
             topology: Topology::Point,
