@@ -20,11 +20,11 @@ const P: Vec2 = Vec2 { x: -7.0, y: 2.0 };
 
 #[test]
 fn intersect_circle_and_line_segment() {
-    assert!(circle_intersects_line_segment(A, B, E, 2.0));
-    assert!(!circle_intersects_line_segment(A, B, C, 2.0));
-    assert!(!circle_intersects_line_segment(K, L, E, 2.0));
-    assert!(circle_intersects_line_segment(G, H, C, 2.0));
-    assert!(!circle_intersects_line_segment(G, H, M, 3.0));
-    assert!(!circle_intersects_line_segment(O, P, M, 3.0));
-    assert!(circle_intersects_line_segment(I, J, M, 3.0));
+    assert!(circle_intersects_line_segment(E, 2.0, A, B));
+    assert!(!circle_intersects_line_segment(C, 2.0, A, B));
+    assert!(!circle_intersects_line_segment(E, 2.0, K, L));
+    assert!(circle_intersects_line_segment(C, 2.0, G, H));
+    assert!(!circle_intersects_line_segment(M, 3.0, G, H));
+    assert!(!circle_intersects_line_segment(M, 3.0, O, P));
+    assert!(circle_intersects_line_segment(M, 3.0, I, J));
 }

@@ -31,7 +31,7 @@ pub fn rectangles_intersect(
 
 // Determines if the circle of center o and radius r intersects the line segment [mn].
 // https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
-pub fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool {
+pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool {
     let mn = n - m;
     let om = m - o;
 
@@ -68,9 +68,9 @@ pub fn circle_intersects_line_segment(m: Vec2, n: Vec2, o: Vec2, r: f32) -> bool
 // Determines if the disk of center o and radius r intersects the triangle abc
 pub fn circle_intersects_triangle(a: Vec2, b: Vec2, c: Vec2, o: Vec2, r: f32) -> bool {
     a.distance(o) < r
-        || circle_intersects_line_segment(a, b, o, r)
-        || circle_intersects_line_segment(b, c, o, r)
-        || circle_intersects_line_segment(c, a, o, r)
+        || circle_intersects_line_segment(o, r, a, b)
+        || circle_intersects_line_segment(o, r, b, c)
+        || circle_intersects_line_segment(o, r, c, a)
         || point_in_triangle(o, a, b, c)
 }
 

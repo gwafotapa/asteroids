@@ -275,12 +275,12 @@ pub fn explode(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query: Query<(Entity, &Health, &GlobalTransform, &Velocity), With<Spaceship>>,
 ) {
-    if let Ok((spaceship, s_health, s_transform, s_velocity)) = query.get_single() {
+    if let Ok((s_entity, s_health, s_transform, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
             return;
         }
 
-        commands.entity(spaceship).despawn();
+        commands.entity(s_entity).despawn();
 
         let mut rng = rand::thread_rng();
         for _ in 1..10 {
