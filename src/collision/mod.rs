@@ -353,23 +353,22 @@ pub fn detect_collision_fire_boss_parts(
                                     vertices: fire.impact_vertices,
                                 }))
                                 .into(),
-                            // transform: Transform::from_translation(
-                            //     bp_transform
-                            //         .to_scale_rotation_translation()
-                            //         .1
-                            //         .inverse()
-                            //         .mul_vec3(
-                            //             f_transform.translation() - bp_transform.translation(),
-                            //         ),
-                            // ),
-                            transform: Transform::from_translation(f_transform.translation()),
-                            // transform: *f_transform,
+                            transform: Transform::from_translation(
+                                bp_transform
+                                    .to_scale_rotation_translation()
+                                    .1
+                                    .inverse()
+                                    .mul_vec3(
+                                        f_transform.translation() - bp_transform.translation(),
+                                    ),
+                            ),
+                            // transform: Transform::from_translation(f_transform.translation()),
                             material: materials.add(fire.color.into()),
                             ..default()
                         })
                         .id();
 
-                    // commands.entity(bp_entity).add_child(impact);
+                    commands.entity(bp_entity).add_child(impact);
                 }
             }
         }

@@ -4,7 +4,7 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     asteroid::Asteroid,
-    collision::{math, HitBox, Surface, Topology, Triangle},
+    collision::{math, HitBox, Impact, Surface, Topology, Triangle},
     spaceship::Spaceship,
     Blast, Debris, Direction, Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
     WINDOW_WIDTH,
@@ -565,69 +565,91 @@ pub fn attack_boss_parts(
 }
 
 pub fn explode(
-    // mut commands: Commands,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<ColorMaterial>>,
-    // transform: &GlobalTransform,
-    // velocity: &Velocity,
-    query: Query<(Entity, &Health, &GlobalTransform), With<BossPart>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query_boss_parts: Query<
+        (
+            Entity,
+            Option<&Children>,
+            &Health,
+            &GlobalTransform,
+            &Parent,
+            &Surface,
+        ),
+        With<BossPart>,
+    >,
+    mut query_impact: Query<&mut Transform, With<Impact>>,
+    query_boss: Query<&Velocity, With<Boss>>,
 ) {
-    for (bp_entity, bp_health, bp_transform) in query.iter() {
-        if bp_health.0 > 0 {
+    for (entity, children, health, transform, parent, surface) in query_boss_parts.iter() {
+        if health.0 > 0 {
             continue;
         }
 
-        // commands.entity(bp_entity).despawn();
+        if let Some(children) = children {
+            for child in children {
+                commands.entity(*child).remove::<Parent>();
+                query_impact
+                    .get_component_mut::<Transform>(*child)
+                    .unwrap()
+                    .translation += transform.translation();
+            }
+        }
 
-        // let mut rng = rand::thread_rng();
-        // for _ in 1..100 {
-        //     let mut debris;
-        //     'outer: loop {
-        //         let rho = rng.gen_range(0.0..OUTER_RADIUS);
-        //         let theta = rng.gen_range(0.0..2.0 * PI);
-        //         debris = Vec3 {
-        //             x: rho * theta.cos(),
-        //             y: rho * theta.sin(),
-        //             z: 0.0,
-        //         };
-        //         let triangles = triangles_from_polygon(&POLYGON, Vec3::ZERO);
-        //         let mut iter_triangles = triangles.chunks(3);
-        //         while let Some(&[a, b, c]) = iter_triangles.next() {
-        //             if math::point_in_triangle(
-        //                 debris.truncate(),
-        //                 a.truncate(),
-        //                 b.truncate(),
-        //                 c.truncate(),
-        //             ) {
-        //                 break 'outer;
-        //             }
-        //         }
-        //     }
-        //     debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+        let mut rng = rand::thread_rng();
+        let velocity = query_boss.get_component::<Velocity>(parent.get()).unwrap();
 
-        //     let debris_translation = transform.translation + debris * transform.scale;
-        //     let dv = Vec3 {
-        //         x: rng.gen_range(-0.5..0.5),
-        //         y: rng.gen_range(-0.5..0.5),
-        //         z: 0.0,
-        //     };
+        if let Topology::Triangles(triangles) = surface.topology {
+            let mut triangles = triangles.iter();
+            while let Some(&[a, b, c]) = triangles.next() {
+                for _ in 0..10 {
+                    let mut debris;
+                    'outer: loop {
+                        debris = Vec3 {
+                            x: rng.gen_range(-surface.hitbox.half_x..surface.hitbox.half_x),
+                            y: rng.gen_range(-surface.hitbox.half_y..surface.hitbox.half_y),
+                            z: 0.0,
+                        };
+                        if math::point_in_triangle(
+                            debris.truncate(),
+                            a.truncate(),
+                            b.truncate(),
+                            c.truncate(),
+                        ) {
+                            break 'outer;
+                        }
+                    }
 
-        //     commands
-        //         .spawn_empty()
-        //         .insert(Debris)
-        //         .insert(Velocity(velocity.0 + dv))
-        //         .insert(MaterialMesh2dBundle {
-        //             mesh: meshes
-        //                 .add(Mesh::from(shape::Circle {
-        //                     radius: 20.0,
-        //                     vertices: 8,
-        //                 }))
-        //                 .into(),
-        //             transform: Transform::from_translation(debris_translation),
-        //             material: materials.add(COLOR.into()),
-        //             ..default()
-        //         });
-        // }
+                    let dv = Vec3 {
+                        x: rng.gen_range(-0.5..0.5),
+                        y: rng.gen_range(-0.5..0.5),
+                        z: 0.0,
+                    };
+
+                    commands
+                        .spawn_empty()
+                        .insert(Debris)
+                        .insert(Velocity(velocity.0 + dv))
+                        // .insert(Velocity(dv))
+                        .insert(MaterialMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: rng.gen_range(2.0..15.0),
+                                    vertices: 8,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(
+                                transform.transform_point(debris),
+                            ),
+                            material: materials.add(COLOR.into()),
+                            ..default()
+                        });
+                }
+            }
+        } else {
+            panic!("Boss topology should be triangles.");
+        }
     }
 }
 
