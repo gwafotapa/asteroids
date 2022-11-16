@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::Rng;
 
 use crate::{
-    collision::{math::point_in_triangle, HitBox, Surface, Topology},
+    collision::{math::point_in_triangle, HitBox, Surface, Topology, Triangle},
     Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
@@ -55,7 +55,7 @@ const MIDPOINT_DB: Vec3 = Vec3 {
     z: (D.z + B.z) / 2.0,
 };
 // pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-pub const TRIANGLES: [[Vec3; 3]; 4] = [[A, B, C], [D, C, B], [E, O, F], [G, F, O]];
+pub const TRIANGLES: [Triangle; 4] = [[A, B, C], [D, C, B], [E, O, F], [G, F, O]];
 const HITBOX: HitBox = HitBox {
     half_x: 40.0,
     half_y: 30.0,
@@ -273,7 +273,7 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(Entity, &Health, &GlobalTransform, &Velocity)>,
+    query: Query<(Entity, &Health, &GlobalTransform, &Velocity), With<Spaceship>>,
 ) {
     if let Ok((spaceship, s_health, s_transform, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
