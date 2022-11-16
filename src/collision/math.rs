@@ -66,7 +66,7 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
 }
 
 // Determines if the disk of center o and radius r intersects the triangle abc
-pub fn circle_intersects_triangle(a: Vec2, b: Vec2, c: Vec2, o: Vec2, r: f32) -> bool {
+pub fn circle_intersects_triangle(o: Vec2, r: f32, a: Vec2, b: Vec2, c: Vec2) -> bool {
     a.distance(o) < r
         || circle_intersects_line_segment(o, r, a, b)
         || circle_intersects_line_segment(o, r, b, c)

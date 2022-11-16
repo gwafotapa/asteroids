@@ -144,9 +144,6 @@ fn collision(
 
             for triangle in triangles {
                 if circle_intersects_triangle(
-                    triangle[0].truncate(),
-                    triangle[1].truncate(),
-                    triangle[2].truncate(),
                     triangles_transform
                         .to_scale_rotation_translation()
                         .1
@@ -156,6 +153,9 @@ fn collision(
                         )
                         .truncate(),
                     radius,
+                    triangle[0].truncate(),
+                    triangle[1].truncate(),
+                    triangle[2].truncate(),
                 ) {
                     return true;
                 }
