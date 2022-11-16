@@ -6,6 +6,8 @@ use crate::{Velocity, WINDOW_HEIGHT, WINDOW_WIDTH};
 const INITIAL_COUNT_BY_VELOCITY: usize = 10;
 const MAX_SPEED: usize = 10;
 const BACKGROUND: f32 = 0.0;
+const RADIUS: f32 = 1.0;
+const VERTICES: usize = 4;
 
 #[derive(Component)]
 pub struct Star;
@@ -28,8 +30,8 @@ pub fn setup_stars(
                 .insert(MaterialMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {
-                            radius: 1.0,
-                            vertices: 4,
+                            radius: RADIUS,
+                            vertices: VERTICES,
                         }))
                         .into(),
                     transform: Transform::from_translation(Vec3 {
@@ -62,8 +64,8 @@ pub fn add_stars(
         .insert(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
-                    radius: 1.0,
-                    vertices: 4,
+                    radius: RADIUS,
+                    vertices: VERTICES,
                 }))
                 .into(),
             transform: Transform::from_translation(Vec3 {
@@ -79,9 +81,9 @@ pub fn add_stars(
 pub fn update_stars(
     mut commands: Commands,
     // mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&mut Transform, &Velocity, Entity), With<Star>>,
+    mut query: Query<(Entity, &mut Transform, &Velocity), With<Star>>,
 ) {
-    for (mut transform, velocity, star) in query.iter_mut() {
+    for (star, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;
         //     for value in mesh.attributes() {
         //         println!("{}", value);
