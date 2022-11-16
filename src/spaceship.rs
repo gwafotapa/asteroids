@@ -221,6 +221,7 @@ pub fn attack(
     let blast = commands
         .spawn_empty()
         .insert(Blast)
+        .insert(Health(2))
         .insert(MaterialMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {
