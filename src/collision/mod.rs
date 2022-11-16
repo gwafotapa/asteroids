@@ -410,16 +410,15 @@ pub fn update_impacts(
     mut query: Query<(Entity, &mut Health, Option<&Parent>, &mut Transform), With<Impact>>,
 ) {
     for (entity, mut health, parent, mut transform) in query.iter_mut() {
-        // transform.translation += velocity.0;
-        transform.scale -= 0.1;
         health.0 -= 1;
-        // if transform.scale.x < 0.05 {
+        // if health.0 > 5 {
+        // transform.scale += 0.1;
+        // } else if health.0 > 0 {
+        transform.scale -= 0.1;
+        // } else {
         if health.0 <= 0 {
             if let Some(parent) = parent {
                 commands.entity(parent.get()).remove_children(&[entity]);
-                // commands.entity(entity).remove::<Parent>();
-                // } else {
-                //     commands.entity(entity).despawn();
             }
         }
     }

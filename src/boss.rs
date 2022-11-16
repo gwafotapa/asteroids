@@ -372,27 +372,32 @@ pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) 
     if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
         let mut rng = rand::thread_rng();
         let mut acceleration = Vec::new();
-        if transform.translation.x < WINDOW_WIDTH / 3.0 {
+
+        if velocity.0.x > -1.0 && transform.translation.x > -WINDOW_WIDTH / 4.0 {
             acceleration.push(Direction::Left);
         }
-        if transform.translation.x > -WINDOW_WIDTH / 3.0 {
+
+        if velocity.0.x < 1.0 && transform.translation.x < WINDOW_WIDTH / 4.0 {
             acceleration.push(Direction::Right);
         }
-        if transform.translation.y < WINDOW_HEIGHT / 3.0 {
-            acceleration.push(Direction::Up);
-        }
-        if transform.translation.y > -WINDOW_HEIGHT / 3.0 {
+
+        if velocity.0.y > -1.0 && transform.translation.y > -WINDOW_HEIGHT / 3.0 {
             acceleration.push(Direction::Down);
         }
 
+        if velocity.0.y < 1.0 && transform.translation.y < WINDOW_HEIGHT / 3.0 {
+            acceleration.push(Direction::Up);
+        }
+
         velocity.0 += match acceleration.choose(&mut rng).unwrap() {
-            Direction::Left => Vec3::from([ACCELERATION, 0.0, 0.0]),
-            Direction::Right => Vec3::from([-ACCELERATION, 0.0, 0.0]),
-            Direction::Up => Vec3::from([0.0, ACCELERATION, 0.0]),
+            Direction::Left => Vec3::from([-ACCELERATION, 0.0, 0.0]),
+            Direction::Right => Vec3::from([ACCELERATION, 0.0, 0.0]),
             Direction::Down => Vec3::from([0.0, -ACCELERATION, 0.0]),
+            Direction::Up => Vec3::from([0.0, ACCELERATION, 0.0]),
             // _ => unreachable!(),
         };
         transform.translation += velocity.0;
+        // println!("{}", velocity.0);
         transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), ROTATION_SPEED);
     }
 }

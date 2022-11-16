@@ -13,6 +13,7 @@ fn main() {
                 width: WINDOW_WIDTH,
                 height: WINDOW_HEIGHT,
                 // present_mode: PresentMode::AutoVsync,
+                // mode: WindowMode::SizedFullscreen,
                 ..default()
             },
             ..default()
