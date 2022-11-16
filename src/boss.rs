@@ -492,9 +492,10 @@ pub fn attack_boss_parts(
             for (bp_attack, bp_entity, bp_transform) in query_boss_part.iter() {
                 let mut rng = rand::thread_rng();
                 if rng.gen_range(0..100) == 0 {
+                    // let canon_absolute_position =
+                    //     b_transform.translation + b_transform.rotation.mul_vec3(bp_attack.0);
                     let canon_absolute_position =
-                        b_transform.translation + b_transform.rotation.mul_vec3(bp_attack.0);
-                    // + Vec3::from([0.0, 0.0, 1.0]);
+                        b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
                     // Compute coordinates of vector from boss to spaceship
                     let vec_boss_spaceship = s_transform.translation - b_transform.translation;
@@ -507,9 +508,10 @@ pub fn attack_boss_parts(
                         continue;
                     }
 
-                    let blast = commands
+                    commands
                         .spawn_empty()
                         .insert(Blast)
+                        .insert(Health(2))
                         .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
@@ -517,103 +519,122 @@ pub fn attack_boss_parts(
                                     vertices: BLAST_VERTICES,
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(bp_attack.0),
+                            // transform: Transform::from_translation(bp_attack.0),
+                            transform: Transform::from_translation(canon_absolute_position),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
+                        });
+
+                    // commands.entity(bp_entity).add_child(blast);
+
+                    commands
+                        .spawn_empty()
+                        .insert(Fire {
+                            color: ATTACK_COLOR,
+                            impact_radius: IMPACT_RADIUS,
+                            impact_vertices: IMPACT_VERTICES,
                         })
-                        .id();
-
-                    commands.entity(bp_entity).add_child(blast);
-
-                    //                 commands
-                    //                     .spawn_empty()
-                    //                     .insert(Fire {
-                    //                         color: ATTACK_COLOR,
-                    //                         impact_radius: IMPACT_RADIUS,
-                    //                         impact_vertices: IMPACT_VERTICES,
-                    //                     })
-                    //                     .Insert(Enemy)
-                    //                     .insert(Velocity(
-                    //                         (s_transform.translation - canon_absolute_position).normalize()
-                    //                             * FIRE_VELOCITY,
-                    //                     ))
-                    //                     .insert(Surface {
-                    //                         topology: Topology::Point,
-                    //                         hitbox: HitBox {
-                    //                             half_x: 0.0,
-                    //                             half_y: 0.0,
-                    //                         },
-                    //                     })
-                    //                     .insert(MaterialMesh2dBundle {
-                    //                         mesh: meshes
-                    //                             .add(Mesh::from(shape::Circle {
-                    //                                 radius: FIRE_RADIUS,
-                    //                                 vertices: FIRE_VERTICES,
-                    //                             }))
-                    //                             .into(),
-                    //                         transform: Transform::from_translation(canon_absolute_position),
-                    //                         material: materials.addA(TTACK_COLOR.into()),
-                    //                         ..default()
-                    //                     });
+                        .insert(Health(1))
+                        .insert(Enemy)
+                        .insert(Velocity(
+                            (s_transform.translation - canon_absolute_position).normalize()
+                                * FIRE_VELOCITY,
+                        ))
+                        .insert(Surface {
+                            topology: Topology::Point,
+                            hitbox: HitBox {
+                                half_x: 0.0,
+                                half_y: 0.0,
+                            },
+                        })
+                        .insert(MaterialMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: FIRE_RADIUS,
+                                    vertices: FIRE_VERTICES,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(canon_absolute_position),
+                            material: materials.add(ATTACK_COLOR.into()),
+                            ..default()
+                        });
                 }
             }
         }
     }
 }
 
-pub fn explode(// mut commands: Commands,
+pub fn explode(
+    // mut commands: Commands,
     // mut meshes: ResMut<Assets<Mesh>>,
     // mut materials: ResMut<Assets<ColorMaterial>>,
     // transform: &GlobalTransform,
     // velocity: &Velocity,
+    query: Query<(Entity, &Health, &GlobalTransform), With<BossPart>>,
 ) {
-    // let mut rng = rand::thread_rng();
-    // for _ in 1..100 {
-    //     let mut debris;
-    //     'outer: loop {
-    //         let rho = rng.gen_range(0.0..OUTER_RADIUS);
-    //         let theta = rng.gen_range(0.0..2.0 * PI);
-    //         debris = Vec3 {
-    //             x: rho * theta.cos(),
-    //             y: rho * theta.sin(),
-    //             z: 0.0,
-    //         };
-    //         let triangles = triangles_from_polygon(&POLYGON, Vec3::ZERO);
-    //         let mut iter_triangles = triangles.chunks(3);
-    //         while let Some(&[a, b, c]) = iter_triangles.next() {
-    //             if math::point_in_triangle(
-    //                 debris.truncate(),
-    //                 a.truncate(),
-    //                 b.truncate(),
-    //                 c.truncate(),
-    //             ) {
-    //                 break 'outer;
-    //             }
-    //         }
-    //     }
-    //     debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+    for (bp_entity, bp_health, bp_transform) in query.iter() {
+        if bp_health.0 > 0 {
+            continue;
+        }
 
-    //     let debris_translation = transform.translation + debris * transform.scale;
-    //     let dv = Vec3 {
-    //         x: rng.gen_range(-0.5..0.5),
-    //         y: rng.gen_range(-0.5..0.5),
-    //         z: 0.0,
-    //     };
+        // commands.entity(bp_entity).despawn();
 
-    //     commands
-    //         .spawn_empty()
-    //         .insert(Debris)
-    //         .insert(Velocity(velocity.0 + dv))
-    //         .insert(MaterialMesh2dBundle {
-    //             mesh: meshes
-    //                 .add(Mesh::from(shape::Circle {
-    //                     radius: 20.0,
-    //                     vertices: 8,
-    //                 }))
-    //                 .into(),
-    //             transform: Transform::from_translation(debris_translation),
-    //             material: materials.add(COLOR.into()),
-    //             ..default()
-    //         });
-    // }
+        // let mut rng = rand::thread_rng();
+        // for _ in 1..100 {
+        //     let mut debris;
+        //     'outer: loop {
+        //         let rho = rng.gen_range(0.0..OUTER_RADIUS);
+        //         let theta = rng.gen_range(0.0..2.0 * PI);
+        //         debris = Vec3 {
+        //             x: rho * theta.cos(),
+        //             y: rho * theta.sin(),
+        //             z: 0.0,
+        //         };
+        //         let triangles = triangles_from_polygon(&POLYGON, Vec3::ZERO);
+        //         let mut iter_triangles = triangles.chunks(3);
+        //         while let Some(&[a, b, c]) = iter_triangles.next() {
+        //             if math::point_in_triangle(
+        //                 debris.truncate(),
+        //                 a.truncate(),
+        //                 b.truncate(),
+        //                 c.truncate(),
+        //             ) {
+        //                 break 'outer;
+        //             }
+        //         }
+        //     }
+        //     debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+
+        //     let debris_translation = transform.translation + debris * transform.scale;
+        //     let dv = Vec3 {
+        //         x: rng.gen_range(-0.5..0.5),
+        //         y: rng.gen_range(-0.5..0.5),
+        //         z: 0.0,
+        //     };
+
+        //     commands
+        //         .spawn_empty()
+        //         .insert(Debris)
+        //         .insert(Velocity(velocity.0 + dv))
+        //         .insert(MaterialMesh2dBundle {
+        //             mesh: meshes
+        //                 .add(Mesh::from(shape::Circle {
+        //                     radius: 20.0,
+        //                     vertices: 8,
+        //                 }))
+        //                 .into(),
+        //             transform: Transform::from_translation(debris_translation),
+        //             material: materials.add(COLOR.into()),
+        //             ..default()
+        //         });
+        // }
+    }
+}
+
+pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<BossPart>>) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn();
+        }
+    }
 }

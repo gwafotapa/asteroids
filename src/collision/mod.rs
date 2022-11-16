@@ -335,11 +335,12 @@ pub fn detect_collision_fire_boss_parts(
                     f_health.0 -= 1;
                     bp_health.0 -= 1;
 
-                    if bp_health.0 == 0 {
-                        commands.entity(bp_entity).despawn();
-                        // boss::explode(commands, meshes, materials, b_transform, b_velocity);
-                        break;
-                    }
+                    // if bp_health.0 == 0 {
+                    //     commands.entity(bp_entity).despawn();
+                    //     // boss::explode(commands, meshes, materials, b_transform, b_velocity);
+                    //     break;
+                    // }
+
                     let impact = commands
                         .spawn_empty()
                         .insert(Impact)
@@ -383,22 +384,13 @@ pub fn detect_collision_fire_spaceship(
         (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
         (With<Enemy>, Without<Spaceship>),
     >,
-    mut query_spaceship: Query<
-        (Entity, &GlobalTransform, &mut Health, &Velocity, &Surface),
-        With<Spaceship>,
-    >,
+    mut query_spaceship: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Spaceship>>,
 ) {
-    if let Ok((s_entity, s_transform, mut s_health, velocity, s_surface)) =
-        query_spaceship.get_single_mut()
-    {
+    if let Ok((s_entity, s_transform, mut s_health, s_surface)) = query_spaceship.get_single_mut() {
         for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
             if collision(f_transform, f_surface, s_transform, s_surface) {
                 f_health.0 -= 1;
                 s_health.0 -= 1;
-
-                if s_health.0 == 0 {
-                    break;
-                }
 
                 let impact = commands
                     .spawn_empty()

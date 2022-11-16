@@ -20,7 +20,7 @@ pub enum Direction {
 const ALTITUDE: f32 = 500.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
 pub const WINDOW_HEIGHT: f32 = 600.0;
-const INITIAL_DISTANCE_TO_BOSS: usize = 10000;
+const INITIAL_DISTANCE_TO_BOSS: usize = 0000;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
@@ -218,9 +218,20 @@ pub fn despawn_fire(mut commands: Commands, query: Query<(Entity, &Health), With
     }
 }
 
-pub fn despawn_blast(mut commands: Commands, query: Query<(Entity, &Parent), With<Blast>>) {
-    for (blast, parent) in query.iter() {
-        commands.entity(parent.get()).remove_children(&[blast]);
-        commands.entity(blast).despawn();
+// pub fn update_blast(mut query: Query<&mut Health, With<Blast>>) {
+//     for mut health in query.iter_mut() {
+//         // if let Some(parent) = parent {
+//         //     commands.entity(parent.get()).remove_children(&[entity]);
+//         // }
+//         health.0 -= 1;
+//     }
+// }
+
+pub fn despawn_blast(mut commands: Commands, mut query: Query<(Entity, &mut Health), With<Blast>>) {
+    for (blast, mut health) in query.iter_mut() {
+        health.0 -= 1;
+        if health.0 <= 0 {
+            commands.entity(blast).despawn();
+        }
     }
 }
