@@ -185,7 +185,7 @@ pub fn detect_collision_fire_asteroid(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<(&Fire, &GlobalTransform, &mut Health, &Surface), Without<Asteroid>>,
-    mut query_asteroid: Query<(Entity, &GlobalTransform, &mut Health, &Surface)>,
+    mut query_asteroid: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Asteroid>>,
 ) {
     for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
         for (a_entity, a_transform, mut a_health, a_surface) in query_asteroid.iter_mut() {
@@ -196,7 +196,7 @@ pub fn detect_collision_fire_asteroid(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
-                    .insert(Health(1))
+                    .insert(Health(10))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -296,7 +296,7 @@ pub fn detect_collision_fire_boss_parts(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
-                    .insert(Health(1))
+                    .insert(Health(10))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -327,13 +327,13 @@ pub fn detect_collision_fire_spaceship(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<
-        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
+        (&Fire, &GlobalTransform, &mut Health, &Surface),
         (With<Enemy>, Without<Spaceship>),
     >,
     mut query_spaceship: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Spaceship>>,
 ) {
     if let Ok((s_entity, s_transform, mut s_health, s_surface)) = query_spaceship.get_single_mut() {
-        for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+        for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
             if collision(f_transform, f_surface, s_transform, s_surface) {
                 f_health.0 -= 1;
                 s_health.0 -= 1;
@@ -341,7 +341,7 @@ pub fn detect_collision_fire_spaceship(
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
-                    .insert(Health(1))
+                    .insert(Health(10))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -349,16 +349,16 @@ pub fn detect_collision_fire_spaceship(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        // transform: Transform::from_translation(
-                        //     f_transform.translation() - s_transform.translation(),
-                        // ),
-                        transform: Transform::from_translation(f_transform.translation()),
+                        transform: Transform::from_translation(
+                            f_transform.translation() - s_transform.translation(),
+                        ),
+                        // transform: Transform::from_translation(f_transform.translation()),
                         material: materials.add(fire.color.into()),
                         ..default()
                     })
                     .id();
 
-                // commands.entity(s_entity).add_child(impact);
+                commands.entity(s_entity).add_child(impact);
             }
         }
     }

@@ -484,16 +484,14 @@ pub fn attack_boss_parts(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss: Query<&Transform, With<Boss>>,
-    query_boss_part: Query<(&Attack, &Transform), With<BossPart>>,
+    query_boss_part: Query<(&Attack, Entity, &Transform), With<BossPart>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
     if let Ok(b_transform) = query_boss.get_single() {
         if let Ok(s_transform) = query_spaceship.get_single() {
-            for (bp_attack, bp_transform) in query_boss_part.iter() {
+            for (bp_attack, bp_entity, bp_transform) in query_boss_part.iter() {
                 let mut rng = rand::thread_rng();
                 if rng.gen_range(0..100) == 0 {
-                    // let canon_absolute_position =
-                    //     b_transform.translation + b_transform.rotation.mul_vec3(bp_attack.0);
                     let canon_absolute_position =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
@@ -508,7 +506,7 @@ pub fn attack_boss_parts(
                         continue;
                     }
 
-                    commands
+                    let blast = commands
                         .spawn_empty()
                         .insert(Blast)
                         .insert(Health(2))
@@ -519,13 +517,14 @@ pub fn attack_boss_parts(
                                     vertices: BLAST_VERTICES,
                                 }))
                                 .into(),
-                            // transform: Transform::from_translation(bp_attack.0),
-                            transform: Transform::from_translation(canon_absolute_position),
+                            transform: Transform::from_translation(bp_attack.0),
+                            // transform: Transform::from_translation(canon_absolute_position),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
-                        });
+                        })
+                        .id();
 
-                    // commands.entity(bp_entity).add_child(blast);
+                    commands.entity(bp_entity).add_child(blast);
 
                     commands
                         .spawn_empty()

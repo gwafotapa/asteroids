@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBu
 use rand::Rng;
 
 use crate::{
-    collision::{math::point_in_triangle, HitBox, Surface, Topology, Triangle},
+    collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
     Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
@@ -274,14 +274,23 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(Entity, &Health, &GlobalTransform, &Velocity), With<Spaceship>>,
+    query: Query<(Option<&Children>, &Health, &GlobalTransform, &Velocity), With<Spaceship>>,
+    mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    if let Ok((s_entity, s_health, s_transform, s_velocity)) = query.get_single() {
+    if let Ok((s_children, s_health, s_transform, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
             return;
         }
 
-        commands.entity(s_entity).despawn();
+        if let Some(children) = s_children {
+            for child in children {
+                commands.entity(*child).remove::<Parent>();
+                query_impact
+                    .get_component_mut::<Transform>(*child)
+                    .unwrap()
+                    .translation += s_transform.translation();
+            }
+        }
 
         let mut rng = rand::thread_rng();
         for _ in 1..10 {
@@ -329,6 +338,14 @@ pub fn explode(
                     material: materials.add(SPACESHIP_COLOR.into()),
                     ..default()
                 });
+        }
+    }
+}
+
+pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn();
         }
     }
 }
