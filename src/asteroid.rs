@@ -71,14 +71,13 @@ pub fn explode(
     query_asteroid: Query<(
         &Asteroid,
         Option<&Children>,
-        Entity,
         &GlobalTransform,
         &Health,
         &Velocity,
     )>,
     mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    for (asteroid, children, entity, transform, health, velocity) in query_asteroid.iter() {
+    for (asteroid, children, transform, health, velocity) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }
@@ -100,15 +99,10 @@ pub fn explode(
             let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
             let debris_dy = rng.gen_range(-dy_max..dy_max);
             let debris_y = transform.translation().y + debris_dy;
-            // let z = rng.gen_range(
-            //     transform.translation.z - asteroid.radius
-            //         ..transform.translation.z + asteroid.radius,
-            // );
 
             let dv = Vec3 {
                 x: rng.gen_range(-0.5..0.5),
                 y: rng.gen_range(-0.5..0.5),
-                // z: rng.gen_range(-0.5..0.5),
                 z: 0.0,
             };
 
@@ -116,7 +110,6 @@ pub fn explode(
                 .spawn_empty()
                 .insert(Debris)
                 .insert(Velocity(velocity.0 + dv))
-                // .insert(Velocity(velocity.0 * 0.5))
                 .insert(MaterialMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {

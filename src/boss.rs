@@ -116,7 +116,7 @@ const HEALTH: i32 = 10;
 
 pub const ATTACK_COLOR: Color = Color::RED;
 const FIRE_VELOCITY: f32 = 4.0;
-const ATTACK_SOURCE: [Vec3; 8] = [A0, A2, A4, A6, A8, A10, A12, A14];
+// const ATTACK_SOURCE: [Vec3; 8] = [A0, A2, A4, A6, A8, A10, A12, A14];
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const FIRE_RADIUS: f32 = 5.0;
@@ -148,16 +148,16 @@ pub struct Attack(Vec3);
 // There are 8 egdes.
 // Each edge is a triangle and constitutes a whole part of the boss.
 const EDGES: usize = 8;
-const EDGES_TRIANGLES: [[Triangle; 1]; EDGES] = [
-    [[A1, A2, A3]],
-    [[A3, A4, A5]],
-    [[A5, A6, A7]],
-    [[A7, A8, A9]],
-    [[A9, A10, A11]],
-    [[A11, A12, A13]],
-    [[A13, A14, A15]],
-    [[A15, A0, A1]],
-];
+// const EDGES_TRIANGLES: [[Triangle; 1]; EDGES] = [
+//     [[A1, A2, A3]],
+//     [[A3, A4, A5]],
+//     [[A5, A6, A7]],
+//     [[A7, A8, A9]],
+//     [[A9, A10, A11]],
+//     [[A11, A12, A13]],
+//     [[A13, A14, A15]],
+//     [[A15, A0, A1]],
+// ];
 
 // The body is a collection of 6 triangles. It is a single part of the boss.
 const CORE_PARTS: usize = 6;
@@ -397,99 +397,99 @@ pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) 
     }
 }
 
-pub fn attack_boss(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss: Query<(Entity, &Transform), With<Boss>>,
-    query_spaceship: Query<&Transform, With<Spaceship>>,
-) {
-    if let Ok((b_entity, b_transform)) = query_boss.get_single() {
-        if let Ok(s_transform) = query_spaceship.get_single() {
-            let mut rng = rand::thread_rng();
-            for canon_relative_position in ATTACK_SOURCE {
-                if rng.gen_range(0..100) == 0 {
-                    let canon_absolute_position = b_transform.translation
-                        + b_transform.rotation.mul_vec3(canon_relative_position);
-                    // + Vec3::from([0.0, 0.0, 1.0]);
+// pub fn attack_boss(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     query_boss: Query<(Entity, &Transform), With<Boss>>,
+//     query_spaceship: Query<&Transform, With<Spaceship>>,
+// ) {
+//     if let Ok((b_entity, b_transform)) = query_boss.get_single() {
+//         if let Ok(s_transform) = query_spaceship.get_single() {
+//             let mut rng = rand::thread_rng();
+//             for canon_relative_position in ATTACK_SOURCE {
+//                 if rng.gen_range(0..100) == 0 {
+//                     let canon_absolute_position = b_transform.translation
+//                         + b_transform.rotation.mul_vec3(canon_relative_position);
+//                     // + Vec3::from([0.0, 0.0, 1.0]);
 
-                    // Compute coordinates of vector from boss to spaceship
-                    let vec_boss_spaceship = s_transform.translation - b_transform.translation;
-                    // Compute coordinates of vector from boss to canon
-                    let vec_boss_center_canon = canon_absolute_position - b_transform.translation;
-                    let scalar_product = vec_boss_spaceship.x * vec_boss_center_canon.x
-                        + vec_boss_spaceship.y * vec_boss_center_canon.y;
-                    // Scalar product sign determines whether or not canon has line of sight
-                    if scalar_product < 0.0 {
-                        continue;
-                    }
+//                     // Compute coordinates of vector from boss to spaceship
+//                     let vec_boss_spaceship = s_transform.translation - b_transform.translation;
+//                     // Compute coordinates of vector from boss to canon
+//                     let vec_boss_center_canon = canon_absolute_position - b_transform.translation;
+//                     let scalar_product = vec_boss_spaceship.x * vec_boss_center_canon.x
+//                         + vec_boss_spaceship.y * vec_boss_center_canon.y;
+//                     // Scalar product sign determines whether or not canon has line of sight
+//                     if scalar_product < 0.0 {
+//                         continue;
+//                     }
 
-                    let blast = commands
-                        .spawn_empty()
-                        .insert(Blast)
-                        .insert(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: BLAST_RADIUS,
-                                    vertices: BLAST_VERTICES,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(canon_relative_position),
-                            material: materials.add(ATTACK_COLOR.into()),
-                            ..default()
-                        })
-                        .id();
+//                     let blast = commands
+//                         .spawn_empty()
+//                         .insert(Blast)
+//                         .insert(MaterialMesh2dBundle {
+//                             mesh: meshes
+//                                 .add(Mesh::from(shape::Circle {
+//                                     radius: BLAST_RADIUS,
+//                                     vertices: BLAST_VERTICES,
+//                                 }))
+//                                 .into(),
+//                             transform: Transform::from_translation(canon_relative_position),
+//                             material: materials.add(ATTACK_COLOR.into()),
+//                             ..default()
+//                         })
+//                         .id();
 
-                    commands.entity(b_entity).add_child(blast);
+//                     commands.entity(b_entity).add_child(blast);
 
-                    commands
-                        .spawn_empty()
-                        .insert(Fire {
-                            color: ATTACK_COLOR,
-                            impact_radius: IMPACT_RADIUS,
-                            impact_vertices: IMPACT_VERTICES,
-                        })
-                        .insert(Health(1))
-                        .insert(Enemy)
-                        .insert(Velocity(
-                            (s_transform.translation - canon_absolute_position).normalize()
-                                * FIRE_VELOCITY,
-                        ))
-                        .insert(Surface {
-                            topology: Topology::Point,
-                            hitbox: HitBox {
-                                half_x: 0.0,
-                                half_y: 0.0,
-                            },
-                        })
-                        .insert(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: FIRE_RADIUS,
-                                    vertices: FIRE_VERTICES,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(canon_absolute_position),
-                            material: materials.add(ATTACK_COLOR.into()),
-                            ..default()
-                        });
-                }
-            }
-        }
-    }
-}
+//                     commands
+//                         .spawn_empty()
+//                         .insert(Fire {
+//                             color: ATTACK_COLOR,
+//                             impact_radius: IMPACT_RADIUS,
+//                             impact_vertices: IMPACT_VERTICES,
+//                         })
+//                         .insert(Health(1))
+//                         .insert(Enemy)
+//                         .insert(Velocity(
+//                             (s_transform.translation - canon_absolute_position).normalize()
+//                                 * FIRE_VELOCITY,
+//                         ))
+//                         .insert(Surface {
+//                             topology: Topology::Point,
+//                             hitbox: HitBox {
+//                                 half_x: 0.0,
+//                                 half_y: 0.0,
+//                             },
+//                         })
+//                         .insert(MaterialMesh2dBundle {
+//                             mesh: meshes
+//                                 .add(Mesh::from(shape::Circle {
+//                                     radius: FIRE_RADIUS,
+//                                     vertices: FIRE_VERTICES,
+//                                 }))
+//                                 .into(),
+//                             transform: Transform::from_translation(canon_absolute_position),
+//                             material: materials.add(ATTACK_COLOR.into()),
+//                             ..default()
+//                         });
+//                 }
+//             }
+//         }
+//     }
+// }
 
 pub fn attack_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss: Query<&Transform, With<Boss>>,
-    query_boss_part: Query<(&Attack, Entity, &Transform), With<BossPart>>,
+    query_boss_part: Query<(&Attack, &Transform), With<BossPart>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
     if let Ok(b_transform) = query_boss.get_single() {
         if let Ok(s_transform) = query_spaceship.get_single() {
-            for (bp_attack, bp_entity, bp_transform) in query_boss_part.iter() {
+            for (bp_attack, bp_transform) in query_boss_part.iter() {
                 let mut rng = rand::thread_rng();
                 if rng.gen_range(0..100) == 0 {
                     // let canon_absolute_position =
@@ -570,7 +570,6 @@ pub fn explode(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss_parts: Query<
         (
-            Entity,
             Option<&Children>,
             &Health,
             &GlobalTransform,
@@ -582,7 +581,7 @@ pub fn explode(
     mut query_impact: Query<&mut Transform, With<Impact>>,
     query_boss: Query<&Velocity, With<Boss>>,
 ) {
-    for (entity, children, health, transform, parent, surface) in query_boss_parts.iter() {
+    for (children, health, transform, parent, surface) in query_boss_parts.iter() {
         if health.0 > 0 {
             continue;
         }

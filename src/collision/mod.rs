@@ -1,12 +1,12 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use crate::{
-    asteroid::{self, Asteroid},
-    boss::{self, Boss, BossPart},
+    asteroid::Asteroid,
+    boss::BossPart,
     collision::math::{
         circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
     },
-    spaceship::{self, Spaceship},
+    spaceship::Spaceship,
     Debris, Enemy, Fire, Health, Velocity,
 };
 
@@ -72,7 +72,7 @@ fn collision(
 
             circle1.translation().distance(circle2.translation()) < radius1 + radius2
         }
-        (_, Topology::Triangles(triangles1), _, _, Topology::Triangles(triangles2), _) => {
+        (_, Topology::Triangles(_triangles1), _, _, Topology::Triangles(_triangles2), _) => {
             unimplemented!()
         }
         (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
@@ -184,34 +184,11 @@ pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_fire: Query<
-        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
-        Without<Asteroid>,
-    >,
-    mut query_asteroid: Query<
-        (
-            &Asteroid,
-            // Option<&Children>,
-            Entity,
-            &GlobalTransform,
-            &mut Health,
-            &Surface,
-            &Velocity,
-        ),
-        // Without<Fire>,
-    >,
+    mut query_fire: Query<(&Fire, &GlobalTransform, &mut Health, &Surface), Without<Asteroid>>,
+    mut query_asteroid: Query<(Entity, &GlobalTransform, &mut Health, &Surface)>,
 ) {
-    for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-        for (
-            asteroid,
-            // a_children,
-            a_entity,
-            a_transform,
-            mut a_health,
-            a_surface,
-            a_velocity,
-        ) in query_asteroid.iter_mut()
-        {
+    for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+        for (a_entity, a_transform, mut a_health, a_surface) in query_asteroid.iter_mut() {
             if collision(f_transform, f_surface, a_transform, a_surface) {
                 a_health.0 -= 1;
                 f_health.0 -= 1;
@@ -220,7 +197,6 @@ pub fn detect_collision_fire_asteroid(
                     .spawn_empty()
                     .insert(Impact)
                     .insert(Health(1))
-                    // .insert(Velocity(a_velocity.0))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -236,22 +212,7 @@ pub fn detect_collision_fire_asteroid(
                     })
                     .id();
 
-                // let mut impact_translation = f_transform.translation();
-                // if a_health.0 == 0 {
-                // asteroid::explode(
-                //     &mut commands,
-                //     &mut meshes,
-                //     &mut materials,
-                //     asteroid,
-                //     a_entity,
-                //     a_transform,
-                //     a_velocity,
-                //     // a_children,
-                // );
-                // } else {
-                //     impact_translation -= a_transform.translation();
                 commands.entity(a_entity).add_child(impact);
-                // }
 
                 break;
             }
@@ -259,34 +220,83 @@ pub fn detect_collision_fire_asteroid(
     }
 }
 
-pub fn detect_collision_fire_boss(
+// pub fn detect_collision_fire_boss(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     mut query_fire: Query<
+//         (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
+//         (Without<Boss>, Without<Enemy>),
+//     >,
+//     mut query_boss: Query<(Entity, &GlobalTransform, &mut Health, &Surface, &Velocity), With<Boss>>,
+// ) {
+//     if let Ok((b_entity, b_transform, mut b_health, b_surface, b_velocity)) =
+//         query_boss.get_single_mut()
+//     {
+//         for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+//             if collision(f_transform, f_surface, b_transform, b_surface) {
+//                 b_health.0 -= 1;
+//                 f_health.0 -= 1;
+
+//                 if b_health.0 == 0 {
+//                     commands.entity(b_entity).despawn_recursive();
+//                     // boss::explode(commands, meshes, materials, b_transform, b_velocity);
+//                     break;
+//                 }
+//                 let impact = commands
+//                     .spawn_empty()
+//                     .insert(Impact)
+//                     .insert(Health(1))
+//                     // .insert(Velocity(b_velocity.0))
+//                     .insert(MaterialMesh2dBundle {
+//                         mesh: meshes
+//                             .add(Mesh::from(shape::Circle {
+//                                 radius: fire.impact_radius,
+//                                 vertices: fire.impact_vertices,
+//                             }))
+//                             .into(),
+//                         // transform: Transform::from_translation(
+//                         //     b_transform
+//                         //         .to_scale_rotation_translation()
+//                         //         .1
+//                         //         .inverse()
+//                         //         .mul_vec3(
+//                         //             f_transform.translation() - b_transform.translation(),
+//                         //         ),
+//                         // ),
+//                         transform: Transform::from_translation(f_transform.translation()),
+//                         // transform: *f_transform,
+//                         material: materials.add(fire.color.into()),
+//                         ..default()
+//                     })
+//                     .id();
+
+//                 // commands.entity(b_entity).add_child(impact);
+//             }
+//         }
+//     }
+// }
+
+pub fn detect_collision_fire_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<
-        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
-        (Without<Boss>, Without<Enemy>),
+        (&Fire, &GlobalTransform, &mut Health, &Surface),
+        (Without<BossPart>, Without<Enemy>),
     >,
-    mut query_boss: Query<(Entity, &GlobalTransform, &mut Health, &Surface, &Velocity), With<Boss>>,
+    mut query_boss_parts: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<BossPart>>,
 ) {
-    if let Ok((b_entity, b_transform, mut b_health, b_surface, b_velocity)) =
-        query_boss.get_single_mut()
-    {
-        for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-            if collision(f_transform, f_surface, b_transform, b_surface) {
-                b_health.0 -= 1;
+    for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+        for (bp_entity, bp_transform, mut bp_health, bp_surface) in query_boss_parts.iter_mut() {
+            if collision(f_transform, f_surface, bp_transform, bp_surface) {
                 f_health.0 -= 1;
+                bp_health.0 -= 1;
 
-                if b_health.0 == 0 {
-                    commands.entity(b_entity).despawn_recursive();
-                    // boss::explode(commands, meshes, materials, b_transform, b_velocity);
-                    break;
-                }
                 let impact = commands
                     .spawn_empty()
                     .insert(Impact)
                     .insert(Health(1))
-                    // .insert(Velocity(b_velocity.0))
                     .insert(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
@@ -294,82 +304,19 @@ pub fn detect_collision_fire_boss(
                                 vertices: fire.impact_vertices,
                             }))
                             .into(),
-                        // transform: Transform::from_translation(
-                        //     b_transform
-                        //         .to_scale_rotation_translation()
-                        //         .1
-                        //         .inverse()
-                        //         .mul_vec3(
-                        //             f_transform.translation() - b_transform.translation(),
-                        //         ),
-                        // ),
-                        transform: Transform::from_translation(f_transform.translation()),
-                        // transform: *f_transform,
+                        transform: Transform::from_translation(
+                            bp_transform
+                                .to_scale_rotation_translation()
+                                .1
+                                .inverse()
+                                .mul_vec3(f_transform.translation() - bp_transform.translation()),
+                        ),
                         material: materials.add(fire.color.into()),
                         ..default()
                     })
                     .id();
 
-                // commands.entity(b_entity).add_child(impact);
-            }
-        }
-    }
-}
-
-pub fn detect_collision_fire_boss_parts(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_fire: Query<
-        (Entity, &Fire, &GlobalTransform, &mut Health, &Surface),
-        (Without<BossPart>, Without<Enemy>),
-    >,
-    mut query_boss: Query<(Entity, &GlobalTransform, &Velocity), With<Boss>>,
-    mut query_boss_parts: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<BossPart>>,
-) {
-    if let Ok((b_entity, b_transform, b_velocity)) = query_boss.get_single_mut() {
-        for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-            for (bp_entity, bp_transform, mut bp_health, bp_surface) in query_boss_parts.iter_mut()
-            {
-                if collision(f_transform, f_surface, bp_transform, bp_surface) {
-                    f_health.0 -= 1;
-                    bp_health.0 -= 1;
-
-                    // if bp_health.0 == 0 {
-                    //     commands.entity(bp_entity).despawn();
-                    //     // boss::explode(commands, meshes, materials, b_transform, b_velocity);
-                    //     break;
-                    // }
-
-                    let impact = commands
-                        .spawn_empty()
-                        .insert(Impact)
-                        .insert(Health(1))
-                        // .insert(Velocity(b_velocity.0))
-                        .insert(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: fire.impact_radius,
-                                    vertices: fire.impact_vertices,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(
-                                bp_transform
-                                    .to_scale_rotation_translation()
-                                    .1
-                                    .inverse()
-                                    .mul_vec3(
-                                        f_transform.translation() - bp_transform.translation(),
-                                    ),
-                            ),
-                            // transform: Transform::from_translation(f_transform.translation()),
-                            material: materials.add(fire.color.into()),
-                            ..default()
-                        })
-                        .id();
-
-                    commands.entity(bp_entity).add_child(impact);
-                }
+                commands.entity(bp_entity).add_child(impact);
             }
         }
     }
@@ -418,25 +365,13 @@ pub fn detect_collision_fire_spaceship(
 }
 
 pub fn detect_collision_asteroid_asteroid(
-    mut query: Query<(
-        &Asteroid,
-        Option<&Children>,
-        Entity,
-        &GlobalTransform,
-        &mut Health,
-        &Surface,
-        &Velocity,
-    )>,
+    mut query: Query<(&Asteroid, &GlobalTransform, &mut Health, &Surface)>,
 ) {
     let mut i = 0;
     loop {
         let mut iter = query.iter_mut().skip(i);
-        if let Some((asteroid1, children1, entity1, transform1, mut health1, surface1, velocity1)) =
-            iter.next()
-        {
-            for (asteroid2, children2, entity2, transform2, mut health2, surface2, velocity2) in
-                iter
-            {
+        if let Some((asteroid1, transform1, mut health1, surface1)) = iter.next() {
+            for (asteroid2, transform2, mut health2, surface2) in iter {
                 if collision(transform1, surface1, transform2, surface2) {
                     if asteroid1.radius < asteroid2.radius {
                         health1.0 = 0;
