@@ -204,11 +204,11 @@ pub fn add_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut level_query: Query<&mut Level>,
-    asteroid_query: Query<&Asteroid>,
+    mut query_level: Query<&mut Level>,
+    query_asteroid: Query<With<Asteroid>>,
 ) {
-    let mut level = level_query.single_mut();
-    if !level.boss_spawned && level.distance_to_boss == 0 && asteroid_query.is_empty() {
+    let mut level = query_level.single_mut();
+    if !level.boss_spawned && level.distance_to_boss == 0 && query_asteroid.is_empty() {
         let boss = commands
             .spawn_empty()
             .insert(Boss)
@@ -319,11 +319,11 @@ pub fn add_boss_parts(
 //     mut commands: Commands,
 //     mut meshes: ResMut<Assets<Mesh>>,
 //     mut materials: ResMut<Assets<ColorMaterial>>,
-//     mut level_query: Query<&mut Level>,
-//     asteroid_query: Query<&Asteroid>,
+//     mut query_level: Query<&mut Level>,
+//     query_asteroid: Query<&Asteroid>,
 // ) {
-//     let mut level = level_query.single_mut();
-//     if !level.boss.spawn_emptyed && level.distance_to_boss == 0 && asteroid_query.is_empty() {
+//     let mut level = query_level.single_mut();
+//     if !level.boss.spawn_emptyed && level.distance_to_boss == 0 && query_asteroid.is_empty() {
 //         let mut boss = Mesh::new(PrimitiveTopology::TriangleList);
 //         let vertices_position = triangles_from_polygon(&POLYGON, Vec3::ZERO)
 //             .into_iter()
@@ -404,21 +404,19 @@ pub fn attack_boss(
     query_boss: Query<(Entity, &Transform), With<Boss>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
-    if let Ok((boss, boss_transform)) = query_boss.get_single() {
-        if let Ok(spaceship_transform) = query_spaceship.get_single() {
+    if let Ok((b_entity, b_transform)) = query_boss.get_single() {
+        if let Ok(s_transform) = query_spaceship.get_single() {
             let mut rng = rand::thread_rng();
             for canon_relative_position in ATTACK_SOURCE {
                 if rng.gen_range(0..100) == 0 {
-                    let canon_absolute_position = boss_transform.translation
-                        + boss_transform.rotation.mul_vec3(canon_relative_position);
+                    let canon_absolute_position = b_transform.translation
+                        + b_transform.rotation.mul_vec3(canon_relative_position);
                     // + Vec3::from([0.0, 0.0, 1.0]);
 
                     // Compute coordinates of vector from boss to spaceship
-                    let vec_boss_spaceship =
-                        spaceship_transform.translation - boss_transform.translation;
+                    let vec_boss_spaceship = s_transform.translation - b_transform.translation;
                     // Compute coordinates of vector from boss to canon
-                    let vec_boss_center_canon =
-                        canon_absolute_position - boss_transform.translation;
+                    let vec_boss_center_canon = canon_absolute_position - b_transform.translation;
                     let scalar_product = vec_boss_spaceship.x * vec_boss_center_canon.x
                         + vec_boss_spaceship.y * vec_boss_center_canon.y;
                     // Scalar product sign determines whether or not canon has line of sight
@@ -442,7 +440,7 @@ pub fn attack_boss(
                         })
                         .id();
 
-                    commands.entity(boss).add_child(blast);
+                    commands.entity(b_entity).add_child(blast);
 
                     commands
                         .spawn_empty()
@@ -454,7 +452,7 @@ pub fn attack_boss(
                         .insert(Health(1))
                         .insert(Enemy)
                         .insert(Velocity(
-                            (spaceship_transform.translation - canon_absolute_position).normalize()
+                            (s_transform.translation - canon_absolute_position).normalize()
                                 * FIRE_VELOCITY,
                         ))
                         .insert(Surface {
@@ -486,24 +484,22 @@ pub fn attack_boss_parts(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss: Query<&Transform, With<Boss>>,
-    query_boss_part: Query<(Entity, &Transform, &Attack), With<BossPart>>,
+    query_boss_part: Query<(&Attack, Entity, &Transform), With<BossPart>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
-    if let Ok(boss_transform) = query_boss.get_single() {
-        if let Ok(spaceship_transform) = query_spaceship.get_single() {
-            for (boss_part, boss_part_transform, boss_part_attack) in query_boss_part.iter() {
+    if let Ok(b_transform) = query_boss.get_single() {
+        if let Ok(s_transform) = query_spaceship.get_single() {
+            for (bp_attack, bp_entity, bp_transform) in query_boss_part.iter() {
                 let mut rng = rand::thread_rng();
                 if rng.gen_range(0..100) == 0 {
-                    let canon_absolute_position = boss_transform.translation
-                        + boss_transform.rotation.mul_vec3(boss_part_attack.0);
+                    let canon_absolute_position =
+                        b_transform.translation + b_transform.rotation.mul_vec3(bp_attack.0);
                     // + Vec3::from([0.0, 0.0, 1.0]);
 
                     // Compute coordinates of vector from boss to spaceship
-                    let vec_boss_spaceship =
-                        spaceship_transform.translation - boss_transform.translation;
+                    let vec_boss_spaceship = s_transform.translation - b_transform.translation;
                     // Compute coordinates of vector from boss to canon
-                    let vec_boss_center_canon =
-                        canon_absolute_position - boss_transform.translation;
+                    let vec_boss_center_canon = canon_absolute_position - b_transform.translation;
                     let scalar_product = vec_boss_spaceship.x * vec_boss_center_canon.x
                         + vec_boss_spaceship.y * vec_boss_center_canon.y;
                     // Scalar product sign determines whether or not canon has line of sight
@@ -521,13 +517,13 @@ pub fn attack_boss_parts(
                                     vertices: BLAST_VERTICES,
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(boss_part_attack.0),
+                            transform: Transform::from_translation(bp_attack.0),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
                         })
                         .id();
 
-                    commands.entity(boss_part).add_child(blast);
+                    commands.entity(bp_entity).add_child(blast);
 
                     //                 commands
                     //                     .spawn_empty()
@@ -538,7 +534,7 @@ pub fn attack_boss_parts(
                     //                     })
                     //                     .Insert(Enemy)
                     //                     .insert(Velocity(
-                    //                         (spaceship_transform.translation - canon_absolute_position).normalize()
+                    //                         (s_transform.translation - canon_absolute_position).normalize()
                     //                             * FIRE_VELOCITY,
                     //                     ))
                     //                     .insert(Surface {

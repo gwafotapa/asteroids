@@ -18,12 +18,12 @@ pub fn asteroids(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut asteroid_query: Query<(&mut Transform, &Velocity, &Asteroid, Entity)>,
-    level_query: Query<&Level>,
+    mut query_asteroid: Query<(&Asteroid, Entity, &mut Transform, &Velocity)>,
+    query_level: Query<&Level>,
 ) {
     let mut rng = rand::thread_rng();
 
-    if level_query.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
+    if query_level.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
         let health = rng.gen_range(1..MAX_HEALTH + 1);
         let radius = (health * 20) as f32;
         let speed = rng.gen_range(1..MAX_SPEED + 1) as f32;
@@ -56,7 +56,7 @@ pub fn asteroids(
             });
     }
 
-    for (mut transform, velocity, asteroid, entity) in asteroid_query.iter_mut() {
+    for (asteroid, entity, mut transform, velocity) in query_asteroid.iter_mut() {
         transform.translation += velocity.0;
         if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
             commands.entity(entity).despawn();
@@ -73,12 +73,12 @@ pub fn explode(
         Option<&Children>,
         Entity,
         &GlobalTransform,
-        &Velocity,
         &Health,
+        &Velocity,
     )>,
     mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    for (asteroid, children, entity, transform, velocity, health) in query_asteroid.iter() {
+    for (asteroid, children, entity, transform, health, velocity) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }

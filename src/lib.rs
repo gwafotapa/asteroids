@@ -103,8 +103,8 @@ pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-pub fn update_distance_to_boss(mut query: Query<(&mut Text, &mut Level)>) {
-    for (mut text, mut level) in &mut query {
+pub fn update_distance_to_boss(mut query: Query<(&mut Level, &mut Text)>) {
+    for (mut level, mut text) in &mut query {
         if level.distance_to_boss > 0 {
             level.distance_to_boss -= 1;
         }
@@ -134,7 +134,7 @@ pub fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((spaceship, mut transform, mut velocity)) = query.get_single_mut() {
+    if let Ok((entity, mut transform, mut velocity)) = query.get_single_mut() {
         // // we can check multiple at once with `.any_*`
         // if keys.any_pressed([
         //     KeyCode::Left,
@@ -147,7 +147,7 @@ pub fn keyboard_input(
         //     KeyCode::L,
         // ]) {
         if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
-            spaceship::attack(commands, meshes, materials, spaceship, &transform);
+            spaceship::attack(commands, meshes, materials, entity, &transform);
         }
         // Either the left or right shift are being held down
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {

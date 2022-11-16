@@ -269,7 +269,7 @@ pub fn detect_collision_fire_boss(
     >,
     mut query_boss: Query<(Entity, &GlobalTransform, &mut Health, &Surface, &Velocity), With<Boss>>,
 ) {
-    if let Ok((boss, b_transform, mut b_health, b_surface, b_velocity)) =
+    if let Ok((b_entity, b_transform, mut b_health, b_surface, b_velocity)) =
         query_boss.get_single_mut()
     {
         for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
@@ -278,7 +278,7 @@ pub fn detect_collision_fire_boss(
                 f_health.0 -= 1;
 
                 if b_health.0 == 0 {
-                    commands.entity(boss).despawn_recursive();
+                    commands.entity(b_entity).despawn_recursive();
                     // boss::explode(commands, meshes, materials, b_transform, b_velocity);
                     break;
                 }
@@ -310,7 +310,7 @@ pub fn detect_collision_fire_boss(
                     })
                     .id();
 
-                // commands.entity(boss).add_child(impact);
+                // commands.entity(b_entity).add_child(impact);
             }
         }
     }
@@ -388,7 +388,7 @@ pub fn detect_collision_fire_spaceship(
         With<Spaceship>,
     >,
 ) {
-    if let Ok((spaceship, s_transform, mut s_health, velocity, s_surface)) =
+    if let Ok((s_entity, s_transform, mut s_health, velocity, s_surface)) =
         query_spaceship.get_single_mut()
     {
         for (f_entity, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
@@ -420,7 +420,7 @@ pub fn detect_collision_fire_spaceship(
                     })
                     .id();
 
-                // commands.entity(spaceship).add_child(impact);
+                // commands.entity(s_entity).add_child(impact);
             }
         }
     }
@@ -481,9 +481,9 @@ pub fn update_debris(
 
 pub fn update_impacts(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Health, &mut Transform, Option<&Parent>), With<Impact>>,
+    mut query: Query<(Entity, &mut Health, Option<&Parent>, &mut Transform), With<Impact>>,
 ) {
-    for (entity, mut health, mut transform, parent) in query.iter_mut() {
+    for (entity, mut health, parent, mut transform) in query.iter_mut() {
         // transform.translation += velocity.0;
         transform.scale -= 0.1;
         health.0 -= 1;
