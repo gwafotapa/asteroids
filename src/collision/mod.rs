@@ -184,14 +184,24 @@ pub fn detect_collision_fire_asteroid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_fire: Query<(&Fire, &GlobalTransform, &mut Health, &Surface), Without<Asteroid>>,
+    mut query_fire: Query<
+        (
+            &Handle<ColorMaterial>,
+            &Fire,
+            &GlobalTransform,
+            &mut Health,
+            &Surface,
+        ),
+        Without<Asteroid>,
+    >,
     mut query_asteroid: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Asteroid>>,
 ) {
-    for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+    for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
         for (a_entity, a_transform, mut a_health, a_surface) in query_asteroid.iter_mut() {
             if collision(f_transform, f_surface, a_transform, a_surface) {
                 a_health.0 -= 1;
                 f_health.0 -= 1;
+                let color = materials.get(f_color).unwrap().color;
 
                 let impact = commands
                     .spawn_empty()
@@ -207,7 +217,7 @@ pub fn detect_collision_fire_asteroid(
                         transform: Transform::from_translation(
                             f_transform.translation() - a_transform.translation(),
                         ),
-                        material: materials.add(fire.color.into()),
+                        material: materials.add(color.into()),
                         ..default()
                     })
                     .id();
@@ -282,7 +292,13 @@ pub fn detect_collision_fire_boss_parts(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<
-        (&Fire, &GlobalTransform, &mut Health, &Surface),
+        (
+            &Handle<ColorMaterial>,
+            &Fire,
+            &GlobalTransform,
+            &mut Health,
+            &Surface,
+        ),
         (Without<BossPart>, Without<Enemy>),
     >,
     mut query_boss_parts: Query<
@@ -296,7 +312,7 @@ pub fn detect_collision_fire_boss_parts(
         With<BossPart>,
     >,
 ) {
-    for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+    for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
         for (bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
             query_boss_parts.iter_mut()
         {
@@ -304,9 +320,10 @@ pub fn detect_collision_fire_boss_parts(
                 f_health.0 -= 1;
                 bp_health.0 -= 1;
 
+                let f_color = materials.get(f_color).unwrap().color;
                 let bp_color = materials.get_mut(bp_color).unwrap();
                 let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
-                let [r2, g2, b2, _] = fire.color.as_rgba_f32();
+                let [r2, g2, b2, _] = f_color.as_rgba_f32();
                 r += (r2 - r) / (1. + bp_health.0 as f32);
                 g += (g2 - g) / (1. + bp_health.0 as f32);
                 b += (b2 - b) / (1. + bp_health.0 as f32);
@@ -330,7 +347,7 @@ pub fn detect_collision_fire_boss_parts(
                                 .inverse()
                                 .mul_vec3(f_transform.translation() - bp_transform.translation()),
                         ),
-                        material: materials.add(fire.color.into()),
+                        material: materials.add(f_color.into()),
                         ..default()
                     })
                     .id();
@@ -346,16 +363,23 @@ pub fn detect_collision_fire_spaceship(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<
-        (&Fire, &GlobalTransform, &mut Health, &Surface),
+        (
+            &Handle<ColorMaterial>,
+            &Fire,
+            &GlobalTransform,
+            &mut Health,
+            &Surface,
+        ),
         (With<Enemy>, Without<Spaceship>),
     >,
     mut query_spaceship: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Spaceship>>,
 ) {
     if let Ok((s_entity, s_transform, mut s_health, s_surface)) = query_spaceship.get_single_mut() {
-        for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+        for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
             if collision(f_transform, f_surface, s_transform, s_surface) {
                 f_health.0 -= 1;
                 s_health.0 -= 1;
+                let f_color = materials.get(f_color).unwrap().color;
 
                 let impact = commands
                     .spawn_empty()
@@ -372,7 +396,7 @@ pub fn detect_collision_fire_spaceship(
                             f_transform.translation() - s_transform.translation(),
                         ),
                         // transform: Transform::from_translation(f_transform.translation()),
-                        material: materials.add(fire.color.into()),
+                        material: materials.add(f_color.into()),
                         ..default()
                     })
                     .id();

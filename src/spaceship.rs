@@ -242,7 +242,6 @@ pub fn attack(
     commands
         .spawn_empty()
         .insert(Fire {
-            color: ATTACK_COLOR,
             impact_radius: IMPACT_RADIUS,
             impact_vertices: IMPACT_VERTICES,
         })

@@ -27,7 +27,6 @@ pub struct Velocity(Vec3);
 
 #[derive(Component)]
 pub struct Fire {
-    color: Color,
     impact_radius: f32,
     impact_vertices: usize,
 }
