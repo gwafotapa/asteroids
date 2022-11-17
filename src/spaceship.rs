@@ -274,10 +274,19 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(Option<&Children>, &Health, &GlobalTransform, &Velocity), With<Spaceship>>,
+    query: Query<
+        (
+            &Handle<ColorMaterial>,
+            Option<&Children>,
+            &Health,
+            &GlobalTransform,
+            &Velocity,
+        ),
+        With<Spaceship>,
+    >,
     mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    if let Ok((s_children, s_health, s_transform, s_velocity)) = query.get_single() {
+    if let Ok((s_color, s_children, s_health, s_transform, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
             return;
         }
@@ -292,6 +301,7 @@ pub fn explode(
             }
         }
 
+        let color = materials.get(s_color).unwrap().color;
         let mut rng = rand::thread_rng();
         for _ in 1..10 {
             let mut debris;
@@ -335,7 +345,7 @@ pub fn explode(
                         }))
                         .into(),
                     transform: Transform::from_translation(debris_translation),
-                    material: materials.add(SPACESHIP_COLOR.into()),
+                    material: materials.add(color.into()),
                     ..default()
                 });
         }
