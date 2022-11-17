@@ -96,7 +96,7 @@ const FIRE_VERTICES: usize = 4;
 const IMPACT_RADIUS: f32 = 12.0;
 const IMPACT_VERTICES: usize = 16;
 const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 16.0,
+    x: 4.0,
     y: 0.0,
     z: 0.0,
 };
@@ -283,7 +283,7 @@ pub fn explode(
         ),
         With<Spaceship>,
     >,
-    mut query_impact: Query<&mut Transform, With<Impact>>,
+    mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
 ) {
     if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
@@ -293,10 +293,12 @@ pub fn explode(
         if let Some(children) = s_children {
             for child in children {
                 commands.entity(*child).remove::<Parent>();
-                query_impact
-                    .get_component_mut::<Transform>(*child)
-                    .unwrap()
-                    .translation += s_transform.translation();
+                if let Ok(mut child_transform) =
+                    query_blast_impact.get_component_mut::<Transform>(*child)
+                {
+                    child_transform.translation =
+                        s_transform.transform_point(child_transform.translation);
+                }
             }
         }
 

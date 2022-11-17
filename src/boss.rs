@@ -115,7 +115,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
 };
 const ACCELERATION: f32 = 0.01;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const HEALTH: i32 = 5;
+const HEALTH: i32 = 20;
 
 pub const ATTACK_COLOR: Color = Color::RED;
 const FIRE_VELOCITY: f32 = 8.0;

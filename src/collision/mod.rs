@@ -331,11 +331,11 @@ pub fn detect_collision_fire_boss_part(
     for (f_color, f_entity, fire, f_transform, mut f_health, f_surface, mut f_velocity) in
         query_fire.iter_mut()
     {
-        for (bc, bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
+        for (bp_core, bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
             query_boss_part.iter_mut()
         {
             if collision(f_transform, f_surface, bp_transform, bp_surface) {
-                if bc.is_none() || bc.unwrap().edges == 0 {
+                if bp_core.is_none() || bp_core.unwrap().edges == 0 {
                     f_health.0 -= 1;
                     bp_health.0 -= 1;
 
@@ -378,6 +378,7 @@ pub fn detect_collision_fire_boss_part(
                     f_velocity.0 = -f_velocity.0;
                     commands.entity(f_entity).insert(Enemy);
                 }
+                break;
             }
         }
     }
