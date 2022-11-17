@@ -71,13 +71,14 @@ pub fn explode(
     query_asteroid: Query<(
         &Asteroid,
         Option<&Children>,
+        &Handle<ColorMaterial>,
         &GlobalTransform,
         &Health,
         &Velocity,
     )>,
     mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    for (asteroid, children, transform, health, velocity) in query_asteroid.iter() {
+    for (asteroid, children, color, transform, health, velocity) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }
@@ -92,6 +93,7 @@ pub fn explode(
             }
         }
 
+        let color = materials.get(color).unwrap().color;
         let mut rng = rand::thread_rng();
         for _ in 1..asteroid.radius as usize {
             let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
@@ -122,7 +124,7 @@ pub fn explode(
                         debris_y,
                         ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
                     ),
-                    material: materials.add(COLOR.into()),
+                    material: materials.add(color.into()),
                     ..default()
                 });
         }

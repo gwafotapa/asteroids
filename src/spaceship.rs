@@ -276,8 +276,8 @@ pub fn explode(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query: Query<
         (
-            &Handle<ColorMaterial>,
             Option<&Children>,
+            &Handle<ColorMaterial>,
             &Health,
             &GlobalTransform,
             &Velocity,
@@ -286,7 +286,7 @@ pub fn explode(
     >,
     mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    if let Ok((s_color, s_children, s_health, s_transform, s_velocity)) = query.get_single() {
+    if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
             return;
         }
