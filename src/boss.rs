@@ -112,7 +112,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
 };
 const ACCELERATION: f32 = 0.01;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const HEALTH: i32 = 10;
+const HEALTH: i32 = 20;
 
 pub const ATTACK_COLOR: Color = Color::RED;
 const FIRE_VELOCITY: f32 = 4.0;
@@ -575,6 +575,7 @@ pub fn explode(
     query_boss_parts: Query<
         (
             Option<&Children>,
+            &Handle<ColorMaterial>,
             &Health,
             &GlobalTransform,
             &Parent,
@@ -585,7 +586,7 @@ pub fn explode(
     mut query_impact: Query<&mut Transform, With<Impact>>,
     query_boss: Query<&Velocity, With<Boss>>,
 ) {
-    for (children, health, transform, parent, surface) in query_boss_parts.iter() {
+    for (children, color, health, transform, parent, surface) in query_boss_parts.iter() {
         if health.0 > 0 {
             continue;
         }
@@ -600,8 +601,9 @@ pub fn explode(
             }
         }
 
-        let mut rng = rand::thread_rng();
+        let color = materials.get(color).unwrap().color;
         let velocity = query_boss.get_component::<Velocity>(parent.get()).unwrap();
+        let mut rng = rand::thread_rng();
 
         if let Topology::Triangles(triangles) = surface.topology {
             let mut triangles = triangles.iter();
@@ -645,7 +647,7 @@ pub fn explode(
                             transform: Transform::from_translation(
                                 transform.transform_point(debris),
                             ),
-                            material: materials.add(COLOR.into()),
+                            material: materials.add(color.into()),
                             ..default()
                         });
                 }

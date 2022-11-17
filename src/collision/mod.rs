@@ -285,13 +285,32 @@ pub fn detect_collision_fire_boss_parts(
         (&Fire, &GlobalTransform, &mut Health, &Surface),
         (Without<BossPart>, Without<Enemy>),
     >,
-    mut query_boss_parts: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<BossPart>>,
+    mut query_boss_parts: Query<
+        (
+            &Handle<ColorMaterial>,
+            Entity,
+            &GlobalTransform,
+            &mut Health,
+            &Surface,
+        ),
+        With<BossPart>,
+    >,
 ) {
     for (fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-        for (bp_entity, bp_transform, mut bp_health, bp_surface) in query_boss_parts.iter_mut() {
+        for (bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
+            query_boss_parts.iter_mut()
+        {
             if collision(f_transform, f_surface, bp_transform, bp_surface) {
                 f_health.0 -= 1;
                 bp_health.0 -= 1;
+
+                let bp_color = materials.get_mut(bp_color).unwrap();
+                let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
+                let [r2, g2, b2, _] = fire.color.as_rgba_f32();
+                r += (r2 - r) / (1. + bp_health.0 as f32);
+                g += (g2 - g) / (1. + bp_health.0 as f32);
+                b += (b2 - b) / (1. + bp_health.0 as f32);
+                bp_color.color = Color::rgb(r, g, b);
 
                 let impact = commands
                     .spawn_empty()
