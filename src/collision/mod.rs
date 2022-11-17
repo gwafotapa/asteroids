@@ -294,10 +294,12 @@ pub fn detect_collision_fire_boss_part(
     mut query_fire: Query<
         (
             &Handle<ColorMaterial>,
+            Entity,
             &Fire,
             &GlobalTransform,
             &mut Health,
             &Surface,
+            &mut Velocity,
         ),
         Without<Enemy>,
     >,
@@ -326,16 +328,18 @@ pub fn detect_collision_fire_boss_part(
 ) {
     // let (bc_children, bc_color, bc_entity, bc_transform, mut bc_health, bc_surface) =
     //     query_boss_core.single();
-    for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
+    for (f_color, f_entity, fire, f_transform, mut f_health, f_surface, mut f_velocity) in
+        query_fire.iter_mut()
+    {
         for (bc, bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
             query_boss_part.iter_mut()
         {
             if collision(f_transform, f_surface, bp_transform, bp_surface) {
-                let f_color = materials.get(f_color).unwrap().color;
-                f_health.0 -= 1;
-                if bc.filter(|x| x.edges > 0).is_none() {
+                if bc.is_none() || bc.unwrap().edges == 0 {
+                    f_health.0 -= 1;
                     bp_health.0 -= 1;
 
+                    let f_color = materials.get(f_color).unwrap().color;
                     let bp_color = materials.get_mut(bp_color).unwrap();
                     let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
                     let [r2, g2, b2, _] = f_color.as_rgba_f32();
@@ -343,32 +347,37 @@ pub fn detect_collision_fire_boss_part(
                     g += (g2 - g) / (1. + bp_health.0 as f32);
                     b += (b2 - b) / (1. + bp_health.0 as f32);
                     bp_color.color = Color::rgb(r, g, b);
+
+                    let impact = commands
+                        .spawn_empty()
+                        .insert(Impact)
+                        .insert(Health(10))
+                        .insert(MaterialMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(
+                                bp_transform
+                                    .to_scale_rotation_translation()
+                                    .1
+                                    .inverse()
+                                    .mul_vec3(
+                                        f_transform.translation() - bp_transform.translation(),
+                                    ),
+                            ),
+                            material: materials.add(f_color.into()),
+                            ..default()
+                        })
+                        .id();
+
+                    commands.entity(bp_entity).add_child(impact);
+                } else {
+                    f_velocity.0 = -f_velocity.0;
+                    commands.entity(f_entity).insert(Enemy);
                 }
-
-                let impact = commands
-                    .spawn_empty()
-                    .insert(Impact)
-                    .insert(Health(10))
-                    .insert(MaterialMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: fire.impact_radius,
-                                vertices: fire.impact_vertices,
-                            }))
-                            .into(),
-                        transform: Transform::from_translation(
-                            bp_transform
-                                .to_scale_rotation_translation()
-                                .1
-                                .inverse()
-                                .mul_vec3(f_transform.translation() - bp_transform.translation()),
-                        ),
-                        material: materials.add(f_color.into()),
-                        ..default()
-                    })
-                    .id();
-
-                commands.entity(bp_entity).add_child(impact);
             }
         }
     }

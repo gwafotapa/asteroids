@@ -566,7 +566,7 @@ pub fn explode(
         ),
         Or<(With<BossCore>, With<BossEdge>)>,
     >,
-    mut query_impact: Query<&mut Transform, With<Impact>>,
+    mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
     mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
 ) {
     if let Ok((mut core, core_entity, velocity)) = query_boss_core.get_single_mut() {
@@ -583,10 +583,12 @@ pub fn explode(
             if let Some(children) = children {
                 for child in children {
                     commands.entity(*child).remove::<Parent>();
-                    query_impact
-                        .get_component_mut::<Transform>(*child)
-                        .unwrap()
-                        .translation += transform.translation();
+                    if let Ok(mut child_transform) =
+                        query_blast_impact.get_component_mut::<Transform>(*child)
+                    {
+                        child_transform.translation =
+                            transform.transform_point(child_transform.translation);
+                    }
                 }
             }
 
