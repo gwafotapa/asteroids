@@ -479,7 +479,7 @@ pub fn attack_boss_parts(
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
-                if rng.gen_range(0..100) == 0 {
+                if rng.gen_range(0..1) == 0 {
                     let canon_absolute_position =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
