@@ -108,7 +108,8 @@ pub const POLYGON: [Vec3; 16] = [
 ];
 
 const INITIAL_POSITION: Vec3 = Vec3 {
-    x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
+    // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
+    x: WINDOW_WIDTH / 2.0,
     y: 0.0,
     z: ALTITUDE,
 };
@@ -125,7 +126,7 @@ const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
 const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
-const ROTATION_SPEED: f32 = 0.01;
+const ROTATION_SPEED: f32 = 0.0;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
@@ -240,8 +241,8 @@ pub fn add_boss_parts(
             .insert(Surface {
                 topology: Topology::Triangles(&CORE_TRIANGLES),
                 hitbox: HitBox {
-                    half_x: INNER_RADIUS,
-                    half_y: INNER_RADIUS,
+                    half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
+                    half_y: 108.3,
                 },
             })
             .id();
@@ -479,7 +480,7 @@ pub fn attack_boss_parts(
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
-                if rng.gen_range(0..1) == 0 {
+                if rng.gen_range(0..100) == 0 {
                     let canon_absolute_position =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
