@@ -125,7 +125,7 @@ const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
 const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
-const ROTATION_SPEED: f32 = 0.0;
+const ROTATION_SPEED: f32 = 0.01;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
@@ -556,87 +556,100 @@ pub fn explode(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss_part: Query<
         (
+            Option<&BossEdge>,
             Option<&Children>,
+            Entity,
             &Handle<ColorMaterial>,
-            &Health,
             &GlobalTransform,
-            &Parent,
+            &Health,
             &Surface,
         ),
         Or<(With<BossCore>, With<BossEdge>)>,
     >,
     mut query_impact: Query<&mut Transform, With<Impact>>,
-    query_boss: Query<&Velocity, With<BossCore>>,
+    mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
 ) {
-    for (children, color, health, transform, parent, surface) in query_boss_part.iter() {
-        if health.0 > 0 {
-            continue;
-        }
-
-        if let Some(children) = children {
-            for child in children {
-                commands.entity(*child).remove::<Parent>();
-                query_impact
-                    .get_component_mut::<Transform>(*child)
-                    .unwrap()
-                    .translation += transform.translation();
+    if let Ok((mut core, core_entity, velocity)) = query_boss_core.get_single_mut() {
+        for (edge, children, entity, color, transform, health, surface) in query_boss_part.iter() {
+            if health.0 > 0 {
+                continue;
             }
-        }
 
-        let color = materials.get(color).unwrap().color;
-        let velocity = query_boss.get_component::<Velocity>(parent.get()).unwrap();
-        let mut rng = rand::thread_rng();
+            if edge.is_some() {
+                core.edges -= 1;
+                commands.entity(core_entity).remove_children(&[entity]);
+            }
 
-        if let Topology::Triangles(triangles) = surface.topology {
-            let mut triangles = triangles.iter();
-            while let Some(&[a, b, c]) = triangles.next() {
-                for _ in 0..10 {
-                    let mut debris;
-                    'outer: loop {
-                        debris = Vec3 {
-                            x: rng.gen_range(-surface.hitbox.half_x..surface.hitbox.half_x),
-                            y: rng.gen_range(-surface.hitbox.half_y..surface.hitbox.half_y),
-                            z: 0.0,
-                        };
-                        if math::point_in_triangle(
-                            debris.truncate(),
-                            a.truncate(),
-                            b.truncate(),
-                            c.truncate(),
-                        ) {
-                            break 'outer;
-                        }
-                    }
-                    debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-
-                    let dv = Vec3 {
-                        x: rng.gen_range(-0.5..0.5),
-                        y: rng.gen_range(-0.5..0.5),
-                        z: 0.0,
-                    };
-
-                    commands
-                        .spawn_empty()
-                        .insert(Debris)
-                        .insert(Velocity(velocity.0 + dv))
-                        // .insert(Velocity(dv))
-                        .insert(MaterialMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: rng.gen_range(2.0..15.0),
-                                    vertices: 8,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(
-                                transform.transform_point(debris),
-                            ),
-                            material: materials.add(color.into()),
-                            ..default()
-                        });
+            if let Some(children) = children {
+                for child in children {
+                    commands.entity(*child).remove::<Parent>();
+                    query_impact
+                        .get_component_mut::<Transform>(*child)
+                        .unwrap()
+                        .translation += transform.translation();
                 }
             }
-        } else {
-            panic!("Boss topology should be triangles.");
+
+            let color = materials.get(color).unwrap().color;
+            // let velocity = query_boss_core
+            //     .get_component::<Velocity>(parent.get())
+            //     .unwrap();
+            // let mut edges = query_boss_core
+            //     .get_component_mut::<BossCore>(parent.get())
+            //     .unwrap();
+            let mut rng = rand::thread_rng();
+
+            if let Topology::Triangles(triangles) = surface.topology {
+                let mut triangles = triangles.iter();
+                while let Some(&[a, b, c]) = triangles.next() {
+                    for _ in 0..10 {
+                        let mut debris;
+                        'outer: loop {
+                            debris = Vec3 {
+                                x: rng.gen_range(-surface.hitbox.half_x..surface.hitbox.half_x),
+                                y: rng.gen_range(-surface.hitbox.half_y..surface.hitbox.half_y),
+                                z: 0.0,
+                            };
+                            if math::point_in_triangle(
+                                debris.truncate(),
+                                a.truncate(),
+                                b.truncate(),
+                                c.truncate(),
+                            ) {
+                                break 'outer;
+                            }
+                        }
+                        debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+
+                        let dv = Vec3 {
+                            x: rng.gen_range(-0.5..0.5),
+                            y: rng.gen_range(-0.5..0.5),
+                            z: 0.0,
+                        };
+
+                        commands
+                            .spawn_empty()
+                            .insert(Debris)
+                            .insert(Velocity(velocity.0 + dv))
+                            // .insert(Velocity(dv))
+                            .insert(MaterialMesh2dBundle {
+                                mesh: meshes
+                                    .add(Mesh::from(shape::Circle {
+                                        radius: rng.gen_range(2.0..15.0),
+                                        vertices: 8,
+                                    }))
+                                    .into(),
+                                transform: Transform::from_translation(
+                                    transform.transform_point(debris),
+                                ),
+                                material: materials.add(color.into()),
+                                ..default()
+                            });
+                    }
+                }
+            } else {
+                panic!("Boss topology should be triangles.");
+            }
         }
     }
 }
