@@ -14,10 +14,12 @@ const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
 #[derive(Component)]
-pub struct Boss;
+pub struct BossCore {
+    pub edges: usize,
+}
 
 #[derive(Component)]
-pub struct BossPart;
+pub struct BossEdge;
 
 const A0: Vec3 = Vec3 {
     x: -OUTER_RADIUS,
@@ -112,7 +114,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
 };
 const ACCELERATION: f32 = 0.01;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const HEALTH: i32 = 20;
+const HEALTH: i32 = 5;
 
 pub const ATTACK_COLOR: Color = Color::RED;
 const FIRE_VELOCITY: f32 = 8.0;
@@ -209,20 +211,6 @@ pub fn add_boss_parts(
 ) {
     let mut level = query_level.single_mut();
     if !level.boss_spawned && level.distance_to_boss == 0 && query_asteroid.is_empty() {
-        let boss = commands
-            .spawn_empty()
-            .insert(Boss)
-            .insert(Velocity(Vec3::ZERO))
-            // .insert(HitBox {
-            //     half_x: OUTER_RADIUS,
-            //     half_y: OUTER_RADIUS,
-            // })
-            .insert(SpatialBundle {
-                transform: Transform::from_translation(INITIAL_POSITION),
-                ..default()
-            })
-            .id();
-
         // Build core
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
         let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
@@ -237,12 +225,15 @@ pub fn add_boss_parts(
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
-        let boss_body = commands
+        let boss_core = commands
             .spawn_empty()
-            .insert(BossPart)
+            .insert(BossCore { edges: EDGES })
             .insert(Health(HEALTH))
+            .insert(Velocity(Vec3::ZERO))
             .insert(MaterialMesh2dBundle {
                 mesh: meshes.add(mesh).into(),
+                transform: Transform::from_translation(INITIAL_POSITION),
+
                 material: materials.add(COLOR.into()),
                 ..default()
             })
@@ -255,17 +246,9 @@ pub fn add_boss_parts(
             })
             .id();
 
-        commands.entity(boss).add_child(boss_body);
-
-        // Add edges
-        // for triangle in EDGES_TRIANGLES {
+        // Add the edges
         for i in 0..EDGES {
             let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-            // let vertices_position: Vec<[f32; 3]> = EDGES_TRIANGLES[i]
-            //     .iter()
-            //     .flatten()
-            //     .map(|x| x.to_array())
-            //     .collect();
             let vertices_position = vec![C1.to_array(), C2.to_array(), C3.to_array()];
             let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
             let vertices_uv = vec![[0.0, 0.0]; 3];
@@ -276,7 +259,7 @@ pub fn add_boss_parts(
 
             let boss_edge = commands
                 .spawn_empty()
-                .insert(BossPart)
+                .insert(BossEdge)
                 .insert(Health(HEALTH))
                 .insert(MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
@@ -309,7 +292,7 @@ pub fn add_boss_parts(
                 .insert(Attack(C2))
                 .id();
 
-            commands.entity(boss).add_child(boss_edge);
+            commands.entity(boss_core).add_child(boss_edge);
         }
         level.boss_spawned = true;
     }
@@ -368,7 +351,7 @@ pub fn add_boss_parts(
 //     }
 // }
 
-pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<Boss>>) {
+pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<BossCore>>) {
     if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
         let mut rng = rand::thread_rng();
         let mut acceleration = Vec::new();
@@ -488,13 +471,13 @@ pub fn attack_boss_parts(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss: Query<&Transform, With<Boss>>,
-    query_boss_part: Query<(&Attack, Entity, &Transform), With<BossPart>>,
+    query_boss_core: Query<&Transform, With<BossCore>>,
+    query_boss_edge: Query<(&Attack, Entity, &Transform), With<BossEdge>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
-    if let Ok(b_transform) = query_boss.get_single() {
+    if let Ok(b_transform) = query_boss_core.get_single() {
         if let Ok(s_transform) = query_spaceship.get_single() {
-            for (bp_attack, bp_entity, bp_transform) in query_boss_part.iter() {
+            for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
                 if rng.gen_range(0..100) == 0 {
                     let canon_absolute_position =
@@ -571,7 +554,7 @@ pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss_parts: Query<
+    query_boss_part: Query<
         (
             Option<&Children>,
             &Handle<ColorMaterial>,
@@ -580,12 +563,12 @@ pub fn explode(
             &Parent,
             &Surface,
         ),
-        With<BossPart>,
+        Or<(With<BossCore>, With<BossEdge>)>,
     >,
     mut query_impact: Query<&mut Transform, With<Impact>>,
-    query_boss: Query<&Velocity, With<Boss>>,
+    query_boss: Query<&Velocity, With<BossCore>>,
 ) {
-    for (children, color, health, transform, parent, surface) in query_boss_parts.iter() {
+    for (children, color, health, transform, parent, surface) in query_boss_part.iter() {
         if health.0 > 0 {
             continue;
         }
@@ -624,6 +607,7 @@ pub fn explode(
                             break 'outer;
                         }
                     }
+                    debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
                     let dv = Vec3 {
                         x: rng.gen_range(-0.5..0.5),
@@ -657,7 +641,10 @@ pub fn explode(
     }
 }
 
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<BossPart>>) {
+pub fn despawn(
+    mut commands: Commands,
+    query: Query<(Entity, &Health), Or<(With<BossCore>, With<BossEdge>)>>,
+) {
     for (entity, health) in query.iter() {
         if health.0 <= 0 {
             commands.entity(entity).despawn();

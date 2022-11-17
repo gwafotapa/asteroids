@@ -324,8 +324,7 @@ pub fn explode(
             }
             debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
-            let debris_translation =
-                s_transform.translation() + debris * s_transform.to_scale_rotation_translation().0;
+            let debris_translation = s_transform.translation() + debris;
             let dv = Vec3 {
                 x: rng.gen_range(-0.5..0.5),
                 y: rng.gen_range(-0.5..0.5),

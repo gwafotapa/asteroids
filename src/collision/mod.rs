@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use crate::{
     asteroid::Asteroid,
-    boss::BossPart,
+    boss::{BossCore, BossEdge},
     collision::math::{
         circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
     },
@@ -287,7 +287,7 @@ pub fn detect_collision_fire_asteroid(
 //     }
 // }
 
-pub fn detect_collision_fire_boss_parts(
+pub fn detect_collision_fire_boss_part(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -299,35 +299,51 @@ pub fn detect_collision_fire_boss_parts(
             &mut Health,
             &Surface,
         ),
-        (Without<BossPart>, Without<Enemy>),
+        Without<Enemy>,
     >,
-    mut query_boss_parts: Query<
+    // mut query_boss_core: Query<
+    //     (
+    //         Option<&Children>,
+    //         &Handle<ColorMaterial>,
+    //         Entity,
+    //         &GlobalTransform,
+    //         &mut Health,
+    //         &Surface,
+    //     ),
+    //     (With<BossCore>, Without<Fire>),
+    // >,
+    mut query_boss_part: Query<
         (
+            Option<&BossCore>,
             &Handle<ColorMaterial>,
             Entity,
             &GlobalTransform,
             &mut Health,
             &Surface,
         ),
-        With<BossPart>,
+        (Or<(With<BossEdge>, With<BossCore>)>, Without<Fire>),
     >,
 ) {
+    // let (bc_children, bc_color, bc_entity, bc_transform, mut bc_health, bc_surface) =
+    //     query_boss_core.single();
     for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-        for (bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
-            query_boss_parts.iter_mut()
+        for (bc, bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
+            query_boss_part.iter_mut()
         {
             if collision(f_transform, f_surface, bp_transform, bp_surface) {
-                f_health.0 -= 1;
-                bp_health.0 -= 1;
-
                 let f_color = materials.get(f_color).unwrap().color;
-                let bp_color = materials.get_mut(bp_color).unwrap();
-                let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
-                let [r2, g2, b2, _] = f_color.as_rgba_f32();
-                r += (r2 - r) / (1. + bp_health.0 as f32);
-                g += (g2 - g) / (1. + bp_health.0 as f32);
-                b += (b2 - b) / (1. + bp_health.0 as f32);
-                bp_color.color = Color::rgb(r, g, b);
+                f_health.0 -= 1;
+                if bc.filter(|x| x.edges > 0).is_none() {
+                    bp_health.0 -= 1;
+
+                    let bp_color = materials.get_mut(bp_color).unwrap();
+                    let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
+                    let [r2, g2, b2, _] = f_color.as_rgba_f32();
+                    r += (r2 - r) / (1. + bp_health.0 as f32);
+                    g += (g2 - g) / (1. + bp_health.0 as f32);
+                    b += (b2 - b) / (1. + bp_health.0 as f32);
+                    bp_color.color = Color::rgb(r, g, b);
+                }
 
                 let impact = commands
                     .spawn_empty()
