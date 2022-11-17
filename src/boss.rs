@@ -115,7 +115,7 @@ const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const HEALTH: i32 = 20;
 
 pub const ATTACK_COLOR: Color = Color::RED;
-const FIRE_VELOCITY: f32 = 4.0;
+const FIRE_VELOCITY: f32 = 8.0;
 // const ATTACK_SOURCE: [Vec3; 8] = [A0, A2, A4, A6, A8, A10, A12, A14];
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;

@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{
     collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
-    Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
+    Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE, WINDOW_WIDTH,
 };
 
 const HEALTH: i32 = 10;
@@ -80,9 +80,9 @@ pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // ];
 
 // const VELOCITY_MAX: f32 = 5.0;
-const ACCELERATION: f32 = 0.05;
+const ACCELERATION: f32 = 0.1;
 const POSITION: Vec3 = Vec3 {
-    x: -300.0,
+    x: -WINDOW_WIDTH / 4.0,
     y: 0.0,
     z: ALTITUDE,
 };
@@ -96,7 +96,7 @@ const FIRE_VERTICES: usize = 4;
 const IMPACT_RADIUS: f32 = 12.0;
 const IMPACT_VERTICES: usize = 16;
 const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 8.0,
+    x: 16.0,
     y: 0.0,
     z: 0.0,
 };
