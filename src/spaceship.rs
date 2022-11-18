@@ -3,64 +3,74 @@ use rand::Rng;
 
 use crate::{
     collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
-    Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE, WINDOW_WIDTH,
+    Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
 };
 
 const HEALTH: i32 = 10;
 
-const O: Vec3 = Vec3::ZERO;
-const A: Vec3 = Vec3 {
-    x: -30.0,
-    y: -30.0,
-    z: 0.0,
-};
-const B: Vec3 = Vec3 {
-    x: 30.0,
+// Center of gravity of the spaceship
+const SG: Vec3 = Vec3 {
+    x: -11.0,
     y: 0.0,
     z: 0.0,
 };
-const C: Vec3 = Vec3 {
-    x: -20.0,
-    y: 0.0,
-    z: 0.0,
+const S1: Vec3 = Vec3 {
+    x: -30.0 - SG.x,
+    y: -30.0 - SG.y,
+    z: 0.0 - SG.z,
 };
-const D: Vec3 = Vec3 {
-    x: -30.0,
-    y: 30.0,
-    z: 0.0,
+const S2: Vec3 = Vec3 {
+    x: 30.0 - SG.x,
+    y: 0.0 - SG.y,
+    z: 0.0 - SG.z,
 };
-const E: Vec3 = Vec3 {
-    x: -40.0,
-    y: -20.0,
-    z: 0.0,
+const S3: Vec3 = Vec3 {
+    x: -20.0 - SG.x,
+    y: 0.0 - SG.y,
+    z: 0.0 - SG.z,
 };
-const F: Vec3 = Vec3 {
-    x: -30.0,
-    y: 0.0,
-    z: 0.0,
+const S4: Vec3 = Vec3 {
+    x: -30.0 - SG.x,
+    y: 30.0 - SG.y,
+    z: 0.0 - SG.z,
 };
-const G: Vec3 = Vec3 {
-    x: -40.0,
-    y: 20.0,
-    z: 0.0,
+const S5: Vec3 = Vec3 {
+    x: -40.0 - SG.x,
+    y: -20.0 - SG.y,
+    z: 0.0 - SG.z,
 };
-const MIDPOINT_AB: Vec3 = Vec3 {
-    x: (A.x + B.x) / 2.0,
-    y: (A.y + B.y) / 2.0,
-    z: (A.z + B.z) / 2.0,
+const S6: Vec3 = Vec3 {
+    x: -SG.x,
+    y: 0.0 - SG.y,
+    z: 0.0 - SG.z,
 };
-const MIDPOINT_DB: Vec3 = Vec3 {
-    x: (D.x + B.x) / 2.0,
-    y: (D.y + B.y) / 2.0,
-    z: (D.z + B.z) / 2.0,
+const S7: Vec3 = Vec3 {
+    x: -30.0 - SG.x,
+    y: 0.0 - SG.y,
+    z: 0.0 - SG.z,
 };
+const S8: Vec3 = Vec3 {
+    x: -40.0 - SG.x,
+    y: 20.0 - SG.y,
+    z: 0.0 - SG.z,
+};
+// const MIDPOINT_AB: Vec3 = Vec3 {
+//     x: (A.x + B.x) / 2.0,
+//     y: (A.y + B.y) / 2.0,
+//     z: (A.z + B.z) / 2.0,
+// };
+// const MIDPOINT_DB: Vec3 = Vec3 {
+//     x: (D.x + B.x) / 2.0,
+//     y: (D.y + B.y) / 2.0,
+//     z: (D.z + B.z) / 2.0,
+// };
 // pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-pub const TRIANGLES: [Triangle; 4] = [[A, B, C], [D, C, B], [E, O, F], [G, F, O]];
+pub const TRIANGLES: [Triangle; 4] = [[S1, S2, S3], [S4, S3, S2], [S5, S6, S7], [S8, S7, S6]];
 const HITBOX: HitBox = HitBox {
-    half_x: 40.0,
-    half_y: 30.0,
+    half_x: S2.x,
+    half_y: S4.y,
 };
-pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
+// pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const TRIANGLELIST: [[f32; 3]; 6] = [
 //     [40.0, -5.0, 0.0],
 //     [-20.0, 15.0, 0.0],
@@ -83,12 +93,13 @@ pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 const ACCELERATION: f32 = 0.1;
 const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
-    x: -WINDOW_WIDTH / 2.0,
+    // x: -WINDOW_WIDTH / 2.0,
+    x: 0.0,
     y: 0.0,
     // y: -crate::WINDOW_HEIGHT,
     z: ALTITUDE,
 };
-pub const ATTACK_SOURCE: Vec3 = B;
+pub const ATTACK_SOURCE: Vec3 = S2;
 const SPACESHIP_COLOR: Color = Color::BLUE;
 pub const ATTACK_COLOR: Color = Color::YELLOW;
 const BLAST_RADIUS: f32 = 8.0;
@@ -310,8 +321,8 @@ pub fn explode(
             let mut debris;
             'outer: loop {
                 debris = Vec3 {
-                    x: rng.gen_range(E.x..B.x),
-                    y: rng.gen_range(A.y..D.y),
+                    x: rng.gen_range(S5.x..S2.x),
+                    y: rng.gen_range(S1.y..S4.y),
                     z: 0.0,
                 };
                 let mut triangles = TRIANGLES.iter();

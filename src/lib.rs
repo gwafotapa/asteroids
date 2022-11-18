@@ -128,30 +128,13 @@ pub fn keyboard_input(
     // }
 
     if let Ok((entity, mut transform, mut velocity)) = query.get_single_mut() {
-        // // we can check multiple at once with `.any_*`
-        // if keys.any_pressed([
-        //     KeyCode::Left,
-        //     KeyCode::Down,
-        //     KeyCode::Up,
-        //     KeyCode::Right,
-        //     KeyCode::H,
-        //     KeyCode::J,
-        //     KeyCode::K,
-        //     KeyCode::L,
-        // ]) {
         if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
             spaceship::attack(commands, meshes, materials, entity, &transform);
         }
-        // Either the left or right shift are being held down
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
-            // W is being held down
-            // transform.translation += Vec3::from([-spaceship.acceleration(), 0., 0.]);
-            Spaceship::accelerate(&mut velocity, Direction::Left);
+            transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.1);
         } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
-            // W is being held down
-            Spaceship::accelerate(&mut velocity, Direction::Right);
-        } else {
-            Spaceship::decelerate_x(&mut velocity);
+            transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.1);
         }
 
         if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
@@ -172,18 +155,18 @@ pub fn keyboard_input(
         transform.translation += velocity.0;
 
         // Don't move out of the screen
-        if transform.translation.x < -WINDOW_WIDTH / 2.0 + 40.0 {
-            transform.translation.x = -WINDOW_WIDTH / 2.0 + 40.0;
-        }
-        if transform.translation.x > WINDOW_WIDTH / 2.0 - 30.0 {
-            transform.translation.x = WINDOW_WIDTH / 2.0 - 30.0;
-        }
-        if transform.translation.y < -WINDOW_HEIGHT / 2.0 + 40.0 {
-            transform.translation.y = -WINDOW_HEIGHT / 2.0 + 40.0;
-        }
-        if transform.translation.y > WINDOW_HEIGHT / 2.0 - 30.0 {
-            transform.translation.y = WINDOW_HEIGHT / 2.0 - 30.0;
-        }
+        // if transform.translation.x < -WINDOW_WIDTH / 2.0 + 40.0 {
+        //     transform.translation.x = -WINDOW_WIDTH / 2.0 + 40.0;
+        // }
+        // if transform.translation.x > WINDOW_WIDTH / 2.0 - 30.0 {
+        //     transform.translation.x = WINDOW_WIDTH / 2.0 - 30.0;
+        // }
+        // if transform.translation.y < -WINDOW_HEIGHT / 2.0 + 40.0 {
+        //     transform.translation.y = -WINDOW_HEIGHT / 2.0 + 40.0;
+        // }
+        // if transform.translation.y > WINDOW_HEIGHT / 2.0 - 30.0 {
+        //     transform.translation.y = WINDOW_HEIGHT / 2.0 - 30.0;
+        // }
     }
 }
 
