@@ -131,20 +131,17 @@ pub fn keyboard_input(
         if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
             spaceship::attack(commands, meshes, materials, entity, &transform);
         }
+
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
             transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.1);
         } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
             transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.1);
         }
 
-        if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
-            // W is being held down
-            Spaceship::accelerate(&mut velocity, Direction::Down);
-        } else if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
-            // W is being held down
-            Spaceship::accelerate(&mut velocity, Direction::Up);
-        } else {
-            Spaceship::decelerate_y(&mut velocity);
+        if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
+            Spaceship::accelerate(&*transform, &mut velocity);
+        } else if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
+            Spaceship::decelerate(&*transform, &mut velocity);
         }
         // } else {
         //     Spaceship::decelerate();

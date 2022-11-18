@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{
     collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
-    Blast, Debris, Direction, Fire, Health, Velocity, ALTITUDE,
+    Blast, Debris, Fire, Health, Velocity, ALTITUDE,
 };
 
 const HEALTH: i32 = 10;
@@ -118,51 +118,34 @@ const FIRE_VELOCITY: Vec3 = Vec3 {
 pub struct Spaceship;
 
 impl Spaceship {
-    // pub fn envelop(&self) -> &Vec<Vec3> {
-    //     &self.envelop
-    // }
+    //     pub fn accelerate(velocity: &mut Velocity) {
 
-    pub fn accelerate(velocity: &mut Velocity, direction: Direction) {
-        // if self.velocity.length() < VELOCITY_MAX {
-        velocity.0 += match direction {
-            Direction::Left => Vec3 {
-                x: -ACCELERATION,
-                y: 0.0,
-                z: 0.0,
-            },
-            Direction::Down => Vec3 {
-                x: 0.0,
-                y: -ACCELERATION,
-                z: 0.0,
-            },
-            Direction::Up => Vec3 {
-                x: 0.0,
-                y: ACCELERATION,
-                z: 0.0,
-            },
-            Direction::Right => Vec3 {
-                x: ACCELERATION,
-                y: 0.0,
-                z: 0.0,
-            },
-        };
-        // }
+    //         velocity.0 +=
+    //     }
+
+    //     pub fn decelerate_x(velocity: &mut Velocity) {
+    //         if velocity.0.x > 0.0 {
+    //             velocity.0.x -= ACCELERATION / 2.0;
+    //         } else if velocity.0.x < 0.0 {
+    //             velocity.0.x += ACCELERATION / 2.0;
+    //         }
+    //     }
+
+    //     pub fn decelerate_y(velocity: &mut Velocity) {
+    //         if velocity.0.y > 0.0 {
+    //             velocity.0.y -= ACCELERATION / 2.0;
+    //         } else if velocity.0.y < 0.0 {
+    //             velocity.0.y += ACCELERATION / 2.0;
+    //         }
+    //     }
+    pub fn accelerate(transport: &Transform, velocity: &mut Velocity) {
+        let direction = transport.rotation * Vec3::X;
+        velocity.0 += ACCELERATION * direction;
     }
 
-    pub fn decelerate_x(velocity: &mut Velocity) {
-        if velocity.0.x > 0.0 {
-            velocity.0.x -= ACCELERATION / 2.0;
-        } else if velocity.0.x < 0.0 {
-            velocity.0.x += ACCELERATION / 2.0;
-        }
-    }
-
-    pub fn decelerate_y(velocity: &mut Velocity) {
-        if velocity.0.y > 0.0 {
-            velocity.0.y -= ACCELERATION / 2.0;
-        } else if velocity.0.y < 0.0 {
-            velocity.0.y += ACCELERATION / 2.0;
-        }
+    pub fn decelerate(transport: &Transform, velocity: &mut Velocity) {
+        let direction = transport.rotation * Vec3::X;
+        velocity.0 -= 0.5 * ACCELERATION * direction;
     }
 }
 
