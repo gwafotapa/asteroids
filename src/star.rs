@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::{Velocity, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const INITIAL_COUNT_BY_VELOCITY: usize = 10;
-const MAX_SPEED: usize = 10;
+const SPEED_MAX: usize = 10;
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;
 const VERTICES: usize = 4;
@@ -12,17 +12,14 @@ const VERTICES: usize = 4;
 #[derive(Component)]
 pub struct Star;
 
-pub fn setup_stars(
+pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mut rng = rand::thread_rng();
-    for speed in 1..(MAX_SPEED + 1) {
+    for speed in 1..(SPEED_MAX + 1) {
         for _i in 0..INITIAL_COUNT_BY_VELOCITY {
-            let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
-            let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
-
             commands
                 .spawn_empty()
                 .insert(Star)
@@ -35,27 +32,25 @@ pub fn setup_stars(
                         }))
                         .into(),
                     transform: Transform::from_translation(Vec3 {
-                        x,
-                        y,
+                        x: rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
+                        y: rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
                         z: BACKGROUND,
                     }),
-                    material: materials.add(Color::rgb(1., 1., 1.).into()),
+                    material: materials.add(Color::WHITE.into()),
                     ..default()
                 });
         }
     }
 }
 
-pub fn add_stars(
+pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mut rng = rand::thread_rng();
-    let speed = rng.gen_range(1..MAX_SPEED + 1) as f32;
+    let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
     let velocity = Vec3::from([-speed, 0., 0.]);
-
-    let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
     commands
         .spawn_empty()
@@ -70,27 +65,22 @@ pub fn add_stars(
                 .into(),
             transform: Transform::from_translation(Vec3 {
                 x: WINDOW_WIDTH / 2.0,
-                y,
+                y: rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
                 z: BACKGROUND,
             }),
-            material: materials.add(Color::rgb(1., 1., 1.).into()),
+            material: materials.add(Color::WHITE.into()),
             ..default()
         });
 }
 
-pub fn update_stars(
+pub fn update(
     mut commands: Commands,
-    // mut meshes: ResMut<Assets<Mesh>>,
     mut query: Query<(Entity, &mut Transform, &Velocity), With<Star>>,
 ) {
     for (star, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;
-        //     for value in mesh.attributes() {
-        //         println!("{}", value);
-        //     }
         if transform.translation.x < -WINDOW_WIDTH / 2.0 {
             commands.entity(star).despawn();
         }
     }
-    // for mesh in meshes.get_handle() {}
 }

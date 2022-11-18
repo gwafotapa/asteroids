@@ -23,7 +23,7 @@ fn main() {
         .add_startup_system(camera)
         .add_startup_system(spaceship::spaceship)
         .add_startup_system(setup_level)
-        .add_startup_system(star::setup_stars)
+        .add_startup_system(star::setup)
         .add_system(bevy::window::close_on_esc)
         .add_system(update_distance_to_boss)
         .add_system_set(
@@ -44,8 +44,8 @@ fn main() {
                 .with_system(collision::detect_collision_fire_boss_part)
                 .with_system(collision::detect_collision_fire_spaceship),
         )
-        .add_system(star::add_stars)
-        .add_system(star::update_stars)
+        .add_system(star::spawn)
+        .add_system(star::update)
         .add_system(collision::update_impacts)
         .add_system(collision::update_debris)
         // .add_system(boss::add_boss)
