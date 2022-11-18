@@ -48,16 +48,6 @@ pub struct Level {
 #[derive(Component)]
 pub struct Health(i32);
 
-// #[derive(Component)]
-// pub struct Attack {
-//     source: Vec3,
-//     color: Color,
-//     blast_radius: f32,
-//     blast_vertices: usize,
-//     fire_radius: f32,
-//     fire_vertices: usize,
-// }
-
 #[derive(Component)]
 pub struct Enemy;
 
@@ -104,7 +94,7 @@ pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-pub fn update_distance_to_boss(mut query: Query<(&mut Level, &mut Text)>) {
+pub fn distance_to_boss(mut query: Query<(&mut Level, &mut Text)>) {
     for (mut level, mut text) in &mut query {
         if level.distance_to_boss > 0 {
             level.distance_to_boss -= 1;

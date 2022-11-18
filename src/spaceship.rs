@@ -153,7 +153,7 @@ impl Spaceship {
     }
 }
 
-pub fn spaceship(
+pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

@@ -6,9 +6,9 @@ use crate::{
     Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-const MAX_SPEED: usize = 5;
-const MAX_HEALTH: i32 = 6;
-pub const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
+const SPEED_MAX: usize = 5;
+const HEALTH_MAX: i32 = 6;
+const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 
 #[derive(Component)]
 pub struct Asteroid {
@@ -24,11 +24,11 @@ pub fn asteroids(
     let mut rng = rand::thread_rng();
 
     if query_level.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
-        let health = rng.gen_range(1..MAX_HEALTH + 1);
+        let health = rng.gen_range(1..HEALTH_MAX + 1);
         let radius = (health * 20) as f32;
-        let speed = rng.gen_range(1..MAX_SPEED + 1) as f32;
+        let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
         let velocity = Vec3::from([-speed, 0., 0.]);
-        let x = WINDOW_WIDTH / 2.0 + (MAX_HEALTH * 20) as f32;
+        let x = WINDOW_WIDTH / 2.0 + (HEALTH_MAX * 20) as f32;
         let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
         commands

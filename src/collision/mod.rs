@@ -166,7 +166,7 @@ fn collision(
     }
 }
 
-pub fn detect_collision_spaceship_asteroid(
+pub fn spaceship_and_asteroid(
     mut query_spaceship: Query<(&GlobalTransform, &mut Health, &Surface), With<Spaceship>>,
     query_asteroid: Query<(&GlobalTransform, &Surface), With<Asteroid>>,
 ) {
@@ -180,7 +180,7 @@ pub fn detect_collision_spaceship_asteroid(
     }
 }
 
-pub fn detect_collision_fire_asteroid(
+pub fn fire_and_asteroid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -230,7 +230,7 @@ pub fn detect_collision_fire_asteroid(
     }
 }
 
-// pub fn detect_collision_fire_boss(
+// pub fn fire_boss(
 //     mut commands: Commands,
 //     mut meshes: ResMut<Assets<Mesh>>,
 //     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -287,7 +287,7 @@ pub fn detect_collision_fire_asteroid(
 //     }
 // }
 
-pub fn detect_collision_fire_boss_part(
+pub fn fire_and_boss(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -384,7 +384,7 @@ pub fn detect_collision_fire_boss_part(
     }
 }
 
-pub fn detect_collision_fire_spaceship(
+pub fn fire_and_spaceship(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -433,7 +433,7 @@ pub fn detect_collision_fire_spaceship(
     }
 }
 
-pub fn detect_collision_asteroid_asteroid(
+pub fn asteroid_and_asteroid(
     mut query: Query<(&Asteroid, &GlobalTransform, &mut Health, &Surface)>,
 ) {
     let mut i = 0;
