@@ -18,8 +18,10 @@ pub enum Direction {
 }
 
 const ALTITUDE: f32 = 500.0;
-pub const WINDOW_WIDTH: f32 = 1920.0;
-pub const WINDOW_HEIGHT: f32 = 1280.0;
+// pub const WINDOW_WIDTH: f32 = 1920.0;
+// pub const WINDOW_HEIGHT: f32 = 1080.0;
+pub const WINDOW_WIDTH: f32 = 1280.0;
+pub const WINDOW_HEIGHT: f32 = 720.0;
 // pub const WINDOW_WIDTH: f32 = 800.0;
 // pub const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0000;
@@ -168,6 +170,20 @@ pub fn keyboard_input(
         //     // Either delete or backspace was just pressed
         // }
         transform.translation += velocity.0;
+
+        // Don't move out of the screen
+        if transform.translation.x < -WINDOW_WIDTH / 2.0 + 40.0 {
+            transform.translation.x = -WINDOW_WIDTH / 2.0 + 40.0;
+        }
+        if transform.translation.x > WINDOW_WIDTH / 2.0 - 30.0 {
+            transform.translation.x = WINDOW_WIDTH / 2.0 - 30.0;
+        }
+        if transform.translation.y < -WINDOW_HEIGHT / 2.0 + 40.0 {
+            transform.translation.y = -WINDOW_HEIGHT / 2.0 + 40.0;
+        }
+        if transform.translation.y > WINDOW_HEIGHT / 2.0 - 30.0 {
+            transform.translation.y = WINDOW_HEIGHT / 2.0 - 30.0;
+        }
     }
 }
 

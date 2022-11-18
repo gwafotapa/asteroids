@@ -125,7 +125,8 @@ const INITIAL_POSITION: Vec3 = Vec3 {
     y: 0.0,
     z: ALTITUDE,
 };
-const ROTATION_SPEED: f32 = 0.05;
+// const ROTATION_SPEED: f32 = 0.05;
+const ROTATION_SPEED: f32 = 0.0;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
@@ -273,15 +274,12 @@ pub fn advance(
             if velocity.0.x > -1.0 && transform.translation.x > -WINDOW_WIDTH / 4.0 {
                 acceleration.push(Direction::Left);
             }
-
             if velocity.0.x < 1.0 && transform.translation.x < WINDOW_WIDTH / 4.0 {
                 acceleration.push(Direction::Right);
             }
-
             if velocity.0.y > -1.0 && transform.translation.y > -WINDOW_HEIGHT / 3.0 {
                 acceleration.push(Direction::Down);
             }
-
             if velocity.0.y < 1.0 && transform.translation.y < WINDOW_HEIGHT / 3.0 {
                 acceleration.push(Direction::Up);
             }
@@ -291,10 +289,7 @@ pub fn advance(
                 Direction::Right => Vec3::from([ACCELERATION, 0.0, 0.0]),
                 Direction::Down => Vec3::from([0.0, -ACCELERATION, 0.0]),
                 Direction::Up => Vec3::from([0.0, ACCELERATION, 0.0]),
-                // _ => unreachable!(),
             };
-            transform.translation += velocity.0;
-            // println!("{}", velocity.0);
             transform.rotation *=
                 Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), ROTATION_SPEED);
         } else {
@@ -302,10 +297,25 @@ pub fn advance(
                 let direction = (s_transform.translation - transform.translation).normalize();
                 let acceleration = -velocity.0 / 2.0 + 3.0 * direction;
                 velocity.0 += acceleration;
-                transform.translation += velocity.0;
                 transform.rotation *=
                     Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 2.0 * ROTATION_SPEED);
             }
+        }
+
+        transform.translation += velocity.0;
+
+        // Don't move out of the screen
+        if transform.translation.x < -WINDOW_WIDTH / 2.0 {
+            transform.translation.x = -WINDOW_WIDTH / 2.0;
+        }
+        if transform.translation.x > WINDOW_WIDTH / 2.0 {
+            transform.translation.x = WINDOW_WIDTH / 2.0;
+        }
+        if transform.translation.y < -WINDOW_HEIGHT / 2.0 {
+            transform.translation.y = -WINDOW_HEIGHT / 2.0;
+        }
+        if transform.translation.y > WINDOW_HEIGHT / 2.0 {
+            transform.translation.y = WINDOW_HEIGHT / 2.0;
         }
     }
 }
@@ -322,7 +332,7 @@ pub fn attack(
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
-                if rng.gen_range(0..100) == 0 {
+                if rng.gen_range(0..100000) == 0 {
                     let canon_absolute_position =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 

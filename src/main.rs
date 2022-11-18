@@ -12,7 +12,6 @@ fn main() {
                 title: "Asteroids".to_string(),
                 width: WINDOW_WIDTH,
                 height: WINDOW_HEIGHT,
-                // present_mode: PresentMode::AutoVsync,
                 // mode: WindowMode::SizedFullscreen,
                 ..default()
             },

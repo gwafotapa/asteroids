@@ -82,8 +82,10 @@ pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const VELOCITY_MAX: f32 = 5.0;
 const ACCELERATION: f32 = 0.1;
 const POSITION: Vec3 = Vec3 {
-    x: -WINDOW_WIDTH / 4.0,
+    // x: -WINDOW_WIDTH / 4.0,
+    x: -WINDOW_WIDTH / 2.0,
     y: 0.0,
+    // y: -crate::WINDOW_HEIGHT,
     z: ALTITUDE,
 };
 pub const ATTACK_SOURCE: Vec3 = B;
