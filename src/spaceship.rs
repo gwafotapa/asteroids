@@ -96,7 +96,7 @@ const FIRE_VERTICES: usize = 4;
 const IMPACT_RADIUS: f32 = 12.0;
 const IMPACT_VERTICES: usize = 16;
 const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 4.0,
+    x: 12.0,
     y: 0.0,
     z: 0.0,
 };

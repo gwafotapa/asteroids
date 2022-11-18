@@ -115,7 +115,8 @@ const INITIAL_POSITION: Vec3 = Vec3 {
 };
 const ACCELERATION: f32 = 0.01;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const HEALTH: i32 = 20;
+const CORE_HEALTH: i32 = 50;
+const EDGE_HEALTH: i32 = 10;
 
 pub const ATTACK_COLOR: Color = Color::RED;
 const FIRE_VELOCITY: f32 = 8.0;
@@ -126,7 +127,7 @@ const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
 const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
-const ROTATION_SPEED: f32 = 0.0;
+const ROTATION_SPEED: f32 = 0.05;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
@@ -229,7 +230,7 @@ pub fn add_boss_parts(
         let boss_core = commands
             .spawn_empty()
             .insert(BossCore { edges: EDGES })
-            .insert(Health(HEALTH))
+            .insert(Health(CORE_HEALTH))
             .insert(Velocity(Vec3::ZERO))
             .insert(MaterialMesh2dBundle {
                 mesh: meshes.add(mesh).into(),
@@ -261,7 +262,7 @@ pub fn add_boss_parts(
             let boss_edge = commands
                 .spawn_empty()
                 .insert(BossEdge)
-                .insert(Health(HEALTH))
+                .insert(Health(EDGE_HEALTH))
                 .insert(MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
                     transform: Transform::from_xyz(
@@ -352,37 +353,52 @@ pub fn add_boss_parts(
 //     }
 // }
 
-pub fn move_boss(mut query: Query<(&mut Transform, &mut Velocity), With<BossCore>>) {
-    if let Ok((mut transform, mut velocity)) = query.get_single_mut() {
-        let mut rng = rand::thread_rng();
-        let mut acceleration = Vec::new();
+pub fn move_boss(
+    mut query_boss: Query<(&BossCore, &mut Transform, &mut Velocity)>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<BossCore>)>,
+) {
+    if let Ok((core, mut transform, mut velocity)) = query_boss.get_single_mut() {
+        if core.edges > 0 {
+            let mut rng = rand::thread_rng();
+            let mut acceleration = Vec::new();
 
-        if velocity.0.x > -1.0 && transform.translation.x > -WINDOW_WIDTH / 4.0 {
-            acceleration.push(Direction::Left);
+            if velocity.0.x > -1.0 && transform.translation.x > -WINDOW_WIDTH / 4.0 {
+                acceleration.push(Direction::Left);
+            }
+
+            if velocity.0.x < 1.0 && transform.translation.x < WINDOW_WIDTH / 4.0 {
+                acceleration.push(Direction::Right);
+            }
+
+            if velocity.0.y > -1.0 && transform.translation.y > -WINDOW_HEIGHT / 3.0 {
+                acceleration.push(Direction::Down);
+            }
+
+            if velocity.0.y < 1.0 && transform.translation.y < WINDOW_HEIGHT / 3.0 {
+                acceleration.push(Direction::Up);
+            }
+
+            velocity.0 += match acceleration.choose(&mut rng).unwrap() {
+                Direction::Left => Vec3::from([-ACCELERATION, 0.0, 0.0]),
+                Direction::Right => Vec3::from([ACCELERATION, 0.0, 0.0]),
+                Direction::Down => Vec3::from([0.0, -ACCELERATION, 0.0]),
+                Direction::Up => Vec3::from([0.0, ACCELERATION, 0.0]),
+                // _ => unreachable!(),
+            };
+            transform.translation += velocity.0;
+            // println!("{}", velocity.0);
+            transform.rotation *=
+                Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), ROTATION_SPEED);
+        } else {
+            if let Ok(s_transform) = query_spaceship.get_single() {
+                let direction = (s_transform.translation - transform.translation).normalize();
+                let acceleration = -velocity.0 / 2.0 + 3.0 * direction;
+                velocity.0 += acceleration;
+                transform.translation += velocity.0;
+                transform.rotation *=
+                    Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 2.0 * ROTATION_SPEED);
+            }
         }
-
-        if velocity.0.x < 1.0 && transform.translation.x < WINDOW_WIDTH / 4.0 {
-            acceleration.push(Direction::Right);
-        }
-
-        if velocity.0.y > -1.0 && transform.translation.y > -WINDOW_HEIGHT / 3.0 {
-            acceleration.push(Direction::Down);
-        }
-
-        if velocity.0.y < 1.0 && transform.translation.y < WINDOW_HEIGHT / 3.0 {
-            acceleration.push(Direction::Up);
-        }
-
-        velocity.0 += match acceleration.choose(&mut rng).unwrap() {
-            Direction::Left => Vec3::from([-ACCELERATION, 0.0, 0.0]),
-            Direction::Right => Vec3::from([ACCELERATION, 0.0, 0.0]),
-            Direction::Down => Vec3::from([0.0, -ACCELERATION, 0.0]),
-            Direction::Up => Vec3::from([0.0, ACCELERATION, 0.0]),
-            // _ => unreachable!(),
-        };
-        transform.translation += velocity.0;
-        // println!("{}", velocity.0);
-        transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), ROTATION_SPEED);
     }
 }
 
@@ -570,18 +586,20 @@ pub fn explode(
     mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
     mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
 ) {
-    if let Ok((mut core, core_entity, velocity)) = query_boss_core.get_single_mut() {
-        for (edge, children, entity, color, transform, health, surface) in query_boss_part.iter() {
+    if let Ok((mut core, core_entity, core_velocity)) = query_boss_core.get_single_mut() {
+        for (maybe_edge, maybe_children, entity, color, transform, health, surface) in
+            query_boss_part.iter()
+        {
             if health.0 > 0 {
                 continue;
             }
 
-            if edge.is_some() {
+            if maybe_edge.is_some() {
                 core.edges -= 1;
                 commands.entity(core_entity).remove_children(&[entity]);
             }
 
-            if let Some(children) = children {
+            if let Some(children) = maybe_children {
                 for child in children {
                     commands.entity(*child).remove::<Parent>();
                     if let Ok(mut child_transform) =
@@ -633,7 +651,7 @@ pub fn explode(
                         commands
                             .spawn_empty()
                             .insert(Debris)
-                            .insert(Velocity(velocity.0 + dv))
+                            .insert(Velocity(core_velocity.0 + dv))
                             // .insert(Velocity(dv))
                             .insert(MaterialMesh2dBundle {
                                 mesh: meshes

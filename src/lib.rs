@@ -18,10 +18,10 @@ pub enum Direction {
 }
 
 const ALTITUDE: f32 = 500.0;
-// pub const WINDOW_WIDTH: f32 = 1920.0;
-// pub const WINDOW_HEIGHT: f32 = 1280.0;
-pub const WINDOW_WIDTH: f32 = 800.0;
-pub const WINDOW_HEIGHT: f32 = 600.0;
+pub const WINDOW_WIDTH: f32 = 1920.0;
+pub const WINDOW_HEIGHT: f32 = 1280.0;
+// pub const WINDOW_WIDTH: f32 = 800.0;
+// pub const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0000;
 
 #[derive(Component)]
