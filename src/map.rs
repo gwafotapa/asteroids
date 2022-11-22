@@ -127,72 +127,76 @@ pub fn update(
     let camera_xyz = query_camera.single().translation;
     let mut rng = rand::thread_rng();
 
-    let [i, j] = [
+    let [camera_a, camera_b] = [
         (camera_xyz.x / WINDOW_WIDTH).trunc() as usize,
         (camera_xyz.y / WINDOW_HEIGHT).trunc() as usize,
     ];
-    if map.current_sector == [i, j] {
+    if map.current_sector == [camera_a, camera_b] {
         return;
     }
 
-    // TODO: update the map, toggle visibility of old sectors
-    map.current_sector = [i, j];
-    map.sectors[i][j] = Location::Current;
+    // Turn off the visibility of sectors at distance 2
+    for [i, j] in adjacent_sectors(map.current_sector) {
+        let dx = if camera_a > i {
+            camera_a - i
+        } else {
+            i - camera_a
+        };
+        if dx > 1 {
+            // Turn off sector visibility
+        }
+        let dy = if camera_b > j {
+            camera_b - j
+        } else {
+            j - camera_b
+        };
+        if dy > 1 {
+            // Turn off sector visibility
+        }
+    }
 
-    let mut sector_x = vec![i];
-    let mut sector_y = vec![j];
-    if i > 0 {
-        sector_x.push(i - 1);
-    }
-    if i < MAP_SIZE - 1 {
-        sector_x.push(i + 1);
-    }
-    if j > 0 {
-        sector_y.push(j - 1);
-    }
-    if j < MAP_SIZE - 1 {
-        sector_y.push(j + 1);
-    }
-
-    for i in sector_x {
-        for &j in &sector_y {
-            if map.sectors[i][j] == Location::Unexplored {
-                map.sectors[i][j] = Location::Explored;
-                let sector = commands
-                    .spawn(Sector)
-                    .insert(SpatialBundle {
+    for [i, j] in adjacent_sectors([camera_a, camera_b]) {
+        if map.sectors[i][j] == Location::Unexplored {
+            map.sectors[i][j] = Location::Explored;
+            let sector = commands
+                .spawn(Sector)
+                .insert(SpatialBundle {
+                    transform: Transform::from_xyz(
+                        (i as f32 + 0.5) * WINDOW_WIDTH,
+                        (j as f32 + 0.5) * WINDOW_HEIGHT,
+                        PLANE_Z,
+                    ),
+                    ..default()
+                })
+                .id();
+            for _ in 0..COUNT_BY_SECTOR {
+                let star = commands
+                    .spawn(Star)
+                    .insert(ColorMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: RADIUS,
+                                vertices: VERTICES,
+                            }))
+                            .into(),
                         transform: Transform::from_xyz(
-                            i as f32 * WINDOW_WIDTH,
-                            j as f32 * WINDOW_HEIGHT,
-                            PLANE_Z,
+                            rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
+                            rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
+                            BACKGROUND,
                         ),
+                        material: materials.add(COLOR.into()),
                         ..default()
                     })
                     .id();
-                for _ in 0..COUNT_BY_SECTOR {
-                    let star = commands
-                        .spawn(Star)
-                        .insert(ColorMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: RADIUS,
-                                    vertices: VERTICES,
-                                }))
-                                .into(),
-                            transform: Transform::from_xyz(
-                                rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
-                                rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
-                                BACKGROUND,
-                            ),
-                            material: materials.add(COLOR.into()),
-                            ..default()
-                        })
-                        .id();
-                    commands.entity(sector).add_child(star);
-                }
+                commands.entity(sector).add_child(star);
             }
+        } else {
+            // Turn on sector visibility
         }
     }
+
+    map.sectors[camera_a][camera_b] = Location::Current; // Useless ?
+    map.current_sector = [camera_a, camera_b];
 }
 
 fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
