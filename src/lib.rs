@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 // use std::time::Instant;
 // use std::f32::consts::SQRT_2;pub
+use map::MAP_CENTER;
 
 pub mod asteroid;
 pub mod boss;
 pub mod collision;
+pub mod map;
 pub mod spaceship;
-pub mod star;
 
 use spaceship::Spaceship;
 
@@ -17,7 +18,7 @@ pub enum Direction {
     Right,
 }
 
-const ALTITUDE: f32 = 500.0;
+const PLANE_Z: f32 = 500.0;
 // pub const WINDOW_WIDTH: f32 = 1920.0;
 // pub const WINDOW_HEIGHT: f32 = 1080.0;
 pub const WINDOW_WIDTH: f32 = 1280.0;
@@ -25,6 +26,7 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 // pub const WINDOW_WIDTH: f32 = 800.0;
 // pub const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0000;
+const CAMERA_Z: f32 = 1000.0;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
@@ -57,7 +59,14 @@ pub struct Enemy;
 pub struct Debris;
 
 pub fn camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle {
+        transform: Transform::from_xyz(
+            MAP_CENTER as f32 * WINDOW_WIDTH,
+            MAP_CENTER as f32 * WINDOW_HEIGHT,
+            CAMERA_Z,
+        ),
+        ..default()
+    });
 }
 
 pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -113,11 +122,15 @@ pub fn distance_to_boss(mut query: Query<(&mut Level, &mut Text)>) {
 // }
 
 pub fn keyboard_input(
-    commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
+    // commands: Commands,
+    // meshes: ResMut<Assets<Mesh>>,
+    // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query: Query<(Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
+    mut query_camera: Query<&mut Transform, With<Camera>>,
+    mut query_spaceship: Query<
+        (Entity, &mut Transform, &mut Velocity),
+        (With<Spaceship>, Without<Camera>),
+    >,
 ) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
@@ -127,21 +140,35 @@ pub fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((entity, mut transform, mut velocity)) = query.get_single_mut() {
-        if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
-            spaceship::attack(commands, meshes, materials, entity, &transform);
-        }
+    if let Ok((_entity, mut transform, mut velocity)) = query_spaceship.get_single_mut() {
+        let mut cam_transform = query_camera.get_single_mut().unwrap();
+
+        // if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
+        //     spaceship::attack(commands, meshes, materials, entity, &transform);
+        // }
 
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
-            transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.1);
+            let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
+            transform.rotation *= rotation;
+            // cam_transform.rotation *= rotation;
         } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
-            transform.rotation *= Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.1);
+            let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
+            transform.rotation *= rotation;
+            // cam_transform.rotation *= rotation;
         }
 
         if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
-            Spaceship::accelerate(&*transform, &mut velocity);
+            // Spaceship::accelerate(&*transform, &mut velocity);
+            let direction = transform.rotation * Vec3::X;
+            if velocity.0.dot(direction) < spaceship::SPEED_MAX {
+                velocity.0 += spaceship::ACCELERATION * direction;
+            }
         } else if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
-            Spaceship::decelerate(&*transform, &mut velocity);
+            // Spaceship::decelerate(&*transform, &mut velocity);
+            let direction = transform.rotation * Vec3::NEG_X;
+            if velocity.0.dot(direction) < 0.5 * spaceship::SPEED_MAX {
+                velocity.0 += spaceship::ACCELERATION * direction;
+            }
         }
         // } else {
         //     Spaceship::decelerate();
@@ -150,6 +177,7 @@ pub fn keyboard_input(
         //     // Either delete or backspace was just pressed
         // }
         transform.translation += velocity.0;
+        cam_transform.translation += velocity.0;
 
         // Don't move out of the screen
         // if transform.translation.x < -WINDOW_WIDTH / 2.0 + 40.0 {

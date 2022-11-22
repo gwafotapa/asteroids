@@ -6,7 +6,7 @@ use crate::{
     asteroid::Asteroid,
     collision::{math, HitBox, Impact, Surface, Topology, Triangle},
     spaceship::Spaceship,
-    Blast, Debris, Direction, Enemy, Fire, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT,
+    Blast, Debris, Direction, Enemy, Fire, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT,
     WINDOW_WIDTH,
 };
 
@@ -123,7 +123,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
     // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
     x: WINDOW_WIDTH / 2.0,
     y: 0.0,
-    z: ALTITUDE,
+    z: PLANE_Z,
 };
 // const ROTATION_SPEED: f32 = 0.05;
 const ROTATION_SPEED: f32 = 0.0;

@@ -3,7 +3,8 @@ use rand::Rng;
 
 use crate::{
     collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
-    Blast, Debris, Fire, Health, Velocity, ALTITUDE,
+    map::MAP_CENTER,
+    Blast, Debris, Fire, Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const HEALTH: i32 = 10;
@@ -90,14 +91,14 @@ const HITBOX: HitBox = HitBox {
 // ];
 
 // const VELOCITY_MAX: f32 = 5.0;
-const ACCELERATION: f32 = 0.1;
+pub const ACCELERATION: f32 = 1.;
 const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
     // x: -WINDOW_WIDTH / 2.0,
-    x: 0.0,
-    y: 0.0,
+    x: MAP_CENTER as f32 * WINDOW_WIDTH,
+    y: MAP_CENTER as f32 * WINDOW_HEIGHT,
     // y: -crate::WINDOW_HEIGHT,
-    z: ALTITUDE,
+    z: PLANE_Z,
 };
 pub const ATTACK_SOURCE: Vec3 = S2;
 const SPACESHIP_COLOR: Color = Color::BLUE;
@@ -113,6 +114,7 @@ const FIRE_VELOCITY: Vec3 = Vec3 {
     y: 0.0,
     z: 0.0,
 };
+pub const SPEED_MAX: f32 = 12.0;
 
 #[derive(Component)]
 pub struct Spaceship;
@@ -138,14 +140,14 @@ impl Spaceship {
     //             velocity.0.y += ACCELERATION / 2.0;
     //         }
     //     }
-    pub fn accelerate(transport: &Transform, velocity: &mut Velocity) {
-        let direction = transport.rotation * Vec3::X;
+    pub fn accelerate(transform: &Transform, velocity: &mut Velocity) {
+        let direction = transform.rotation * Vec3::X;
         velocity.0 += ACCELERATION * direction;
     }
 
-    pub fn decelerate(transport: &Transform, velocity: &mut Velocity) {
-        let direction = transport.rotation * Vec3::X;
-        velocity.0 -= 0.5 * ACCELERATION * direction;
+    pub fn decelerate(transform: &Transform, velocity: &mut Velocity) {
+        let direction = transform.rotation * Vec3::NEG_X;
+        velocity.0 += 0.5 * ACCELERATION * direction;
     }
 }
 
@@ -320,7 +322,7 @@ pub fn explode(
                     }
                 }
             }
-            debris.z += ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+            debris.z += PLANE_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
             let debris_translation = s_transform.translation() + debris;
             let dv = Vec3 {

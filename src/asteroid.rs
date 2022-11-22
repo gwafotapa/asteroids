@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{
     collision::{HitBox, Impact, Surface, Topology},
-    Debris, Health, Level, Velocity, ALTITUDE, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Debris, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const SPEED_MAX: usize = 5;
@@ -50,7 +50,7 @@ pub fn asteroids(
                         vertices: 16,
                     }))
                     .into(),
-                transform: Transform::from_xyz(x, y, ALTITUDE),
+                transform: Transform::from_xyz(x, y, PLANE_Z),
                 material: materials.add(ColorMaterial::from(COLOR)),
                 ..default()
             });
@@ -122,7 +122,7 @@ pub fn explode(
                     transform: Transform::from_xyz(
                         debris_x,
                         debris_y,
-                        ALTITUDE + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                        PLANE_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
                     ),
                     material: materials.add(color.into()),
                     ..default()
