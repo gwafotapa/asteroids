@@ -43,7 +43,7 @@ fn main() {
         // .with_system(collision::fire_and_boss)
         // .with_system(collision::fire_and_spaceship),
         // )
-        // .add_system(map::spawn)
+        .add_system(map::update)
         // .add_system(map::update)
         // .add_system(collision::update_impacts)
         // .add_system(collision::update_debris)

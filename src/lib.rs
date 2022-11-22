@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 // use std::time::Instant;
 // use std::f32::consts::SQRT_2;pub
-use map::MAP_CENTER;
+use map::{MAP_CENTER_X, MAP_CENTER_Y, MAP_SIZE};
 
 pub mod asteroid;
 pub mod boss;
@@ -60,11 +60,7 @@ pub struct Debris;
 
 pub fn camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(
-            MAP_CENTER as f32 * WINDOW_WIDTH,
-            MAP_CENTER as f32 * WINDOW_HEIGHT,
-            CAMERA_Z,
-        ),
+        transform: Transform::from_xyz(MAP_CENTER_X, MAP_CENTER_Y, CAMERA_Z),
         ..default()
     });
 }
@@ -176,8 +172,23 @@ pub fn keyboard_input(
         // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
         //     // Either delete or backspace was just pressed
         // }
+
         transform.translation += velocity.0;
-        cam_transform.translation += velocity.0;
+        // cam_transform.translation += velocity.0;
+        if transform.translation.x < 0. {
+            transform.translation.x = 0.;
+        }
+        if transform.translation.y < 0. {
+            transform.translation.y = 0.;
+        }
+        if transform.translation.x >= MAP_SIZE as f32 * WINDOW_WIDTH {
+            transform.translation.x = MAP_SIZE as f32 * WINDOW_WIDTH - 1.;
+        }
+        if transform.translation.y >= MAP_SIZE as f32 * WINDOW_HEIGHT {
+            transform.translation.y = MAP_SIZE as f32 * WINDOW_HEIGHT - 1.;
+        }
+
+        cam_transform.translation = transform.translation;
 
         // Don't move out of the screen
         // if transform.translation.x < -WINDOW_WIDTH / 2.0 + 40.0 {

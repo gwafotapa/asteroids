@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{
     collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
-    map::MAP_CENTER,
+    map::{MAP_CENTER_X, MAP_CENTER_Y},
     Blast, Debris, Fire, Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
@@ -95,8 +95,8 @@ pub const ACCELERATION: f32 = 1.;
 const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
     // x: -WINDOW_WIDTH / 2.0,
-    x: MAP_CENTER as f32 * WINDOW_WIDTH,
-    y: MAP_CENTER as f32 * WINDOW_HEIGHT,
+    x: MAP_CENTER_X,
+    y: MAP_CENTER_Y,
     // y: -crate::WINDOW_HEIGHT,
     z: PLANE_Z,
 };
