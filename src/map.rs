@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::{Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 pub const MAP_SIZE: usize = 3;
 pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
@@ -131,12 +131,14 @@ pub fn update(
         (camera_xyz.x / WINDOW_WIDTH).trunc() as usize,
         (camera_xyz.y / WINDOW_HEIGHT).trunc() as usize,
     ];
-    if [i, j] == map.current_sector {
+    if map.current_sector == [i, j] {
         return;
     }
 
+    // TODO: update the map, toggle visibility of old sectors
     map.current_sector = [i, j];
     map.sectors[i][j] = Location::Current;
+
     let mut sector_x = vec![i];
     let mut sector_y = vec![j];
     if i > 0 {
@@ -152,7 +154,7 @@ pub fn update(
         sector_y.push(j + 1);
     }
 
-    'outer: for i in sector_x {
+    for i in sector_x {
         for &j in &sector_y {
             if map.sectors[i][j] == Location::Unexplored {
                 map.sectors[i][j] = Location::Explored;
@@ -193,14 +195,36 @@ pub fn update(
     }
 }
 
-pub fn update(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Transform, &Velocity), With<Star>>,
-) {
-    for (star, mut transform, velocity) in query.iter_mut() {
-        transform.translation += velocity.0;
-        if transform.translation.x < -WINDOW_WIDTH / 2.0 {
-            commands.entity(star).despawn();
-        }
+fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
+    let mut sector_x = vec![i];
+    let mut sector_y = vec![j];
+    if i > 0 {
+        sector_x.push(i - 1);
     }
+    if i < MAP_SIZE - 1 {
+        sector_x.push(i + 1);
+    }
+    if j > 0 {
+        sector_y.push(j - 1);
+    }
+    if j < MAP_SIZE - 1 {
+        sector_y.push(j + 1);
+    }
+    sector_x
+        .into_iter()
+        .zip(sector_y.into_iter())
+        .map(|(x, y)| [x, y])
+        .collect()
 }
+
+// pub fn update(
+//     mut commands: Commands,
+//     mut query: Query<(Entity, &mut Transform, &Velocity), With<Star>>,
+// ) {
+//     for (star, mut transform, velocity) in query.iter_mut() {
+//         transform.translation += velocity.0;
+//         if transform.translation.x < -WINDOW_WIDTH / 2.0 {
+//             commands.entity(star).despawn();
+//         }
+//     }
+// }

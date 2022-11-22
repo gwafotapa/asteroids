@@ -1,10 +1,21 @@
-use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
-use rand::Rng;
+use bevy::{prelude::*, render::mesh::PrimitiveTopology};
+// use rand::Rng;
 
 use crate::{
-    collision::{math::point_in_triangle, HitBox, Impact, Surface, Topology, Triangle},
+    collision::{
+        //math::point_in_triangle,
+        HitBox,
+        //Impact,
+        Surface,
+        Topology,
+        Triangle,
+    },
     map::{MAP_CENTER_X, MAP_CENTER_Y},
-    Blast, Debris, Fire, Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    // Blast, Debris, Fire,
+    Health,
+    Velocity,
+    PLANE_Z,
+    // WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const HEALTH: i32 = 10;
@@ -103,17 +114,17 @@ const POSITION: Vec3 = Vec3 {
 pub const ATTACK_SOURCE: Vec3 = S2;
 const SPACESHIP_COLOR: Color = Color::BLUE;
 pub const ATTACK_COLOR: Color = Color::YELLOW;
-const BLAST_RADIUS: f32 = 8.0;
-const BLAST_VERTICES: usize = 8;
-const FIRE_RADIUS: f32 = 3.0;
-const FIRE_VERTICES: usize = 4;
-const IMPACT_RADIUS: f32 = 12.0;
-const IMPACT_VERTICES: usize = 16;
-const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 12.0,
-    y: 0.0,
-    z: 0.0,
-};
+// const BLAST_RADIUS: f32 = 8.0;
+// const BLAST_VERTICES: usize = 8;
+// const FIRE_RADIUS: f32 = 3.0;
+// const FIRE_VERTICES: usize = 4;
+// const IMPACT_RADIUS: f32 = 12.0;
+// const IMPACT_VERTICES: usize = 16;
+// const FIRE_VELOCITY: Vec3 = Vec3 {
+//     x: 12.0,
+//     y: 0.0,
+//     z: 0.0,
+// };
 pub const SPEED_MAX: f32 = 12.0;
 
 #[derive(Component)]
@@ -206,154 +217,154 @@ pub fn spawn(
         });
 }
 
-pub fn attack(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    spaceship: Entity,
-    transform: &Transform,
-    // attack: &Attack,
-) {
-    // let (spaceship, transform) = query.single();
+// pub fn attack(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     spaceship: Entity,
+//     transform: &Transform,
+//     // attack: &Attack,
+// ) {
+//     // let (spaceship, transform) = query.single();
 
-    let blast = commands
-        .spawn_empty()
-        .insert(Blast)
-        .insert(Health(2))
-        .insert(MaterialMesh2dBundle {
-            mesh: meshes
-                .add(Mesh::from(shape::Circle {
-                    radius: BLAST_RADIUS,
-                    vertices: BLAST_VERTICES,
-                }))
-                .into(),
-            // transform: transform.clone().with_scale(Vec3::splat(5.0)),
-            transform: Transform::from_translation(ATTACK_SOURCE),
-            // .with_scale(Vec3::splat(1.0)),
-            material: materials.add(ATTACK_COLOR.into()),
-            ..default()
-        })
-        .id();
+//     let blast = commands
+//         .spawn_empty()
+//         .insert(Blast)
+//         .insert(Health(2))
+//         .insert(ColorMesh2dBundle {
+//             mesh: meshes
+//                 .add(Mesh::from(shape::Circle {
+//                     radius: BLAST_RADIUS,
+//                     vertices: BLAST_VERTICES,
+//                 }))
+//                 .into(),
+//             // transform: transform.clone().with_scale(Vec3::splat(5.0)),
+//             transform: Transform::from_translation(ATTACK_SOURCE),
+//             // .with_scale(Vec3::splat(1.0)),
+//             material: materials.add(ATTACK_COLOR.into()),
+//             ..default()
+//         })
+//         .id();
 
-    commands.entity(spaceship).push_children(&[blast]);
+//     commands.entity(spaceship).push_children(&[blast]);
 
-    commands
-        .spawn_empty()
-        .insert(Fire {
-            impact_radius: IMPACT_RADIUS,
-            impact_vertices: IMPACT_VERTICES,
-        })
-        .insert(Health(1))
-        .insert(Velocity(FIRE_VELOCITY))
-        .insert(Surface {
-            topology: Topology::Point,
-            hitbox: HitBox {
-                half_x: 0.0,
-                half_y: 0.0,
-            },
-        })
-        .insert(MaterialMesh2dBundle {
-            mesh: meshes
-                .add(Mesh::from(shape::Circle {
-                    radius: FIRE_RADIUS,
-                    vertices: FIRE_VERTICES,
-                }))
-                .into(),
-            transform: Transform::from_translation(
-                transform.translation + ATTACK_SOURCE * transform.scale,
-            ),
-            material: materials.add(ATTACK_COLOR.into()),
-            ..default()
-        });
-}
+//     commands
+//         .spawn_empty()
+//         .insert(Fire {
+//             impact_radius: IMPACT_RADIUS,
+//             impact_vertices: IMPACT_VERTICES,
+//         })
+//         .insert(Health(1))
+//         .insert(Velocity(FIRE_VELOCITY))
+//         .insert(Surface {
+//             topology: Topology::Point,
+//             hitbox: HitBox {
+//                 half_x: 0.0,
+//                 half_y: 0.0,
+//             },
+//         })
+//         .insert(ColorMesh2dBundle {
+//             mesh: meshes
+//                 .add(Mesh::from(shape::Circle {
+//                     radius: FIRE_RADIUS,
+//                     vertices: FIRE_VERTICES,
+//                 }))
+//                 .into(),
+//             transform: Transform::from_translation(
+//                 transform.translation + ATTACK_SOURCE * transform.scale,
+//             ),
+//             material: materials.add(ATTACK_COLOR.into()),
+//             ..default()
+//         });
+// }
 
-pub fn explode(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<
-        (
-            Option<&Children>,
-            &Handle<ColorMaterial>,
-            &Health,
-            &GlobalTransform,
-            &Velocity,
-        ),
-        With<Spaceship>,
-    >,
-    mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
-) {
-    if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
-        if s_health.0 > 0 {
-            return;
-        }
+// pub fn explode(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     query: Query<
+//         (
+//             Option<&Children>,
+//             &Handle<ColorMaterial>,
+//             &Health,
+//             &GlobalTransform,
+//             &Velocity,
+//         ),
+//         With<Spaceship>,
+//     >,
+//     mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
+// ) {
+//     if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
+//         if s_health.0 > 0 {
+//             return;
+//         }
 
-        if let Some(children) = s_children {
-            for child in children {
-                commands.entity(*child).remove::<Parent>();
-                if let Ok(mut child_transform) =
-                    query_blast_impact.get_component_mut::<Transform>(*child)
-                {
-                    child_transform.translation =
-                        s_transform.transform_point(child_transform.translation);
-                }
-            }
-        }
+//         if let Some(children) = s_children {
+//             for child in children {
+//                 commands.entity(*child).remove::<Parent>();
+//                 if let Ok(mut child_transform) =
+//                     query_blast_impact.get_component_mut::<Transform>(*child)
+//                 {
+//                     child_transform.translation =
+//                         s_transform.transform_point(child_transform.translation);
+//                 }
+//             }
+//         }
 
-        let color = materials.get(s_color).unwrap().color;
-        let mut rng = rand::thread_rng();
-        for _ in 1..10 {
-            let mut debris;
-            'outer: loop {
-                debris = Vec3 {
-                    x: rng.gen_range(S5.x..S2.x),
-                    y: rng.gen_range(S1.y..S4.y),
-                    z: 0.0,
-                };
-                let mut triangles = TRIANGLES.iter();
-                while let Some(&[a, b, c]) = triangles.next() {
-                    if point_in_triangle(
-                        debris.truncate(),
-                        a.truncate(),
-                        b.truncate(),
-                        c.truncate(),
-                    ) {
-                        break 'outer;
-                    }
-                }
-            }
-            debris.z += PLANE_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+//         let color = materials.get(s_color).unwrap().color;
+//         let mut rng = rand::thread_rng();
+//         for _ in 1..10 {
+//             let mut debris;
+//             'outer: loop {
+//                 debris = Vec3 {
+//                     x: rng.gen_range(S5.x..S2.x),
+//                     y: rng.gen_range(S1.y..S4.y),
+//                     z: 0.0,
+//                 };
+//                 let mut triangles = TRIANGLES.iter();
+//                 while let Some(&[a, b, c]) = triangles.next() {
+//                     if point_in_triangle(
+//                         debris.truncate(),
+//                         a.truncate(),
+//                         b.truncate(),
+//                         c.truncate(),
+//                     ) {
+//                         break 'outer;
+//                     }
+//                 }
+//             }
+//             debris.z += PLANE_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
-            let debris_translation = s_transform.translation() + debris;
-            let dv = Vec3 {
-                x: rng.gen_range(-0.5..0.5),
-                y: rng.gen_range(-0.5..0.5),
-                z: 0.0,
-            };
+//             let debris_translation = s_transform.translation() + debris;
+//             let dv = Vec3 {
+//                 x: rng.gen_range(-0.5..0.5),
+//                 y: rng.gen_range(-0.5..0.5),
+//                 z: 0.0,
+//             };
 
-            commands
-                .spawn_empty()
-                .insert(Debris)
-                .insert(Velocity(s_velocity.0 + dv))
-                .insert(MaterialMesh2dBundle {
-                    mesh: meshes
-                        .add(Mesh::from(shape::Circle {
-                            radius: 10.0,
-                            vertices: 4,
-                        }))
-                        .into(),
-                    transform: Transform::from_translation(debris_translation),
-                    material: materials.add(color.into()),
-                    ..default()
-                });
-        }
-    }
-}
+//             commands
+//                 .spawn_empty()
+//                 .insert(Debris)
+//                 .insert(Velocity(s_velocity.0 + dv))
+//                 .insert(ColorMesh2dBundle {
+//                     mesh: meshes
+//                         .add(Mesh::from(shape::Circle {
+//                             radius: 10.0,
+//                             vertices: 4,
+//                         }))
+//                         .into(),
+//                     transform: Transform::from_translation(debris_translation),
+//                     material: materials.add(color.into()),
+//                     ..default()
+//                 });
+//         }
+//     }
+// }
 
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
+//     for (entity, health) in query.iter() {
+//         if health.0 <= 0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }
