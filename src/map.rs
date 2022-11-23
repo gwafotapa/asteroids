@@ -7,7 +7,7 @@ pub const MAP_SIZE: usize = 33;
 pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
 pub const MAP_CENTER_Y: f32 = (MAP_SIZE / 2) as f32 * WINDOW_HEIGHT + WINDOW_HEIGHT / 2.;
 const COLOR: Color = Color::WHITE;
-const STARS_BY_SECTOR: usize = 50;
+const STARS_PER_SECTOR: usize = 50;
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;
 const VERTICES: usize = 4;
@@ -100,7 +100,7 @@ pub fn setup(
 
             map.sectors[i][j] = Some(sector);
 
-            for _ in 0..STARS_BY_SECTOR {
+            for _ in 0..STARS_PER_SECTOR {
                 let star = commands
                     .spawn(Star)
                     .insert(ColorMesh2dBundle {
@@ -157,7 +157,7 @@ pub fn update(
         };
         if delta_i > 1 {
             query_sector
-                .get_mut(map.sectors[i][j].unwrap())
+                .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
                 .unwrap()
                 .is_visible = false;
             continue;
@@ -169,7 +169,7 @@ pub fn update(
         };
         if delta_j > 1 {
             query_sector
-                .get_mut(map.sectors[i][j].unwrap())
+                .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
                 .unwrap()
                 .is_visible = false;
         }
@@ -192,7 +192,7 @@ pub fn update(
 
             map.sectors[i][j] = Some(sector);
 
-            for _ in 0..STARS_BY_SECTOR {
+            for _ in 0..STARS_PER_SECTOR {
                 let star = commands
                     .spawn(Star)
                     .insert(ColorMesh2dBundle {
@@ -216,7 +216,7 @@ pub fn update(
         } else {
             // Turn on sector visibility
             query_sector
-                .get_mut(map.sectors[i][j].unwrap())
+                .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
                 .unwrap()
                 .is_visible = true;
         }
