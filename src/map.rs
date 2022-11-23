@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::{PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
-pub const MAP_SIZE: usize = 9;
+pub const MAP_SIZE: usize = 5;
 pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
 pub const MAP_CENTER_Y: f32 = (MAP_SIZE / 2) as f32 * WINDOW_HEIGHT + WINDOW_HEIGHT / 2.;
 const COLOR: Color = Color::WHITE;
@@ -11,6 +11,7 @@ const COUNT_BY_SECTOR: usize = 50;
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;
 const VERTICES: usize = 4;
+const SECTOR_Z: f32 = 0.0;
 
 // const SECTOR_CENTERS: [(f32, f32); 9] = [
 //     (-WINDOW_WIDTH, WINDOW_HEIGHT),
@@ -78,17 +79,17 @@ pub fn setup(
     });
 
     let mut rng = rand::thread_rng();
-    for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
-        for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
-            // for i in 0..MAP_SIZE {
-            //     for j in 0..MAP_SIZE {
+    // for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+    //     for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+    for i in 0..MAP_SIZE {
+        for j in 0..MAP_SIZE {
             let sector = commands
                 .spawn(Sector)
                 .insert(SpatialBundle {
                     transform: Transform::from_xyz(
                         (i as f32 + 0.5) * WINDOW_WIDTH,
                         (j as f32 + 0.5) * WINDOW_HEIGHT,
-                        PLANE_Z,
+                        SECTOR_Z,
                     ),
                     ..default()
                 })
@@ -166,7 +167,7 @@ pub fn update(
                     transform: Transform::from_xyz(
                         (i as f32 + 0.5) * WINDOW_WIDTH,
                         (j as f32 + 0.5) * WINDOW_HEIGHT,
-                        PLANE_Z,
+                        SECTOR_Z,
                     ),
                     ..default()
                 })
@@ -216,6 +217,7 @@ fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
     if j < MAP_SIZE - 1 {
         sector_y.push(j + 1);
     }
+
     sector_x
         .into_iter()
         .flat_map(|x| sector_y.iter().map(move |&y| [x, y]))

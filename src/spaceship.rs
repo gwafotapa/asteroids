@@ -14,11 +14,11 @@ use crate::{
     // Blast, Debris, Fire,
     Health,
     Velocity,
-    PLANE_Z,
     // WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const HEALTH: i32 = 10;
+const SPACESHIP_Z: f32 = 500.0;
 
 // Center of gravity of the spaceship
 const SG: Vec3 = Vec3 {
@@ -109,7 +109,7 @@ const POSITION: Vec3 = Vec3 {
     x: MAP_CENTER_X,
     y: MAP_CENTER_Y,
     // y: -crate::WINDOW_HEIGHT,
-    z: PLANE_Z,
+    z: SPACESHIP_Z,
 };
 pub const ATTACK_SOURCE: Vec3 = S2;
 const SPACESHIP_COLOR: Color = Color::BLUE;
@@ -333,7 +333,7 @@ pub fn spawn(
 //                     }
 //                 }
 //             }
-//             debris.z += PLANE_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+//             debris.z += SPACESHIP_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
 //             let debris_translation = s_transform.translation() + debris;
 //             let dv = Vec3 {
