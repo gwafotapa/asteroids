@@ -46,7 +46,7 @@ enum Location {
 #[derive(Component)]
 pub struct Map {
     sectors: Vec<Vec<Location>>,
-    current_sector: [usize; 2],
+    current_sector_at: [usize; 2],
 }
 
 #[derive(Component)]
@@ -75,7 +75,7 @@ pub fn setup(
 
     commands.spawn(Map {
         sectors,
-        current_sector: [MAP_SIZE / 2, MAP_SIZE / 2],
+        current_sector_at: [MAP_SIZE / 2, MAP_SIZE / 2],
     });
 
     let mut rng = rand::thread_rng();
@@ -142,12 +142,12 @@ pub fn update(
         (camera_xyz.x / WINDOW_WIDTH).trunc() as usize,
         (camera_xyz.y / WINDOW_HEIGHT).trunc() as usize,
     ];
-    if map.current_sector == [camera_a, camera_b] {
+    if map.current_sector_at == [camera_a, camera_b] {
         return;
     }
 
     // Turn off the visibility of sectors at distance 2
-    for [i, j] in adjacent_sectors(map.current_sector) {
+    for [i, j] in adjacent_sectors(map.current_sector_at) {
         let dx = if camera_a > i {
             camera_a - i
         } else {
@@ -207,7 +207,7 @@ pub fn update(
     }
 
     map.sectors[camera_a][camera_b] = Location::Current; // Useless ?
-    map.current_sector = [camera_a, camera_b];
+    map.current_sector_at = [camera_a, camera_b];
 }
 
 fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
