@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
-pub const MAP_SIZE: usize = 5;
+pub const MAP_SIZE: usize = 33;
 pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
 pub const MAP_CENTER_Y: f32 = (MAP_SIZE / 2) as f32 * WINDOW_HEIGHT + WINDOW_HEIGHT / 2.;
 const COLOR: Color = Color::WHITE;
@@ -79,10 +79,17 @@ pub fn setup(
     });
 
     let mut rng = rand::thread_rng();
-    // for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
-    //     for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
-    for i in 0..MAP_SIZE {
-        for j in 0..MAP_SIZE {
+    for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+        for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+            // for i in 0..MAP_SIZE {
+            //     for j in 0..MAP_SIZE {
+            //         let visibility = Visibility {
+            //             is_visible: i >= MAP_SIZE / 2 - 1
+            //                 && i <= MAP_SIZE / 2 + 1
+            //                 && j >= MAP_SIZE / 2 - 1
+            //                 && j <= MAP_SIZE / 2 + 1,
+            //         };
+
             let sector = commands
                 .spawn(Sector)
                 .insert(SpatialBundle {
@@ -91,6 +98,7 @@ pub fn setup(
                         (j as f32 + 0.5) * WINDOW_HEIGHT,
                         SECTOR_Z,
                     ),
+                    // visibility,
                     ..default()
                 })
                 .id();
@@ -203,17 +211,20 @@ pub fn update(
 }
 
 fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
-    let mut sector_x = vec![i];
-    let mut sector_y = vec![j];
+    let mut sector_x = Vec::with_capacity(3);
     if i > 0 {
         sector_x.push(i - 1);
     }
+    sector_x.push(i);
     if i < MAP_SIZE - 1 {
         sector_x.push(i + 1);
     }
+
+    let mut sector_y = Vec::with_capacity(3);
     if j > 0 {
         sector_y.push(j - 1);
     }
+    sector_y.push(j);
     if j < MAP_SIZE - 1 {
         sector_y.push(j + 1);
     }
