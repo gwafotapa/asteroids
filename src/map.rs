@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH};
 
-pub const MAP_SIZE: usize = 3;
+pub const MAP_SIZE: usize = 9;
 pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
 pub const MAP_CENTER_Y: f32 = (MAP_SIZE / 2) as f32 * WINDOW_HEIGHT + WINDOW_HEIGHT / 2.;
 const COLOR: Color = Color::WHITE;
@@ -80,6 +80,8 @@ pub fn setup(
     let mut rng = rand::thread_rng();
     for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
         for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+            // for i in 0..MAP_SIZE {
+            //     for j in 0..MAP_SIZE {
             let sector = commands
                 .spawn(Sector)
                 .insert(SpatialBundle {
@@ -216,8 +218,7 @@ fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
     }
     sector_x
         .into_iter()
-        .zip(sector_y.into_iter())
-        .map(|(x, y)| [x, y])
+        .flat_map(|x| sector_y.iter().map(move |&y| [x, y]))
         .collect()
 }
 
