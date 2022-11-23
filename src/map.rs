@@ -36,21 +36,21 @@ const SECTOR_Z: f32 = 0.0;
 //     (MAP_SIZE / 2 + 1, MAP_SIZE / 2 + 1),
 // ];
 
-#[derive(Clone, Component, Copy, Debug, Eq, PartialEq)]
-enum Location {
-    Unexplored,
-    Explored,
-    Current,
-}
+// #[derive(Clone, Component, Copy, Debug, Eq, PartialEq)]
+// enum Location {
+//     Unexplored,
+//     Explored,
+//     Current,
+// }
 
 #[derive(Component)]
 pub struct Map {
-    sectors: Vec<Vec<Location>>,
+    sectors: Vec<Vec<Option<Entity>>>,
     current_sector_at: [usize; 2],
 }
 
 #[derive(Component)]
-struct Sector;
+pub struct Sector;
 
 #[derive(Component)]
 pub struct Star;
@@ -61,24 +61,16 @@ pub fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     assert!(MAP_SIZE > 2);
-    let mut sectors = vec![vec![Location::Unexplored; MAP_SIZE]; MAP_SIZE];
-    // for (x, y) in INITIAL_SECTORS {
-    //     sectors[x][y] = Location::Explored;
+    let mut rng = rand::thread_rng();
+    let mut sectors = vec![vec![None; MAP_SIZE]; MAP_SIZE];
+    // for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+    //     for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
+    // sectors[i][j] = Location::Explored;
+    //     }
     // }
-    for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
-        for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
-            sectors[i][j] = Location::Explored;
-        }
-    }
-    sectors[MAP_SIZE / 2][MAP_SIZE / 2] = Location::Current;
+    // sectors[MAP_SIZE / 2][MAP_SIZE / 2] = Location::Current;
     // println!("{:?}", map);
 
-    commands.spawn(Map {
-        sectors,
-        current_sector_at: [MAP_SIZE / 2, MAP_SIZE / 2],
-    });
-
-    let mut rng = rand::thread_rng();
     for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
         for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
             // for i in 0..MAP_SIZE {
@@ -102,6 +94,9 @@ pub fn setup(
                     ..default()
                 })
                 .id();
+
+            sectors[i][j] = Some(sector);
+
             for _ in 0..COUNT_BY_SECTOR {
                 let star = commands
                     .spawn(Star)
@@ -125,6 +120,11 @@ pub fn setup(
             }
         }
     }
+
+    commands.spawn(Map {
+        sectors,
+        current_sector_at: [MAP_SIZE / 2, MAP_SIZE / 2],
+    });
 }
 
 pub fn update(
@@ -133,6 +133,7 @@ pub fn update(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_map: Query<&mut Map>,
     query_camera: Query<&Transform, With<Camera>>,
+    mut query_sector: Query<&mut Visibility, With<Sector>>,
 ) {
     let mut map = query_map.single_mut();
     let camera_xyz = query_camera.single().translation;
@@ -154,7 +155,11 @@ pub fn update(
             i - camera_a
         };
         if dx > 1 {
-            // Turn off sector visibility
+            query_sector
+                .get_mut(map.sectors[i][j].unwrap())
+                .unwrap()
+                .is_visible = false;
+            continue;
         }
         let dy = if camera_b > j {
             camera_b - j
@@ -162,13 +167,16 @@ pub fn update(
             j - camera_b
         };
         if dy > 1 {
-            // Turn off sector visibility
+            query_sector
+                .get_mut(map.sectors[i][j].unwrap())
+                .unwrap()
+                .is_visible = false;
         }
     }
 
     for [i, j] in adjacent_sectors([camera_a, camera_b]) {
-        if map.sectors[i][j] == Location::Unexplored {
-            map.sectors[i][j] = Location::Explored;
+        if map.sectors[i][j] == None {
+            // Create new sector
             let sector = commands
                 .spawn(Sector)
                 .insert(SpatialBundle {
@@ -180,6 +188,9 @@ pub fn update(
                     ..default()
                 })
                 .id();
+
+            map.sectors[i][j] = Some(sector);
+
             for _ in 0..COUNT_BY_SECTOR {
                 let star = commands
                     .spawn(Star)
@@ -203,10 +214,14 @@ pub fn update(
             }
         } else {
             // Turn on sector visibility
+            query_sector
+                .get_mut(map.sectors[i][j].unwrap())
+                .unwrap()
+                .is_visible = true;
         }
     }
 
-    map.sectors[camera_a][camera_b] = Location::Current; // Useless ?
+    // map.sectors[camera_a][camera_b] = Location::Current; // Useless ?
     map.current_sector_at = [camera_a, camera_b];
 }
 
