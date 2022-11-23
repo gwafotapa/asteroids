@@ -43,7 +43,7 @@ const SECTOR_Z: f32 = 0.0;
 //     Current,
 // }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Map {
     sectors: Vec<Vec<Option<Entity>>>,
     current_sector_at: [usize; 2],
@@ -62,7 +62,10 @@ pub fn setup(
 ) {
     assert!(MAP_SIZE > 2);
     let mut rng = rand::thread_rng();
-    let mut sectors = vec![vec![None; MAP_SIZE]; MAP_SIZE];
+    let mut map = Map {
+        sectors: vec![vec![None; MAP_SIZE]; MAP_SIZE],
+        current_sector_at: [MAP_SIZE / 2, MAP_SIZE / 2],
+    };
     // for i in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
     //     for j in [MAP_SIZE / 2 - 1, MAP_SIZE / 2, MAP_SIZE / 2 + 1] {
     // sectors[i][j] = Location::Explored;
@@ -95,7 +98,7 @@ pub fn setup(
                 })
                 .id();
 
-            sectors[i][j] = Some(sector);
+            map.sectors[i][j] = Some(sector);
 
             for _ in 0..COUNT_BY_SECTOR {
                 let star = commands
@@ -116,15 +119,13 @@ pub fn setup(
                         ..default()
                     })
                     .id();
+
                 commands.entity(sector).add_child(star);
             }
         }
     }
 
-    commands.spawn(Map {
-        sectors,
-        current_sector_at: [MAP_SIZE / 2, MAP_SIZE / 2],
-    });
+    commands.spawn(map);
 }
 
 pub fn update(
@@ -135,38 +136,38 @@ pub fn update(
     query_camera: Query<&Transform, With<Camera>>,
     mut query_sector: Query<&mut Visibility, With<Sector>>,
 ) {
+    let mut rng = rand::thread_rng();
     let mut map = query_map.single_mut();
     let camera_xyz = query_camera.single().translation;
-    let mut rng = rand::thread_rng();
 
-    let [camera_a, camera_b] = [
+    let [camera_i, camera_j] = [
         (camera_xyz.x / WINDOW_WIDTH).trunc() as usize,
         (camera_xyz.y / WINDOW_HEIGHT).trunc() as usize,
     ];
-    if map.current_sector_at == [camera_a, camera_b] {
+    if map.current_sector_at == [camera_i, camera_j] {
         return;
     }
 
     // Turn off the visibility of sectors at distance 2
     for [i, j] in adjacent_sectors(map.current_sector_at) {
-        let dx = if camera_a > i {
-            camera_a - i
+        let delta_i = if camera_i > i {
+            camera_i - i
         } else {
-            i - camera_a
+            i - camera_i
         };
-        if dx > 1 {
+        if delta_i > 1 {
             query_sector
                 .get_mut(map.sectors[i][j].unwrap())
                 .unwrap()
                 .is_visible = false;
             continue;
         }
-        let dy = if camera_b > j {
-            camera_b - j
+        let delta_j = if camera_j > j {
+            camera_j - j
         } else {
-            j - camera_b
+            j - camera_j
         };
-        if dy > 1 {
+        if delta_j > 1 {
             query_sector
                 .get_mut(map.sectors[i][j].unwrap())
                 .unwrap()
@@ -174,7 +175,7 @@ pub fn update(
         }
     }
 
-    for [i, j] in adjacent_sectors([camera_a, camera_b]) {
+    for [i, j] in adjacent_sectors([camera_i, camera_j]) {
         if map.sectors[i][j] == None {
             // Create new sector
             let sector = commands
@@ -221,8 +222,10 @@ pub fn update(
         }
     }
 
-    // map.sectors[camera_a][camera_b] = Location::Current; // Useless ?
-    map.current_sector_at = [camera_a, camera_b];
+    // map.sectors[camera_i][camera_j] = Location::Current; // Useless ?
+    map.current_sector_at = [camera_i, camera_j];
+
+    println!("{:?}", map);
 }
 
 fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
