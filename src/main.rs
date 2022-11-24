@@ -24,6 +24,7 @@ fn main() {
         // .add_startup_system(setup_level)
         .add_startup_system(map::setup)
         .add_system(bevy::window::close_on_esc)
+        // .add_system(map::update)
         // .add_system(distance_to_boss)
         .add_system_set(
             SystemSet::new()
@@ -43,8 +44,6 @@ fn main() {
         // .with_system(collision::fire_and_boss)
         // .with_system(collision::fire_and_spaceship),
         // )
-        .add_system(map::update)
-        // .add_system(map::update)
         // .add_system(collision::update_impacts)
         // .add_system(collision::update_debris)
         // .add_system(boss::spawn)
