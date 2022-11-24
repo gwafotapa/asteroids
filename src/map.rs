@@ -13,21 +13,21 @@ const RADIUS: f32 = 1.0;
 const VERTICES: usize = 4;
 const SECTOR_Z: f32 = 0.0;
 
-#[derive(Component, Debug)]
-pub struct Map {
-    sectors: Vec<Vec<Option<Entity>>>,
-    current_sector_at: [usize; 2],
-}
+// #[derive(Component, Debug)]
+// pub struct Map {
+//     sectors: Vec<Vec<Option<Entity>>>,
+//     current_sector_at: [usize; 2],
+// }
 
 type SectorXY = [isize; 2];
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Debug)]
 pub struct Sector {
     xy: SectorXY,
     adjacent_sectors: Vec<Entity>,
 }
 
-#[derive(Resource, Debug)]
+#[derive(Debug, Resource)]
 pub struct CurrentSectorId(Entity);
 
 #[derive(Component)]
@@ -132,150 +132,195 @@ pub fn update(
     // mut query_map: Query<&mut Map>,
     mut current_sector_id: ResMut<CurrentSectorId>,
     query_camera: Query<&Transform, With<Camera>>,
-    mut query_sector: Query<(&Sector, &mut Visibility)>,
+    mut query_sector: Query<(Entity, &mut Sector, &mut Visibility)>,
 ) {
     let mut rng = rand::thread_rng();
     // let mut map = query_map.single_mut();
     let camera_xyz = query_camera.single().translation;
 
-    let [camera_i, camera_j] = [
-        (camera_xyz.x / WINDOW_WIDTH).trunc() as isize,
-        (camera_xyz.y / WINDOW_HEIGHT).trunc() as isize,
+    let [camera_x, camera_y] = [
+        (camera_xyz.x / WINDOW_WIDTH).floor() as isize,
+        (camera_xyz.y / WINDOW_HEIGHT).floor() as isize,
     ];
     let current_sector = query_sector
         .get_component::<Sector>(current_sector_id.0)
         .unwrap()
         .clone();
-    if current_sector.xy == [camera_i, camera_j] {
+    if current_sector.xy == [camera_x, camera_y] {
         return;
     }
+    info!("Camera({}, {})", camera_x, camera_y);
+    info!(
+        "Current sector({}, {})",
+        current_sector.xy[0], current_sector.xy[1]
+    );
 
     // Turn off the visibility of sectors at distance 2
     // for [i, j] in adjacent_sectors([x, y]) {
     // let camera_sector;
     for sector_id in current_sector.adjacent_sectors {
-        let (sector, mut visibility) = query_sector.get_mut(sector_id).unwrap();
-        if sector.xy == [camera_i, camera_j] {
+        let (_, sector, mut visibility) = query_sector.get_mut(sector_id).unwrap();
+        if sector.xy == [camera_x, camera_y] {
             // camera_sector = sector;
             current_sector_id.0 = sector_id;
+            continue;
         }
-        let [i, j] = sector.xy;
-        let delta_i = if camera_i > i {
-            camera_i - i
-        } else {
-            i - camera_i
-        };
-        if delta_i > 1 {
-            // query_sector
-            //     .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
-            //     .unwrap()
-            //     .is_visible = false;
+        let [x, y] = sector.xy;
+        if (camera_x - x).abs() > 1 || (camera_y - y).abs() > 1 {
             visibility.is_visible = false;
             continue;
         }
-        let delta_j = if camera_j > j {
-            camera_j - j
-        } else {
-            j - camera_j
-        };
-        if delta_j > 1 {
-            // query_sector
-            //     .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
-            //     .unwrap()
-            //     .is_visible = false;
-            visibility.is_visible = false;
-        }
     }
 
-    let mut new_sectors: Vec<(Entity, SectorXY)> = Vec::with_capacity(3);
-    // for [i, j] in adjacent_sectors([camera_i, camera_j]) {
+    let mut new_sectors: Vec<(Entity, Sector)> = Vec::with_capacity(3);
     for i in [-1isize, 0, 1] {
-        for j in [-1isize, 0, 1] {
-            // if map.sectors[i][j] == None {
-            for (sector, mut visibility) in &mut query_sector {
-                if sector.xy == [camera_i + i, camera_j + j] {
+        'outer: for j in [-1isize, 0, 1] {
+            for (_, sector, mut visibility) in &mut query_sector {
+                if sector.xy == [camera_x + i, camera_y + j] {
                     visibility.is_visible = true;
-                    continue;
+                    continue 'outer;
                 }
-                // Create new sector
-                let new_sector = commands
-                    .spawn(SpatialBundle {
+            }
+
+            // Create new sector
+            let new_sector_id = commands
+                .spawn(SpatialBundle {
+                    transform: Transform::from_xyz(
+                        ((camera_x + i) as f32 + 0.5) * WINDOW_WIDTH,
+                        ((camera_y + j) as f32 + 0.5) * WINDOW_HEIGHT,
+                        SECTOR_Z,
+                    ),
+                    ..default()
+                })
+                .id();
+
+            new_sectors.push((
+                new_sector_id,
+                Sector {
+                    xy: [camera_x + i, camera_y + j],
+                    adjacent_sectors: Vec::new(),
+                },
+            ));
+
+            for _ in 0..STARS_PER_SECTOR {
+                let star = commands
+                    .spawn(Star)
+                    .insert(ColorMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: RADIUS,
+                                vertices: VERTICES,
+                            }))
+                            .into(),
                         transform: Transform::from_xyz(
-                            (i as f32 + 0.5) * WINDOW_WIDTH,
-                            (j as f32 + 0.5) * WINDOW_HEIGHT,
-                            SECTOR_Z,
+                            rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
+                            rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
+                            BACKGROUND,
                         ),
+                        material: materials.add(COLOR.into()),
                         ..default()
                     })
                     .id();
-
-                new_sectors.push((new_sector, [i, j]));
-
-                for _ in 0..STARS_PER_SECTOR {
-                    let star = commands
-                        .spawn(Star)
-                        .insert(ColorMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: RADIUS,
-                                    vertices: VERTICES,
-                                }))
-                                .into(),
-                            transform: Transform::from_xyz(
-                                rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
-                                rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
-                                BACKGROUND,
-                            ),
-                            material: materials.add(COLOR.into()),
-                            ..default()
-                        })
-                        .id();
-                    commands.entity(new_sector).add_child(star);
-                }
-                // } else {
-                //     // Turn on sector visibility
-                //     query_sector
-                //         .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
-                //         .unwrap()
-                //         .is_visible = true;
-                // }
+                commands.entity(new_sector_id).add_child(star);
             }
+            // } else {
+            //     // Turn on sector visibility
+            //     query_sector
+            //         .get_component_mut::<Visibility>(map.sectors[i][j].unwrap())
+            //         .unwrap()
+            //         .is_visible = true;
+            // }
         }
     }
-    // map.sectors[camera_i][camera_j] = Location::Current; // Useless ?
-    // map.current_sector_at = [camera_i, camera_j];
+    // map.sectors[camera_x][camera_y] = Location::Current; // Useless ?
+    // map.current_sector_at = [camera_x, camera_y];
 
     // println!("{:?}", map);
 
     // TODO
     // Reste à construire les listes d'adjacence des nouveaux secteurs (et insérer Sector)
     // et à rajouter aux anciennes listes d'adjacence ces nouveaux secteurs
+    for (sector_id, mut sector, _) in &mut query_sector {
+        for (new_sector_id, new_sector) in &mut new_sectors {
+            if (sector.xy[0] - new_sector.xy[0]).abs() <= 1
+                && (sector.xy[1] - new_sector.xy[1]).abs() <= 1
+            {
+                sector.adjacent_sectors.push(*new_sector_id);
+                new_sector.adjacent_sectors.push(sector_id);
+            }
+        }
+    }
+
+    // for (new_sector_id_0, new_sector_0) in &mut new_sectors {
+    //     for (new_sector_id_1, new_sector_1) in &new_sectors {
+    //         if (new_sector_0.xy[0] - new_sector_1.xy[0]).abs() <= 1
+    //             && (new_sector_0.xy[1] - new_sector_1.xy[1]).abs() <= 1
+    //         {
+    //             new_sector_0.adjacent_sectors.push(*new_sector_id_1);
+    //         }
+    //     }
+    // }
+
+    // let new_ids_xys: Vec<(Entity, SectorXY)> = new_sectors.iter().map(|x| (x.0, x.1.xy)).collect();
+    // for (new_sector_id_0, new_sector_0) in &mut new_sectors {
+    //     for (new_sector_id_1, xy_1) in &new_ids_xys {
+    //         if new_sector_0.xy != *xy_1
+    //             && (new_sector_0.xy[0] - xy_1[0]).abs() <= 1
+    //             && (new_sector_0.xy[1] - xy_1[1]).abs() <= 1
+    //         {
+    //             new_sector_0.adjacent_sectors.push(*new_sector_id_1);
+    //         }
+    //     }
+    // }
+
+    let mut i = 0;
+    loop {
+        let mut iter = new_sectors.iter_mut().skip(i);
+        if let Some((new_sector_id_0, new_sector_0)) = iter.next() {
+            for (new_sector_id_1, new_sector_1) in iter {
+                if (new_sector_0.xy[0] - new_sector_1.xy[0]).abs() <= 1
+                    && (new_sector_0.xy[1] - new_sector_1.xy[1]).abs() <= 1
+                {
+                    new_sector_0.adjacent_sectors.push(*new_sector_id_1);
+                    new_sector_1.adjacent_sectors.push(*new_sector_id_0);
+                }
+            }
+            i += 1;
+        } else {
+            break;
+        }
+    }
+
+    for (new_sector_id, new_sector) in new_sectors {
+        info!("{:?}: {:?}", new_sector_id, new_sector);
+        commands.entity(new_sector_id).insert(new_sector);
+    }
 }
 
-fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
-    let mut sector_x = Vec::with_capacity(3);
-    if i > 0 {
-        sector_x.push(i - 1);
-    }
-    sector_x.push(i);
-    if i < MAP_SIZE - 1 {
-        sector_x.push(i + 1);
-    }
+// fn adjacent_sectors([i, j]: [usize; 2]) -> Vec<[usize; 2]> {
+//     let mut sector_x = Vec::with_capacity(3);
+//     if i > 0 {
+//         sector_x.push(i - 1);
+//     }
+//     sector_x.push(i);
+//     if i < MAP_SIZE - 1 {
+//         sector_x.push(i + 1);
+//     }
 
-    let mut sector_y = Vec::with_capacity(3);
-    if j > 0 {
-        sector_y.push(j - 1);
-    }
-    sector_y.push(j);
-    if j < MAP_SIZE - 1 {
-        sector_y.push(j + 1);
-    }
+//     let mut sector_y = Vec::with_capacity(3);
+//     if j > 0 {
+//         sector_y.push(j - 1);
+//     }
+//     sector_y.push(j);
+//     if j < MAP_SIZE - 1 {
+//         sector_y.push(j + 1);
+//     }
 
-    sector_x
-        .into_iter()
-        .flat_map(|x| sector_y.iter().map(move |&y| [x, y]))
-        .collect()
-}
+//     sector_x
+//         .into_iter()
+//         .flat_map(|x| sector_y.iter().map(move |&y| [x, y]))
+//         .collect()
+// }
 
 // pub fn update(
 //     mut commands: Commands,

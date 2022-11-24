@@ -14,7 +14,8 @@ use crate::{
     // Blast, Debris, Fire,
     Health,
     Velocity,
-    // WINDOW_HEIGHT, WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
 const HEALTH: i32 = 10;
@@ -106,8 +107,12 @@ pub const ACCELERATION: f32 = 1.;
 const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
     // x: -WINDOW_WIDTH / 2.0,
-    x: MAP_CENTER_X,
-    y: MAP_CENTER_Y,
+    // x: MAP_CENTER_X,
+    // y: MAP_CENTER_Y,
+    // x: 0.0,
+    // y: 0.0,
+    x: WINDOW_WIDTH / 2.0,
+    y: WINDOW_HEIGHT / 2.0,
     // y: -crate::WINDOW_HEIGHT,
     z: SPACESHIP_Z,
 };

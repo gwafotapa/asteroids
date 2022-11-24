@@ -60,7 +60,9 @@ pub struct Debris;
 
 pub fn camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(MAP_CENTER_X, MAP_CENTER_Y, CAMERA_Z),
+        // transform: Transform::from_xyz(MAP_CENTER_X, MAP_CENTER_Y, CAMERA_Z),
+        // transform: Transform::from_xyz(0.0, 0.0, CAMERA_Z),
+        transform: Transform::from_xyz(WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, CAMERA_Z),
         ..default()
     });
 }
@@ -175,18 +177,18 @@ pub fn keyboard_input(
 
         transform.translation += velocity.0;
         // cam_transform.translation += velocity.0;
-        if transform.translation.x < 0. {
-            transform.translation.x = 0.;
-        }
-        if transform.translation.y < 0. {
-            transform.translation.y = 0.;
-        }
-        if transform.translation.x >= MAP_SIZE as f32 * WINDOW_WIDTH {
-            transform.translation.x = MAP_SIZE as f32 * WINDOW_WIDTH - 1.;
-        }
-        if transform.translation.y >= MAP_SIZE as f32 * WINDOW_HEIGHT {
-            transform.translation.y = MAP_SIZE as f32 * WINDOW_HEIGHT - 1.;
-        }
+        // if transform.translation.x < 0. {
+        //     transform.translation.x = 0.;
+        // }
+        // if transform.translation.y < 0. {
+        //     transform.translation.y = 0.;
+        // }
+        // if transform.translation.x >= MAP_SIZE as f32 * WINDOW_WIDTH {
+        //     transform.translation.x = MAP_SIZE as f32 * WINDOW_WIDTH - 1.;
+        // }
+        // if transform.translation.y >= MAP_SIZE as f32 * WINDOW_HEIGHT {
+        //     transform.translation.y = MAP_SIZE as f32 * WINDOW_HEIGHT - 1.;
+        // }
 
         cam_transform.translation = transform.translation;
 

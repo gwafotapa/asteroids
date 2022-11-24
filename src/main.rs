@@ -24,7 +24,7 @@ fn main() {
         // .add_startup_system(setup_level)
         .add_startup_system(map::setup)
         .add_system(bevy::window::close_on_esc)
-        // .add_system(map::update)
+        .add_system(map::update)
         // .add_system(distance_to_boss)
         .add_system_set(
             SystemSet::new()
