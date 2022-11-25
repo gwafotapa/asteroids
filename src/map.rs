@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{asteroid, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 pub const MAP_SIZE: usize = 33;
 pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
 pub const MAP_CENTER_Y: f32 = (MAP_SIZE / 2) as f32 * WINDOW_HEIGHT + WINDOW_HEIGHT / 2.;
 const COLOR: Color = Color::WHITE;
+const MAX_ASTEROIDS_PER_SECTOR: usize = 5;
 const STARS_PER_SECTOR: usize = 50;
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;
@@ -218,10 +219,15 @@ pub fn update(
                     .id();
                 commands.entity(new_sector_id).add_child(star);
             }
+
+            for _ in 0..rng.gen_range(0..MAX_ASTEROIDS_PER_SECTOR + 1) {
+                let asteroid = asteroid::spawn(&mut commands, &mut meshes, &mut materials);
+                commands.entity(new_sector_id).add_child(asteroid);
+            }
         }
     }
 
-    // Update the field 'neighboor' of old sectors with new sectors and vice versa
+    // Update the field 'neighboors' of old sectors with new sectors and vice versa
     for (sector_id, mut sector, _) in &mut query_sector {
         for (new_sector_id, new_sector) in &mut new_sectors {
             if (sector.i - new_sector.i).abs() <= 1 && (sector.j - new_sector.j).abs() <= 1 {
@@ -231,7 +237,7 @@ pub fn update(
         }
     }
 
-    // Complete the field 'neighboor' of new sectors (with new_sectors)
+    // Complete the field 'neighboors' of new sectors (with new_sectors)
     let mut i = 0;
     loop {
         let mut iter = new_sectors.iter_mut().skip(i);

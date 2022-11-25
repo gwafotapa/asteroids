@@ -14,6 +14,48 @@ const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 pub struct Asteroid {
     pub radius: f32,
 }
+
+pub fn spawn(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) -> Entity {
+    let mut rng = rand::thread_rng();
+    let health = rng.gen_range(1..HEALTH_MAX + 1);
+    let radius = (health * 20) as f32;
+    // let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
+    // let velocity = Vec3::from([-speed, 0., 0.]);
+    let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
+    let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
+
+    let asteroid = commands
+        .spawn_empty()
+        .insert(Asteroid { radius })
+        // .insert(Health(health))
+        // .insert(Velocity(velocity))
+        // .insert(Surface {
+        //     topology: Topology::Circle(radius),
+        //     hitbox: HitBox {
+        //         half_x: radius,
+        //         half_y: radius,
+        //     },
+        // })
+        .insert(ColorMesh2dBundle {
+            mesh: meshes
+                .add(Mesh::from(shape::Circle {
+                    radius,
+                    vertices: 16,
+                }))
+                .into(),
+            transform: Transform::from_xyz(x, y, PLANE_Z),
+            material: materials.add(ColorMaterial::from(COLOR)),
+            ..default()
+        })
+        .id();
+
+    asteroid
+}
+
 pub fn asteroids(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -43,7 +85,7 @@ pub fn asteroids(
                     half_y: radius,
                 },
             })
-            .insert(MaterialMesh2dBundle {
+            .insert(ColorMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
                         radius,
