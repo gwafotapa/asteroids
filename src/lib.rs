@@ -157,16 +157,19 @@ pub fn keyboard_input(
 
         if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
             // Spaceship::accelerate(&*transform, &mut velocity);
+
             let direction = transform.rotation * Vec3::X;
-            if velocity.0.dot(direction) < spaceship::SPEED_MAX {
-                velocity.0 += spaceship::ACCELERATION * direction;
-            }
+            velocity.0 += spaceship::ACCELERATION * direction;
+            // if velocity.0.length() > spaceship::SPEED_MAX {
+            //     velocity.0 = spaceship::SPEED_MAX * velocity.0.normalize();
+            // }
         } else if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
             // Spaceship::decelerate(&*transform, &mut velocity);
             let direction = transform.rotation * Vec3::NEG_X;
-            if velocity.0.dot(direction) < 0.5 * spaceship::SPEED_MAX {
-                velocity.0 += spaceship::ACCELERATION * direction;
-            }
+            velocity.0 += 0.5 * spaceship::ACCELERATION * direction;
+            // if velocity.0.length() > 0.5 * spaceship::SPEED_MAX {
+            //     velocity.0 = 0.5 * spaceship::SPEED_MAX * velocity.0.normalize();
+            // }
         }
         // } else {
         //     Spaceship::decelerate();
@@ -174,6 +177,9 @@ pub fn keyboard_input(
         // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
         //     // Either delete or backspace was just pressed
         // }
+
+        velocity.0 *= 1.0 - spaceship::DRAG;
+        debug!("Spaceship velocity: {}", velocity.0);
 
         transform.translation += velocity.0;
         // cam_transform.translation += velocity.0;

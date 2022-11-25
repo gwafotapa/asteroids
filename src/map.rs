@@ -147,8 +147,8 @@ pub fn update(
     if [current_sector.i, current_sector.j] == [camera_i, camera_j] {
         return;
     }
-    info!("Camera({}, {})", camera_i, camera_j);
-    info!("Current sector({}, {})", current_sector.i, current_sector.j);
+    debug!("Camera({}, {})", camera_i, camera_j);
+    debug!("Current sector({}, {})", current_sector.i, current_sector.j);
 
     // Turn off the visibility of sectors at distance 2
     for sector_id in current_sector.adjacent_sectors {
@@ -246,7 +246,7 @@ pub fn update(
     }
 
     for (new_sector_id, new_sector) in new_sectors {
-        info!("{:?}: {:?}", new_sector_id, new_sector);
+        debug!("{:?}: {:?}", new_sector_id, new_sector);
         commands.entity(new_sector_id).insert(new_sector);
     }
 }
