@@ -17,7 +17,7 @@ const SECTOR_Z: f32 = 0.0;
 pub struct Sector {
     i: isize,
     j: isize,
-    adjacent_sectors: Vec<Entity>,
+    neighboors: Vec<Entity>,
 }
 
 #[derive(Debug, Resource)]
@@ -53,7 +53,7 @@ pub fn setup(
                 Sector {
                     i,
                     j,
-                    adjacent_sectors: Vec::new(),
+                    neighboors: Vec::new(),
                 },
             ));
 
@@ -96,8 +96,8 @@ pub fn setup(
         if let Some((sector_id_0, sector_0)) = iter.next() {
             for (sector_id_1, sector_1) in iter {
                 if (sector_0.i - sector_1.i).abs() <= 1 && (sector_0.j - sector_1.j).abs() <= 1 {
-                    sector_0.adjacent_sectors.push(*sector_id_1);
-                    sector_1.adjacent_sectors.push(*sector_id_0);
+                    sector_0.neighboors.push(*sector_id_1);
+                    sector_1.neighboors.push(*sector_id_0);
                 }
             }
             k += 1;
@@ -112,16 +112,16 @@ pub fn setup(
         commands.entity(sector_id).insert(sector);
     }
     // for (sector0, [x0, y0]) in &sectors {
-    //     let mut adjacent_sectors = Vec::with_capacity(8);
+    //     let mut neighboors = Vec::with_capacity(8);
     //     for (sector1, [x1, y1]) in &sectors {
     //         if sector0 != sector1 && (x0 - x1).abs() <= 1 && (y0 - y1).abs() <= 1 {
-    //             adjacent_sectors.push(*sector1);
+    //             neighboors.push(*sector1);
     //         }
     //     }
-    //     println!("{:?}", adjacent_sectors);
+    //     println!("{:?}", neighboors);
     //     commands.entity(*sector0).insert(Sector {
     //         xy: [*x0, *y0],
-    //         adjacent_sectors,
+    //         neighboors,
     //     });
     // }
 }
@@ -150,8 +150,8 @@ pub fn update(
     debug!("Camera({}, {})", camera_i, camera_j);
     debug!("Current sector({}, {})", current_sector.i, current_sector.j);
 
-    // Turn off the visibility of sectors at distance 2
-    for sector_id in current_sector.adjacent_sectors {
+    // Update current sector and turn off the visibility of sectors now at distance 2
+    for sector_id in current_sector.neighboors {
         let (_, sector, mut visibility) = query_sector.get_mut(sector_id).unwrap();
         if [sector.i, sector.j] == [camera_i, camera_j] {
             current_sector_id.0 = sector_id;
@@ -163,9 +163,11 @@ pub fn update(
         }
     }
 
+    // Create up to 3 new sectors. Turn on the visibility of old sectors when needed
     let mut new_sectors: Vec<(Entity, Sector)> = Vec::with_capacity(3);
     for di in [-1isize, 0, 1] {
         'outer: for dj in [-1isize, 0, 1] {
+            // Check if that sector is already known
             for (_, sector, mut visibility) in &mut query_sector {
                 if [sector.i, sector.j] == [camera_i + di, camera_j + dj] {
                     visibility.is_visible = true;
@@ -173,7 +175,7 @@ pub fn update(
                 }
             }
 
-            // Create new sector
+            // If not, create it
             let new_sector_id = commands
                 .spawn(SpatialBundle {
                     transform: Transform::from_xyz(
@@ -190,10 +192,11 @@ pub fn update(
                 Sector {
                     i: camera_i + di,
                     j: camera_j + dj,
-                    adjacent_sectors: Vec::new(),
+                    neighboors: Vec::new(),
                 },
             ));
 
+            // Populate this new sector with stars
             for _ in 0..STARS_PER_SECTOR {
                 let star = commands
                     .spawn(Star)
@@ -218,15 +221,17 @@ pub fn update(
         }
     }
 
+    // Update the field 'neighboor' of old sectors with new sectors and vice versa
     for (sector_id, mut sector, _) in &mut query_sector {
         for (new_sector_id, new_sector) in &mut new_sectors {
             if (sector.i - new_sector.i).abs() <= 1 && (sector.j - new_sector.j).abs() <= 1 {
-                sector.adjacent_sectors.push(*new_sector_id);
-                new_sector.adjacent_sectors.push(sector_id);
+                sector.neighboors.push(*new_sector_id);
+                new_sector.neighboors.push(sector_id);
             }
         }
     }
 
+    // Complete the field 'neighboor' of new sectors (with new_sectors)
     let mut i = 0;
     loop {
         let mut iter = new_sectors.iter_mut().skip(i);
@@ -235,8 +240,8 @@ pub fn update(
                 if (new_sector_0.i - new_sector_1.i).abs() <= 1
                     && (new_sector_0.j - new_sector_1.j).abs() <= 1
                 {
-                    new_sector_0.adjacent_sectors.push(*new_sector_id_1);
-                    new_sector_1.adjacent_sectors.push(*new_sector_id_0);
+                    new_sector_0.neighboors.push(*new_sector_id_1);
+                    new_sector_1.neighboors.push(*new_sector_id_0);
                 }
             }
             i += 1;
