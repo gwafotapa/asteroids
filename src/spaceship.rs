@@ -10,7 +10,6 @@ use crate::{
         Topology,
         Triangle,
     },
-    map::{MAP_CENTER_X, MAP_CENTER_Y},
     // Blast, Debris, Fire,
     Health,
     Velocity,

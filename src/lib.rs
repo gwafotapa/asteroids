@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 // use std::time::Instant;
 // use std::f32::consts::SQRT_2;pub
-use map::{MAP_CENTER_X, MAP_CENTER_Y, MAP_SIZE};
 
 pub mod asteroid;
 pub mod boss;

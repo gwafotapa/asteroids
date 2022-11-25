@@ -3,16 +3,11 @@ use rand::Rng;
 
 use crate::{asteroid, WINDOW_HEIGHT, WINDOW_WIDTH};
 
-pub const MAP_SIZE: usize = 33;
-pub const MAP_CENTER_X: f32 = (MAP_SIZE / 2) as f32 * WINDOW_WIDTH + WINDOW_WIDTH / 2.;
-pub const MAP_CENTER_Y: f32 = (MAP_SIZE / 2) as f32 * WINDOW_HEIGHT + WINDOW_HEIGHT / 2.;
-const COLOR: Color = Color::WHITE;
-const MAX_ASTEROIDS_PER_SECTOR: usize = 5;
+const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
 const STARS_PER_SECTOR: usize = 50;
-const BACKGROUND: f32 = 0.0;
-const RADIUS: f32 = 1.0;
-const VERTICES: usize = 4;
 const SECTOR_Z: f32 = 0.0;
+
+mod star;
 
 #[derive(Clone, Component, Debug)]
 pub struct Sector {
@@ -24,15 +19,11 @@ pub struct Sector {
 #[derive(Debug, Resource)]
 pub struct CurrentSectorId(Entity);
 
-#[derive(Component)]
-pub struct Star;
-
 pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut rng = rand::thread_rng();
     let mut sectors: Vec<(Entity, Sector)> = Vec::with_capacity(9);
 
     for i in [-1, 0, 1] {
@@ -59,25 +50,7 @@ pub fn setup(
             ));
 
             for _ in 0..STARS_PER_SECTOR {
-                let star_id = commands
-                    .spawn(Star)
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: RADIUS,
-                                vertices: VERTICES,
-                            }))
-                            .into(),
-                        transform: Transform::from_xyz(
-                            rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
-                            rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
-                            BACKGROUND,
-                        ),
-                        material: materials.add(COLOR.into()),
-                        ..default()
-                    })
-                    .id();
-
+                let star_id = star::spawn(&mut commands, &mut meshes, &mut materials);
                 commands.entity(sector_id).add_child(star_id);
             }
         }
@@ -112,19 +85,6 @@ pub fn setup(
     for (sector_id, sector) in sectors.into_iter() {
         commands.entity(sector_id).insert(sector);
     }
-    // for (sector0, [x0, y0]) in &sectors {
-    //     let mut neighboors = Vec::with_capacity(8);
-    //     for (sector1, [x1, y1]) in &sectors {
-    //         if sector0 != sector1 && (x0 - x1).abs() <= 1 && (y0 - y1).abs() <= 1 {
-    //             neighboors.push(*sector1);
-    //         }
-    //     }
-    //     println!("{:?}", neighboors);
-    //     commands.entity(*sector0).insert(Sector {
-    //         xy: [*x0, *y0],
-    //         neighboors,
-    //     });
-    // }
 }
 
 pub fn update(
@@ -199,28 +159,12 @@ pub fn update(
 
             // Populate this new sector with stars
             for _ in 0..STARS_PER_SECTOR {
-                let star = commands
-                    .spawn(Star)
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: RADIUS,
-                                vertices: VERTICES,
-                            }))
-                            .into(),
-                        transform: Transform::from_xyz(
-                            rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
-                            rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
-                            BACKGROUND,
-                        ),
-                        material: materials.add(COLOR.into()),
-                        ..default()
-                    })
-                    .id();
+                let star = star::spawn(&mut commands, &mut meshes, &mut materials);
                 commands.entity(new_sector_id).add_child(star);
             }
 
-            for _ in 0..rng.gen_range(0..MAX_ASTEROIDS_PER_SECTOR + 1) {
+            // Populate this new sector with asteroids
+            for _ in 0..rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1) {
                 let asteroid = asteroid::spawn(&mut commands, &mut meshes, &mut materials);
                 commands.entity(new_sector_id).add_child(asteroid);
             }

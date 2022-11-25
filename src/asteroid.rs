@@ -29,8 +29,7 @@ pub fn spawn(
     let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
     let asteroid = commands
-        .spawn_empty()
-        .insert(Asteroid { radius })
+        .spawn(Asteroid { radius })
         // .insert(Health(health))
         // .insert(Velocity(velocity))
         // .insert(Surface {
