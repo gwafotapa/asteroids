@@ -26,6 +26,8 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 // pub const WINDOW_HEIGHT: f32 = 600.0;
 const INITIAL_DISTANCE_TO_BOSS: usize = 0000;
 const CAMERA_Z: f32 = 1000.0;
+const CAMERA_SPEED: f32 = 0.05;
+const CAMERA_REAR_GAP: f32 = 100.0;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
@@ -58,7 +60,7 @@ pub struct Enemy;
 pub struct Debris;
 
 #[derive(Component, Eq, PartialEq)]
-pub enum CameraPosition {
+pub enum CameraPositioning {
     Center,
     Rear,
 }
@@ -71,7 +73,7 @@ pub fn camera(mut commands: Commands) {
             transform: Transform::from_xyz(WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, CAMERA_Z),
             ..default()
         })
-        .insert(CameraPosition::Center);
+        .insert(CameraPositioning::Center);
 }
 
 pub fn setup_level(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -131,7 +133,7 @@ pub fn keyboard_input(
     // meshes: ResMut<Assets<Mesh>>,
     // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query_camera: Query<(&mut CameraPosition, &mut Transform), With<Camera>>,
+    mut query_camera: Query<(&mut CameraPositioning, &mut Transform), With<Camera>>,
     mut query_spaceship: Query<
         (Entity, &mut Transform, &mut Velocity),
         (With<Spaceship>, Without<Camera>),
@@ -145,44 +147,44 @@ pub fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((_entity, mut transform, mut velocity)) = query_spaceship.get_single_mut() {
-        let (mut cam_position, mut cam_transform) = query_camera.get_single_mut().unwrap();
+    if let Ok((_entity, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
+        let (mut camera_positioning, mut c_transform) = query_camera.get_single_mut().unwrap();
         if keys.any_just_pressed([KeyCode::Space, KeyCode::C]) {
-            *cam_position = if *cam_position == CameraPosition::Center {
-                CameraPosition::Rear
+            *camera_positioning = if *camera_positioning == CameraPositioning::Center {
+                CameraPositioning::Rear
             } else {
-                CameraPosition::Center
+                CameraPositioning::Center
             };
         }
 
         // if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
-        //     spaceship::attack(commands, meshes, materials, entity, &transform);
+        //     spaceship::attack(commands, meshes, materials, entity, &s_transform);
         // }
 
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
-            transform.rotation *= rotation;
-            // cam_transform.rotation *= rotation;
+            s_transform.rotation *= rotation;
+            // cam_s_transform.rotation *= rotation;
         } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
-            transform.rotation *= rotation;
-            // cam_transform.rotation *= rotation;
+            s_transform.rotation *= rotation;
+            // cam_s_transform.rotation *= rotation;
         }
 
         if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
-            // Spaceship::accelerate(&*transform, &mut velocity);
+            // Spaceship::accelerate(&*s_transform, &mut s_velocity);
 
-            let direction = transform.rotation * Vec3::X;
-            velocity.0 += spaceship::ACCELERATION * direction;
-            // if velocity.0.length() > spaceship::SPEED_MAX {
-            //     velocity.0 = spaceship::SPEED_MAX * velocity.0.normalize();
+            let direction = s_transform.rotation * Vec3::X;
+            s_velocity.0 += spaceship::ACCELERATION * direction;
+            // if s_velocity.0.length() > spaceship::SPEED_MAX {
+            //     s_velocity.0 = spaceship::SPEED_MAX * s_velocity.0.normalize();
             // }
         } else if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
-            // Spaceship::decelerate(&*transform, &mut velocity);
-            let direction = transform.rotation * Vec3::NEG_X;
-            velocity.0 += 0.5 * spaceship::ACCELERATION * direction;
-            // if velocity.0.length() > 0.5 * spaceship::SPEED_MAX {
-            //     velocity.0 = 0.5 * spaceship::SPEED_MAX * velocity.0.normalize();
+            // Spaceship::decelerate(&*s_transform, &mut s_velocity);
+            let direction = s_transform.rotation * Vec3::NEG_X;
+            s_velocity.0 += 0.5 * spaceship::ACCELERATION * direction;
+            // if s_velocity.0.length() > 0.5 * spaceship::SPEED_MAX {
+            //     s_velocity.0 = 0.5 * spaceship::SPEED_MAX * s_velocity.0.normalize();
             // }
         }
         // } else {
@@ -192,17 +194,14 @@ pub fn keyboard_input(
         //     // Either delete or backspace was just pressed
         // }
 
-        let ship_xyz = transform.translation;
-        let cam_xyz = cam_transform.translation;
+        s_velocity.0 *= 1.0 - spaceship::DRAG;
+        debug!("Spaceship velocity: {}", s_velocity.0);
 
-        velocity.0 *= 1.0 - spaceship::DRAG;
-        debug!("Spaceship velocity: {}", velocity.0);
+        s_transform.translation += s_velocity.0;
+        c_transform.translation += s_velocity.0;
+        // c_transform.translation = s_transform.translation;
 
-        transform.translation += velocity.0;
-        cam_transform.translation += velocity.0;
-        // cam_transform.translation = transform.translation;
-
-        if *cam_position == CameraPosition::Rear {
+        if *camera_positioning == CameraPositioning::Rear {
             // In Rear position, the camera places itself so that the ship is at distance 100.0
             // from the window border with the velocity vector of the ship (not the ship itself)
             // pointing at the camera (which is always at the center of the window).
@@ -211,59 +210,49 @@ pub fn keyboard_input(
             // from the window. We aim to place the camera on this rectangle.
             // The diagonals of this rectangle split its area into 4 quadrants.
             // The computation depends on which quadrant the destination of the camera is.
-            let cam_destination;
-            if (velocity.0.y / velocity.0.x).abs()
-                > (WINDOW_HEIGHT - 200.0) / (WINDOW_WIDTH - 200.0)
+            let c_destination;
+            if (s_velocity.0.y / s_velocity.0.x).abs()
+                > (WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP) / (WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
             {
-                if velocity.0.y > 0.0 {
+                let y = if s_velocity.0.y > 0.0 {
                     // Upper quadrant
-                    let y = (WINDOW_HEIGHT - 200.0) / 2.0;
-                    cam_destination = transform.translation
-                        + Vec3 {
-                            x: y * velocity.0.x / velocity.0.y,
-                            y,
-                            z: CAMERA_Z - SPACESHIP_Z,
-                        };
+                    WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP
                 } else {
                     // Lower quadrant
-                    let y = -(WINDOW_HEIGHT - 200.0) / 2.0;
-                    cam_destination = transform.translation
-                        + Vec3 {
-                            x: y * velocity.0.x / velocity.0.y,
-                            y,
-                            z: CAMERA_Z - SPACESHIP_Z,
-                        };
-                }
+                    -(WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP)
+                };
+                c_destination = s_transform.translation
+                    + Vec3 {
+                        x: y * s_velocity.0.x / s_velocity.0.y,
+                        y,
+                        z: CAMERA_Z - SPACESHIP_Z,
+                    };
             } else {
-                if velocity.0.x > 0.0 {
+                let x = if s_velocity.0.x > 0.0 {
                     // Right quadrant
-                    let x = (WINDOW_WIDTH - 200.0) / 2.0;
-                    cam_destination = transform.translation
-                        + Vec3 {
-                            x,
-                            y: velocity.0.y / velocity.0.x * x,
-                            z: CAMERA_Z - SPACESHIP_Z,
-                        };
+                    WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP
                 } else {
                     // Lower quadrant
-                    let x = -(WINDOW_WIDTH - 200.0) / 2.0;
-                    cam_destination = transform.translation
-                        + Vec3 {
-                            x,
-                            y: velocity.0.y / velocity.0.x * x,
-                            z: CAMERA_Z - SPACESHIP_Z,
-                        };
-                }
+                    -(WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
+                };
+
+                c_destination = s_transform.translation
+                    + Vec3 {
+                        x,
+                        y: s_velocity.0.y / s_velocity.0.x * x,
+                        z: CAMERA_Z - SPACESHIP_Z,
+                    };
             }
-            let cam_path = cam_destination - cam_transform.translation;
-            cam_transform.translation += 0.05 * cam_path;
+
+            let c_path = c_destination - c_transform.translation;
+            c_transform.translation += CAMERA_SPEED * c_path;
         } else {
             let direction = Vec3 {
-                x: transform.translation.x - cam_transform.translation.x,
-                y: transform.translation.y - cam_transform.translation.y,
+                x: s_transform.translation.x - c_transform.translation.x,
+                y: s_transform.translation.y - c_transform.translation.y,
                 z: 0.0,
             };
-            cam_transform.translation += 0.05 * direction;
+            c_transform.translation += CAMERA_SPEED * direction;
         }
     }
 }
