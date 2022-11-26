@@ -80,7 +80,7 @@ pub fn setup(
         }
     }
 
-    println!("{:?}", sectors);
+    debug!("{:?}", sectors);
 
     for (sector_id, sector) in sectors.into_iter() {
         commands.entity(sector_id).insert(sector);

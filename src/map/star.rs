@@ -35,5 +35,6 @@ pub fn spawn(
             ..default()
         })
         .id();
+
     star
 }

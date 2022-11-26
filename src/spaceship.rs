@@ -18,7 +18,7 @@ use crate::{
 };
 
 const HEALTH: i32 = 10;
-const SPACESHIP_Z: f32 = 500.0;
+pub const SPACESHIP_Z: f32 = 500.0;
 
 // Center of gravity of the spaceship
 const SG: Vec3 = Vec3 {
