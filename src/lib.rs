@@ -207,8 +207,12 @@ pub fn keyboard_input(
             // The diagonals of this rectangle split its area into 4 quadrants.
             // The computation depends on which quadrant the destination of the camera is.
             let c_destination;
-            if (s_velocity.0.y / s_velocity.0.x).abs()
-                > (WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP) / (WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
+            if s_velocity.0 == Vec3::ZERO {
+                c_destination = s_transform.translation;
+            } else if s_velocity.0.x == 0.0
+                || (s_velocity.0.y / s_velocity.0.x).abs()
+                    > (WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP)
+                        / (WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
             {
                 let y = if s_velocity.0.y > 0.0 {
                     // Upper quadrant
