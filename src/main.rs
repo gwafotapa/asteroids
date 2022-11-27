@@ -48,6 +48,7 @@ fn main() {
             // .with_system(collision::fire_and_boss)
             // .with_system(collision::fire_and_spaceship),
         )
+        .add_system(spaceship::attack.after("movement"))
         // .add_system(collision::update_impacts)
         .add_system(collision::update_debris)
         // .add_system(boss::spawn)

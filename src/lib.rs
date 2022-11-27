@@ -157,12 +157,6 @@ pub fn keyboard_input(
             };
         }
 
-        // if keys.just_pressed(KeyCode::A) {}
-
-        // if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
-        //     spaceship::attack(commands, meshes, materials, entity, &s_transform);
-        // }
-
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
             s_transform.rotation *= rotation;

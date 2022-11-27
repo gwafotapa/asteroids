@@ -10,13 +10,7 @@ use crate::{
         Topology,
         Triangle,
     },
-    Blast,
-    Debris,
-    // Fire,
-    Health,
-    Velocity,
-    WINDOW_HEIGHT,
-    WINDOW_WIDTH,
+    Blast, Debris, Fire, Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;
@@ -107,7 +101,6 @@ const HITBOX: HitBox = HitBox {
 
 // const VELOCITY_MAX: f32 = 5.0;
 pub const ACCELERATION: f32 = 0.1;
-// pub const DRAG: f32 = 0.01;
 pub const DRAG: f32 = 0.01;
 const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
@@ -121,20 +114,20 @@ const POSITION: Vec3 = Vec3 {
     // y: -crate::WINDOW_HEIGHT,
     z: SPACESHIP_Z,
 };
-pub const ATTACK_SOURCE: Vec3 = S2;
+const ATTACK_SOURCE: Vec3 = S2;
 const SPACESHIP_COLOR: Color = Color::BLUE;
-pub const ATTACK_COLOR: Color = Color::YELLOW;
-// const BLAST_RADIUS: f32 = 8.0;
-// const BLAST_VERTICES: usize = 8;
-// const FIRE_RADIUS: f32 = 3.0;
-// const FIRE_VERTICES: usize = 4;
-// const IMPACT_RADIUS: f32 = 12.0;
-// const IMPACT_VERTICES: usize = 16;
-// const FIRE_VELOCITY: Vec3 = Vec3 {
-//     x: 12.0,
-//     y: 0.0,
-//     z: 0.0,
-// };
+const ATTACK_COLOR: Color = Color::YELLOW;
+const BLAST_RADIUS: f32 = 8.0;
+const BLAST_VERTICES: usize = 8;
+const FIRE_RADIUS: f32 = 3.0;
+const FIRE_VERTICES: usize = 4;
+const IMPACT_RADIUS: f32 = 12.0;
+const IMPACT_VERTICES: usize = 16;
+const FIRE_VELOCITY: Vec3 = Vec3 {
+    x: 12.0,
+    y: 0.0,
+    z: 0.0,
+};
 pub const SPEED_MAX: f32 = 12.0;
 
 #[derive(Component)]
@@ -227,66 +220,65 @@ pub fn spawn(
         });
 }
 
-// pub fn attack(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     spaceship: Entity,
-//     transform: &Transform,
-//     // attack: &Attack,
-// ) {
-//     // let (spaceship, transform) = query.single();
+pub fn attack(
+    keys: Res<Input<KeyCode>>,
+    query: Query<(Entity, &Transform), With<Spaceship>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    if !keys.just_pressed(KeyCode::R) {
+        return;
+    }
 
-//     let blast = commands
-//         .spawn_empty()
-//         .insert(Blast)
-//         .insert(Health(2))
-//         .insert(ColorMesh2dBundle {
-//             mesh: meshes
-//                 .add(Mesh::from(shape::Circle {
-//                     radius: BLAST_RADIUS,
-//                     vertices: BLAST_VERTICES,
-//                 }))
-//                 .into(),
-//             // transform: transform.clone().with_scale(Vec3::splat(5.0)),
-//             transform: Transform::from_translation(ATTACK_SOURCE),
-//             // .with_scale(Vec3::splat(1.0)),
-//             material: materials.add(ATTACK_COLOR.into()),
-//             ..default()
-//         })
-//         .id();
+    if let Ok((spaceship, transform)) = query.get_single() {
+        let blast = commands
+            .spawn(Blast)
+            .insert(Health(2))
+            .insert(ColorMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: BLAST_RADIUS,
+                        vertices: BLAST_VERTICES,
+                    }))
+                    .into(),
+                transform: Transform::from_translation(ATTACK_SOURCE + Vec3::new(0.0, 0.0, 1.0)),
+                material: materials.add(ATTACK_COLOR.into()),
+                ..default()
+            })
+            .id();
 
-//     commands.entity(spaceship).push_children(&[blast]);
+        commands.entity(spaceship).add_child(blast);
 
-//     commands
-//         .spawn_empty()
-//         .insert(Fire {
-//             impact_radius: IMPACT_RADIUS,
-//             impact_vertices: IMPACT_VERTICES,
-//         })
-//         .insert(Health(1))
-//         .insert(Velocity(FIRE_VELOCITY))
-//         .insert(Surface {
-//             topology: Topology::Point,
-//             hitbox: HitBox {
-//                 half_x: 0.0,
-//                 half_y: 0.0,
-//             },
-//         })
-//         .insert(ColorMesh2dBundle {
-//             mesh: meshes
-//                 .add(Mesh::from(shape::Circle {
-//                     radius: FIRE_RADIUS,
-//                     vertices: FIRE_VERTICES,
-//                 }))
-//                 .into(),
-//             transform: Transform::from_translation(
-//                 transform.translation + ATTACK_SOURCE * transform.scale,
-//             ),
-//             material: materials.add(ATTACK_COLOR.into()),
-//             ..default()
-//         });
-// }
+        // commands
+        //     .spawn(Fire {
+        //         impact_radius: IMPACT_RADIUS,
+        //         impact_vertices: IMPACT_VERTICES,
+        //     })
+        //     .insert(Health(1))
+        //     .insert(Velocity(FIRE_VELOCITY))
+        //     .insert(Surface {
+        //         topology: Topology::Point,
+        //         hitbox: HitBox {
+        //             half_x: 0.0,
+        //             half_y: 0.0,
+        //         },
+        //     })
+        //     .insert(ColorMesh2dBundle {
+        //         mesh: meshes
+        //             .add(Mesh::from(shape::Circle {
+        //                 radius: FIRE_RADIUS,
+        //                 vertices: FIRE_VERTICES,
+        //             }))
+        //             .into(),
+        //         transform: Transform::from_translation(
+        //             transform.translation + ATTACK_SOURCE * transform.scale,
+        //         ),
+        //         material: materials.add(ATTACK_COLOR.into()),
+        //         ..default()
+        //     });
+    }
+}
 
 pub fn explode(
     mut commands: Commands,
@@ -324,19 +316,6 @@ pub fn explode(
 
         let color = materials.get(s_color).unwrap().color;
         let mut rng = rand::thread_rng();
-        commands
-            .spawn((Blast, Health(1)))
-            .insert(ColorMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius: 40.0,
-                        vertices: 64,
-                    }))
-                    .into(),
-                transform: s_transform.compute_transform(),
-                material: materials.add(color.into()),
-                ..default()
-            });
 
         for _ in 1..100 {
             let mut debris;
