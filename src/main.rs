@@ -17,13 +17,16 @@ fn main() {
             },
             ..default()
         }))
+        // .add_plugin(flame::ColoredMesh2dPlugin)
         .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::single_threaded())
         .add_stage_after(CLEANUP, DESPAWN, SystemStage::single_threaded())
         .add_startup_system(camera)
         .add_startup_system(spaceship::spawn)
+        .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::spawn)
         // .add_startup_system(setup_level)
         .add_startup_system(map::setup)
         .add_system(bevy::window::close_on_esc)
+        .add_system(spaceship::flame::update)
         .add_system(map::update)
         // .add_system(distance_to_boss)
         .add_system_set(

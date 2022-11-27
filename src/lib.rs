@@ -147,7 +147,7 @@ pub fn keyboard_input(
     //     // Left Ctrl was released
     // }
 
-    if let Ok((_entity, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
+    if let Ok((_s_id, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
         let (mut camera_positioning, mut c_transform) = query_camera.get_single_mut().unwrap();
         if keys.any_just_pressed([KeyCode::Space, KeyCode::C]) {
             *camera_positioning = if *camera_positioning == CameraPositioning::Center {
@@ -157,6 +157,8 @@ pub fn keyboard_input(
             };
         }
 
+        // if keys.just_pressed(KeyCode::A) {}
+
         // if keys.any_just_pressed([KeyCode::Space, KeyCode::R]) {
         //     spaceship::attack(commands, meshes, materials, entity, &s_transform);
         // }
@@ -164,11 +166,11 @@ pub fn keyboard_input(
         if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
             s_transform.rotation *= rotation;
-            // cam_s_transform.rotation *= rotation;
+            // c_transform.rotation *= rotation;
         } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
             s_transform.rotation *= rotation;
-            // cam_s_transform.rotation *= rotation;
+            // c_transform.rotation *= rotation;
         }
 
         if keys.any_pressed([KeyCode::K, KeyCode::Up]) {

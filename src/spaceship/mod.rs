@@ -17,6 +17,8 @@ use crate::{
     WINDOW_WIDTH,
 };
 
+pub mod flame;
+
 const HEALTH: i32 = 10;
 pub const SPACESHIP_Z: f32 = 500.0;
 
