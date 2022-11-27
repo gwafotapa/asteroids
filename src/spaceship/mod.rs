@@ -1,16 +1,18 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology};
-// use rand::Rng;
+use rand::Rng;
 
 use crate::{
     collision::{
-        //math::point_in_triangle,
+        math::point_in_triangle,
         HitBox,
         //Impact,
         Surface,
         Topology,
         Triangle,
     },
-    // Blast, Debris, Fire,
+    Blast,
+    Debris,
+    // Fire,
     Health,
     Velocity,
     WINDOW_HEIGHT,
@@ -81,7 +83,7 @@ const S8: Vec3 = Vec3 {
 // pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
 pub const TRIANGLES: [Triangle; 4] = [[S1, S2, S3], [S4, S3, S2], [S5, S6, S7], [S8, S7, S6]];
 const HITBOX: HitBox = HitBox {
-    half_x: S2.x,
+    half_x: -S5.x,
     half_y: S4.y,
 };
 // pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
@@ -105,6 +107,7 @@ const HITBOX: HitBox = HitBox {
 
 // const VELOCITY_MAX: f32 = 5.0;
 pub const ACCELERATION: f32 = 0.1;
+// pub const DRAG: f32 = 0.01;
 pub const DRAG: f32 = 0.01;
 const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
@@ -177,11 +180,11 @@ pub fn spawn(
     let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
 
     let v_pos: Vec<[f32; 3]> = TRIANGLES.iter().flatten().map(|x| x.to_array()).collect();
-    let v_normals = vec![[0.0, 0.0, 1.0]; 12];
-    let v_uvs = vec![[1.0, 1.0]; 12];
+    // let v_normals = vec![[0.0, 0.0, 1.0]; 12];
+    // let v_uvs = vec![[1.0, 1.0]; 12];
     spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
-    spaceship.insert_attribute(Mesh::ATTRIBUTE_NORMAL, v_normals);
-    spaceship.insert_attribute(Mesh::ATTRIBUTE_UV_0, v_uvs);
+    // spaceship.insert_attribute(Mesh::ATTRIBUTE_NORMAL, v_normals);
+    // spaceship.insert_attribute(Mesh::ATTRIBUTE_UV_0, v_uvs);
 
     // let mut v_color: Vec<u32> = vec![Color::BLUE.as_linear_rgba_u32()];
     // v_color.extend_from_slice(&[Color::YELLOW.as_linear_rgba_u32(); 2]);
@@ -285,93 +288,106 @@ pub fn spawn(
 //         });
 // }
 
-// pub fn explode(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     query: Query<
-//         (
-//             Option<&Children>,
-//             &Handle<ColorMaterial>,
-//             &Health,
-//             &GlobalTransform,
-//             &Velocity,
-//         ),
-//         With<Spaceship>,
-//     >,
-//     mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
-// ) {
-//     if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
-//         if s_health.0 > 0 {
-//             return;
-//         }
+pub fn explode(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<
+        (
+            // Option<&Children>,
+            &Handle<ColorMaterial>,
+            &Health,
+            &GlobalTransform,
+            &Velocity,
+        ),
+        With<Spaceship>,
+    >,
+    // mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
+) {
+    // if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
+    if let Ok((s_color, s_health, s_transform, s_velocity)) = query.get_single() {
+        if s_health.0 > 0 {
+            return;
+        }
 
-//         if let Some(children) = s_children {
-//             for child in children {
-//                 commands.entity(*child).remove::<Parent>();
-//                 if let Ok(mut child_transform) =
-//                     query_blast_impact.get_component_mut::<Transform>(*child)
-//                 {
-//                     child_transform.translation =
-//                         s_transform.transform_point(child_transform.translation);
-//                 }
-//             }
-//         }
+        // if let Some(children) = s_children {
+        //     for child in children {
+        //         commands.entity(*child).remove::<Parent>();
+        //         if let Ok(mut child_transform) =
+        //             query_blast_impact.get_component_mut::<Transform>(*child)
+        //         {
+        //             child_transform.translation =
+        //                 s_transform.transform_point(child_transform.translation);
+        //         }
+        //     }
+        // }
 
-//         let color = materials.get(s_color).unwrap().color;
-//         let mut rng = rand::thread_rng();
-//         for _ in 1..10 {
-//             let mut debris;
-//             'outer: loop {
-//                 debris = Vec3 {
-//                     x: rng.gen_range(S5.x..S2.x),
-//                     y: rng.gen_range(S1.y..S4.y),
-//                     z: 0.0,
-//                 };
-//                 let mut triangles = TRIANGLES.iter();
-//                 while let Some(&[a, b, c]) = triangles.next() {
-//                     if point_in_triangle(
-//                         debris.truncate(),
-//                         a.truncate(),
-//                         b.truncate(),
-//                         c.truncate(),
-//                     ) {
-//                         break 'outer;
-//                     }
-//                 }
-//             }
-//             debris.z += SPACESHIP_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+        let color = materials.get(s_color).unwrap().color;
+        let mut rng = rand::thread_rng();
+        commands
+            .spawn((Blast, Health(1)))
+            .insert(ColorMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: 40.0,
+                        vertices: 64,
+                    }))
+                    .into(),
+                transform: s_transform.compute_transform(),
+                material: materials.add(color.into()),
+                ..default()
+            });
 
-//             let debris_translation = s_transform.translation() + debris;
-//             let dv = Vec3 {
-//                 x: rng.gen_range(-0.5..0.5),
-//                 y: rng.gen_range(-0.5..0.5),
-//                 z: 0.0,
-//             };
+        for _ in 1..100 {
+            let mut debris;
+            'outer: loop {
+                debris = Vec3 {
+                    x: rng.gen_range(S5.x..S2.x),
+                    y: rng.gen_range(S1.y..S4.y),
+                    z: 0.0,
+                };
+                let mut triangles = TRIANGLES.iter();
+                while let Some(&[a, b, c]) = triangles.next() {
+                    if point_in_triangle(
+                        debris.truncate(),
+                        a.truncate(),
+                        b.truncate(),
+                        c.truncate(),
+                    ) {
+                        break 'outer;
+                    }
+                }
+            }
+            debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+            let debris_translation = s_transform.translation() + debris;
+            let dv = Vec3 {
+                x: rng.gen_range(-0.5..0.5),
+                y: rng.gen_range(-0.5..0.5),
+                z: 0.0,
+            };
 
-//             commands
-//                 .spawn_empty()
-//                 .insert(Debris)
-//                 .insert(Velocity(s_velocity.0 + dv))
-//                 .insert(ColorMesh2dBundle {
-//                     mesh: meshes
-//                         .add(Mesh::from(shape::Circle {
-//                             radius: 10.0,
-//                             vertices: 4,
-//                         }))
-//                         .into(),
-//                     transform: Transform::from_translation(debris_translation),
-//                     material: materials.add(color.into()),
-//                     ..default()
-//                 });
-//         }
-//     }
-// }
+            commands
+                .spawn(Debris)
+                .insert(Velocity(s_velocity.0 + dv))
+                .insert(ColorMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: rng.gen_range(1.0..10.0),
+                            vertices: 4 * rng.gen_range(1..5),
+                        }))
+                        .into(),
+                    transform: Transform::from_translation(debris_translation),
+                    material: materials.add(color.into()),
+                    ..default()
+                });
+        }
+    }
+}
 
-// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
-//     for (entity, health) in query.iter() {
-//         if health.0 <= 0 {
-//             commands.entity(entity).despawn();
-//         }
-//     }
-// }
+pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}

@@ -24,8 +24,8 @@ pub fn spawn(
         // [0.0, -100.0, 0.0],
         // [0.0, 100.0, 0.0],
         [0.0, 0.0, 0.0],
-        [0.0, -300.0, 0.0],
-        [0.0, 300.0, 0.0],
+        [0.0, -6.0, 0.0],
+        [0.0, 6.0, 0.0],
     ];
     flame.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
 
@@ -44,8 +44,8 @@ pub fn spawn(
         .spawn(Flame)
         .insert(ColorMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(flame)),
-            transform: Transform::from_xyz(S7.x, 0.0, -1.0)
-                .with_scale(Vec3::from([0.02, 0.02, 1.0])),
+            transform: Transform::from_xyz(S7.x, 0.0, -1.0),
+            // .with_scale(Vec3::from([0.02, 0.02, 1.0])),
             // .with_scale(Vec3::from([1.0, 1.0, 1.0])),
             material: materials.add(COLOR.into()),
             ..default()
@@ -61,52 +61,53 @@ pub fn update(
     mut meshes: ResMut<Assets<Mesh>>,
     query: Query<&Mesh2dHandle, With<Flame>>,
 ) {
-    let mesh = query.single();
-    // meshes
-    //     .get_mut(&mesh.0)
-    //     .unwrap()
-    //     .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-    //     .unwrap()
-    //     .as_float3()
-    //     .unwrap()[0] = [-800.0, 0.0, 0.0];
+    if let Ok(mesh) = query.get_single() {
+        // meshes
+        //     .get_mut(&mesh.0)
+        //     .unwrap()
+        //     .attribute_mut(Mesh::ATTRIBUTE_POSITION)
+        //     .unwrap()
+        //     .as_float3()
+        //     .unwrap()[0] = [-800.0, 0.0, 0.0];
 
-    // println!(
-    //     "indices: {:?}",
-    //     meshes
-    //         .get_mut(&mesh.0)
-    //         .unwrap()
-    //         .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-    //         .unwrap() // .as_float3()
-    //                   // .unwrap()[0]
-    // );
+        // println!(
+        //     "indices: {:?}",
+        //     meshes
+        //         .get_mut(&mesh.0)
+        //         .unwrap()
+        //         .attribute_mut(Mesh::ATTRIBUTE_POSITION)
+        //         .unwrap() // .as_float3()
+        //                   // .unwrap()[0]
+        // );
 
-    // if keys.any_just_pressed([KeyCode::K, KeyCode::Up]) {
-    //     visibility.is_visible = true;
-    // }
+        // if keys.any_just_pressed([KeyCode::K, KeyCode::Up]) {
+        //     visibility.is_visible = true;
+        // }
 
-    if let Some(bevy::render::mesh::VertexAttributeValues::Float32x3(vertices)) = meshes
-        .get_mut(&mesh.0)
-        .unwrap()
-        .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-    {
-        if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
-            if vertices[0][0] > -1000.0 {
-                vertices[0][0] -= 200.0;
-                // vertices[3][0] -= 100.0;
+        if let Some(bevy::render::mesh::VertexAttributeValues::Float32x3(vertices)) = meshes
+            .get_mut(&mesh.0)
+            .unwrap()
+            .attribute_mut(Mesh::ATTRIBUTE_POSITION)
+        {
+            if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
+                if vertices[0][0] > -20.0 {
+                    vertices[0][0] -= 4.0;
+                    // vertices[3][0] -= 100.0;
+                } else {
+                    vertices[0][0] += 4.0;
+                    // vertices[3][0] += 100.0;
+                }
+                // println!("{:?}", vertices[0]);
             } else {
-                vertices[0][0] += 200.0;
-                // vertices[3][0] += 100.0;
-            }
-            // println!("{:?}", vertices[0]);
-        } else {
-            if vertices[0][0] < 0.0 {
-                vertices[0][0] += 200.0;
-                // vertices[3][0] += 100.0;
+                if vertices[0][0] < 0.0 {
+                    vertices[0][0] += 4.0;
+                    // vertices[3][0] += 100.0;
+                }
             }
         }
-    }
 
-    // if keys.any_just_released([KeyCode::K, KeyCode::Up]) {
-    //     visibility.is_visible = false;
-    // }
+        // if keys.any_just_released([KeyCode::K, KeyCode::Up]) {
+        //     visibility.is_visible = false;
+        // }
+    }
 }
