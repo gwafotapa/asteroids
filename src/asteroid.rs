@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{
@@ -7,9 +7,10 @@ use crate::{
     Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-const SPEED_MAX: usize = 5;
+// const SPEED_MAX: usize = 5;
 const HEALTH_MAX: i32 = 6;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
+const ASTEROID_Z: f32 = PLANE_Z;
 
 #[derive(Component)]
 pub struct Asteroid {
@@ -31,7 +32,7 @@ pub fn spawn(
 
     let asteroid = commands
         .spawn(Asteroid { radius })
-        // .insert(Health(health))
+        .insert(Health(health))
         // .insert(Velocity(velocity))
         .insert(Surface {
             topology: Topology::Circle(radius),
@@ -47,7 +48,7 @@ pub fn spawn(
                     vertices: 16,
                 }))
                 .into(),
-            transform: Transform::from_xyz(x, y, PLANE_Z),
+            transform: Transform::from_xyz(x, y, ASTEROID_Z),
             material: materials.add(ColorMaterial::from(COLOR)),
             ..default()
         })
@@ -56,55 +57,55 @@ pub fn spawn(
     asteroid
 }
 
-pub fn asteroids(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_asteroid: Query<(&Asteroid, Entity, &mut Transform, &Velocity)>,
-    query_level: Query<&Level>,
-) {
-    let mut rng = rand::thread_rng();
+// pub fn asteroids(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     mut query_asteroid: Query<(&Asteroid, Entity, &mut Transform, &Velocity)>,
+//     query_level: Query<&Level>,
+// ) {
+//     let mut rng = rand::thread_rng();
 
-    if query_level.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
-        let health = rng.gen_range(1..HEALTH_MAX + 1);
-        let radius = (health * 20) as f32;
-        let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
-        let velocity = Vec3::from([-speed, 0., 0.]);
-        let x = WINDOW_WIDTH / 2.0 + (HEALTH_MAX * 20) as f32;
-        let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
+//     if query_level.single().distance_to_boss > 0 && rng.gen_range(0..100) == 0 {
+//         let health = rng.gen_range(1..HEALTH_MAX + 1);
+//         let radius = (health * 20) as f32;
+//         let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
+//         let velocity = Vec3::from([-speed, 0., 0.]);
+//         let x = WINDOW_WIDTH / 2.0 + (HEALTH_MAX * 20) as f32;
+//         let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
 
-        commands
-            .spawn_empty()
-            .insert(Asteroid { radius })
-            .insert(Health(health))
-            .insert(Velocity(velocity))
-            .insert(Surface {
-                topology: Topology::Circle(radius),
-                hitbox: HitBox {
-                    half_x: radius,
-                    half_y: radius,
-                },
-            })
-            .insert(ColorMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius,
-                        vertices: 16,
-                    }))
-                    .into(),
-                transform: Transform::from_xyz(x, y, PLANE_Z),
-                material: materials.add(ColorMaterial::from(COLOR)),
-                ..default()
-            });
-    }
+//         commands
+//             .spawn_empty()
+//             .insert(Asteroid { radius })
+//             .insert(Health(health))
+//             .insert(Velocity(velocity))
+//             .insert(Surface {
+//                 topology: Topology::Circle(radius),
+//                 hitbox: HitBox {
+//                     half_x: radius,
+//                     half_y: radius,
+//                 },
+//             })
+//             .insert(ColorMesh2dBundle {
+//                 mesh: meshes
+//                     .add(Mesh::from(shape::Circle {
+//                         radius,
+//                         vertices: 16,
+//                     }))
+//                     .into(),
+//                 transform: Transform::from_xyz(x, y, ASTEROID_Z),
+//                 material: materials.add(ColorMaterial::from(COLOR)),
+//                 ..default()
+//             });
+//     }
 
-    for (asteroid, entity, mut transform, velocity) in query_asteroid.iter_mut() {
-        transform.translation += velocity.0;
-        if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+//     for (asteroid, entity, mut transform, velocity) in query_asteroid.iter_mut() {
+//         transform.translation += velocity.0;
+//         if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }
 
 pub fn explode(
     mut commands: Commands,
@@ -112,37 +113,39 @@ pub fn explode(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_asteroid: Query<(
         &Asteroid,
-        Option<&Children>,
+        // Option<&Children>,
         &Handle<ColorMaterial>,
         &GlobalTransform,
         &Health,
         &Velocity,
     )>,
-    mut query_impact: Query<&mut Transform, With<Impact>>,
+    // mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    for (asteroid, children, color, transform, health, velocity) in query_asteroid.iter() {
+    // for (asteroid, children, color, transform, health, velocity) in query_asteroid.iter() {
+    for (asteroid, color, transform, health, velocity) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }
 
-        if let Some(children) = children {
-            for child in children {
-                commands.entity(*child).remove::<Parent>();
-                query_impact
-                    .get_component_mut::<Transform>(*child)
-                    .unwrap()
-                    .translation += transform.translation();
-            }
-        }
+        // if let Some(children) = children {
+        //     for child in children {
+        //         commands.entity(*child).remove::<Parent>();
+        //         query_impact
+        //             .get_component_mut::<Transform>(*child)
+        //             .unwrap()
+        //             .translation += transform.translation();
+        //     }
+        // }
 
         let color = materials.get(color).unwrap().color;
         let mut rng = rand::thread_rng();
+
         for _ in 1..asteroid.radius as usize {
-            let debris_dx = rng.gen_range(-asteroid.radius..asteroid.radius);
-            let debris_x = transform.translation().x + debris_dx;
-            let dy_max = (asteroid.radius.powi(2) - debris_dx.powi(2)).sqrt();
-            let debris_dy = rng.gen_range(-dy_max..dy_max);
-            let debris_y = transform.translation().y + debris_dy;
+            let x = rng.gen_range(-asteroid.radius..asteroid.radius);
+            let y_max = (asteroid.radius.powi(2) - x.powi(2)).sqrt();
+            let y = rng.gen_range(-y_max..y_max);
+            let z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+            let debris_translation = transform.translation() + Vec3::new(x, y, z);
 
             let dv = Vec3 {
                 x: rng.gen_range(-0.5..0.5),
@@ -151,21 +154,16 @@ pub fn explode(
             };
 
             commands
-                .spawn_empty()
-                .insert(Debris)
+                .spawn(Debris)
                 .insert(Velocity(velocity.0 + dv))
-                .insert(MaterialMesh2dBundle {
+                .insert(ColorMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {
                             radius: rng.gen_range(asteroid.radius / 100.0..asteroid.radius / 20.0),
                             vertices: 8,
                         }))
                         .into(),
-                    transform: Transform::from_xyz(
-                        debris_x,
-                        debris_y,
-                        PLANE_Z + if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                    ),
+                    transform: Transform::from_translation(debris_translation),
                     material: materials.add(color.into()),
                     ..default()
                 });

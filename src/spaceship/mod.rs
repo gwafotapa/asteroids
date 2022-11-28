@@ -290,8 +290,8 @@ pub fn explode(
         (
             // Option<&Children>,
             &Handle<ColorMaterial>,
-            &Health,
             &GlobalTransform,
+            &Health,
             &Velocity,
         ),
         With<Spaceship>,
@@ -299,7 +299,7 @@ pub fn explode(
     // mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
 ) {
     // if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
-    if let Ok((s_color, s_health, s_transform, s_velocity)) = query.get_single() {
+    if let Ok((s_color, s_transform, s_health, s_velocity)) = query.get_single() {
         if s_health.0 > 0 {
             return;
         }
@@ -320,9 +320,9 @@ pub fn explode(
         let mut rng = rand::thread_rng();
 
         for _ in 1..100 {
-            let mut debris;
+            let mut debris_translation_ship; // Translation of the debris relative to the spaceship
             'outer: loop {
-                debris = Vec3 {
+                debris_translation_ship = Vec3 {
                     x: rng.gen_range(S5.x..S2.x),
                     y: rng.gen_range(S1.y..S4.y),
                     z: 0.0,
@@ -330,7 +330,7 @@ pub fn explode(
                 let mut triangles = TRIANGLES.iter();
                 while let Some(&[a, b, c]) = triangles.next() {
                     if point_in_triangle(
-                        debris.truncate(),
+                        debris_translation_ship.truncate(),
                         a.truncate(),
                         b.truncate(),
                         c.truncate(),
@@ -339,8 +339,8 @@ pub fn explode(
                     }
                 }
             }
-            debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-            let debris_translation = s_transform.translation() + debris;
+            debris_translation_ship.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+            let debris_translation = debris_translation_ship + s_transform.translation();
             let dv = Vec3 {
                 x: rng.gen_range(-0.5..0.5),
                 y: rng.gen_range(-0.5..0.5),
