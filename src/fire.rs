@@ -11,6 +11,11 @@ pub struct Fire {
 pub fn advance(mut query: Query<(&mut Health, &mut Transform, &Velocity), With<Fire>>) {
     for (mut health, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;
+        transform.scale *= 0.97;
+        // transform.scale.z = 1.0;
+        if transform.scale.x < 0.1 {
+            health.0 = 0;
+        }
         // if transform.translation.x > WINDOW_WIDTH / 2.0
         //     || transform.translation.x < -WINDOW_WIDTH / 2.0
         //     || transform.translation.y > WINDOW_HEIGHT / 2.0
