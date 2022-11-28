@@ -50,7 +50,7 @@ fn main() {
         )
         .add_system(spaceship::attack.after("movement"))
         // .add_system(collision::update_impacts)
-        .add_system(collision::update_debris)
+        .add_system(debris::update)
         // .add_system(boss::spawn)
         // .add_system(boss::attack.after(boss::advance))
         .add_system_to_stage(CLEANUP, spaceship::explode)

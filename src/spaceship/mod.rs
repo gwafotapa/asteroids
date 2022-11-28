@@ -11,7 +11,8 @@ use crate::{
         Topology,
         Triangle,
     },
-    Debris, Fire, Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    debris::Debris,
+    Fire, Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;

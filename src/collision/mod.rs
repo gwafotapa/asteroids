@@ -6,8 +6,9 @@ use crate::{
     collision::math::{
         circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
     },
+    debris::Debris,
     spaceship::Spaceship,
-    Debris, Enemy, Fire, Health, Velocity,
+    Enemy, Fire, Health, Velocity,
 };
 
 pub mod math;
@@ -453,23 +454,6 @@ pub fn asteroid_and_asteroid(
             i += 1;
         } else {
             break;
-        }
-    }
-}
-
-pub fn update_debris(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Transform, &Velocity), With<Debris>>,
-) {
-    for (debris, mut transform, velocity) in query.iter_mut() {
-        transform.translation += velocity.0;
-        transform.scale -= 0.01;
-        // if transform.translation.x < -WINDOW_WIDTH / 2.0
-        //     || transform.translation.x > WINDOW_WIDTH / 2.0
-        //     || transform.translation.y < -WINDOW_HEIGHT / 2.0
-        //     || transform.translation.y > WINDOW_HEIGHT / 2.0
-        if transform.scale.x < 0.005 {
-            commands.entity(debris).despawn();
         }
     }
 }

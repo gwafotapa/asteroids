@@ -6,6 +6,7 @@ pub mod asteroid;
 pub mod blast;
 pub mod boss;
 pub mod collision;
+pub mod debris;
 pub mod map;
 pub mod spaceship;
 
@@ -53,9 +54,6 @@ pub struct Health(i32);
 
 #[derive(Component)]
 pub struct Enemy;
-
-#[derive(Component)]
-pub struct Debris;
 
 #[derive(Component, Eq, PartialEq)]
 pub enum CameraPositioning {

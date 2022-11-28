@@ -3,7 +3,8 @@ use rand::Rng;
 
 use crate::{
     collision::{HitBox, Impact, Surface, Topology},
-    Debris, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    debris::Debris,
+    Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const SPEED_MAX: usize = 5;
