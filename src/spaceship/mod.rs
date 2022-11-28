@@ -2,6 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology};
 use rand::Rng;
 
 use crate::{
+    blast::Blast,
     collision::{
         math::point_in_triangle,
         HitBox,
@@ -10,7 +11,7 @@ use crate::{
         Topology,
         Triangle,
     },
-    Blast, Debris, Fire, Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Debris, Fire, Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;

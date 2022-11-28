@@ -56,12 +56,12 @@ fn main() {
         .add_system_to_stage(CLEANUP, spaceship::explode)
         // .add_system_to_stage(CLEANUP, asteroid::explode)
         // .add_system_to_stage(CLEANUP, boss::explode)
-        .add_system_to_stage(CLEANUP, update_blast)
+        .add_system_to_stage(CLEANUP, blast::update)
         // .add_system_to_stage(DESPAWN, asteroid::despawn)
         // .add_system_to_stage(DESPAWN, boss::despawn)
         .add_system_to_stage(DESPAWN, spaceship::despawn)
         // .add_system_to_stage(DESPAWN, collision::despawn_impacts)
         // .add_system_to_stage(DESPAWN, despawn_fire)
-        .add_system_to_stage(DESPAWN, despawn_blast)
+        .add_system_to_stage(DESPAWN, blast::despawn)
         .run();
 }
