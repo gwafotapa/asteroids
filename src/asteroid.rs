@@ -2,9 +2,19 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{
-    collision::{impact::Impact, HitBox, Surface, Topology},
+    collision::{
+        //impact::Impact,
+        HitBox,
+        Surface,
+        Topology,
+    },
     debris::Debris,
-    Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Health,
+    //Level,
+    Velocity,
+    PLANE_Z,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
 // const SPEED_MAX: usize = 5;
@@ -117,12 +127,12 @@ pub fn explode(
         &Handle<ColorMaterial>,
         &GlobalTransform,
         &Health,
-        &Velocity,
+        // &Velocity,
     )>,
     // mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
     // for (asteroid, children, color, transform, health, velocity) in query_asteroid.iter() {
-    for (asteroid, color, transform, health, velocity) in query_asteroid.iter() {
+    for (asteroid, color, transform, health) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }
@@ -155,7 +165,8 @@ pub fn explode(
 
             commands
                 .spawn(Debris)
-                .insert(Velocity(velocity.0 + dv))
+                // .insert(Velocity(velocity.0 + dv))
+                .insert(Velocity(dv))
                 .insert(ColorMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {

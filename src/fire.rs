@@ -8,10 +8,11 @@ pub struct Fire {
     pub impact_vertices: usize,
 }
 
-pub fn advance(mut query: Query<(&mut Health, &mut Transform, &Velocity), With<Fire>>) {
+pub fn update(mut query: Query<(&mut Health, &mut Transform, &Velocity), With<Fire>>) {
     for (mut health, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;
-        transform.scale *= 0.97;
+        transform.scale -= 0.015;
+        // transform.scale *= 0.97;
         // transform.scale.z = 1.0;
         if transform.scale.x < 0.1 {
             health.0 = 0;

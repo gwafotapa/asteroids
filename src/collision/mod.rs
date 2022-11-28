@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
 
 use crate::{
     asteroid::Asteroid,
@@ -200,17 +200,16 @@ pub fn fire_and_asteroid(
     mut query_asteroid: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Asteroid>>,
 ) {
     for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-        for (a_entity, a_transform, mut a_health, a_surface) in query_asteroid.iter_mut() {
+        for (_a_entity, a_transform, mut a_health, a_surface) in query_asteroid.iter_mut() {
             if collision(f_transform, f_surface, a_transform, a_surface) {
                 a_health.0 -= 1;
                 f_health.0 -= 1;
                 let color = materials.get(f_color).unwrap().color;
 
-                let impact = commands
-                    .spawn_empty()
-                    .insert(Impact)
+                let _impact = commands
+                    .spawn(Impact)
                     .insert(Health(10))
-                    .insert(MaterialMesh2dBundle {
+                    .insert(ColorMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
                                 radius: fire.impact_radius,
@@ -218,14 +217,15 @@ pub fn fire_and_asteroid(
                             }))
                             .into(),
                         transform: Transform::from_translation(
-                            f_transform.translation() - a_transform.translation(),
+                            // f_transform.translation() - a_transform.translation(),
+                            f_transform.translation(),
                         ),
                         material: materials.add(color.into()),
                         ..default()
                     })
                     .id();
 
-                commands.entity(a_entity).add_child(impact);
+                // commands.entity(a_entity).add_child(impact);
 
                 break;
             }
@@ -355,7 +355,7 @@ pub fn fire_and_boss(
                         .spawn_empty()
                         .insert(Impact)
                         .insert(Health(10))
-                        .insert(MaterialMesh2dBundle {
+                        .insert(ColorMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
                                     radius: fire.impact_radius,
@@ -414,7 +414,7 @@ pub fn fire_and_spaceship(
                     .spawn_empty()
                     .insert(Impact)
                     .insert(Health(10))
-                    .insert(MaterialMesh2dBundle {
+                    .insert(ColorMesh2dBundle {
                         mesh: meshes
                             .add(Mesh::from(shape::Circle {
                                 radius: fire.impact_radius,
