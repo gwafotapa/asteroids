@@ -12,7 +12,8 @@ use crate::{
         Triangle,
     },
     debris::Debris,
-    Fire, Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    fire::Fire,
+    Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;
@@ -126,7 +127,7 @@ const FIRE_VERTICES: usize = 4;
 const IMPACT_RADIUS: f32 = 12.0;
 const IMPACT_VERTICES: usize = 16;
 const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 12.0,
+    x: 20.0,
     y: 0.0,
     z: 0.0,
 };
@@ -252,33 +253,33 @@ pub fn attack(
 
         commands.entity(spaceship).add_child(blast);
 
-        // commands
-        //     .spawn(Fire {
-        //         impact_radius: IMPACT_RADIUS,
-        //         impact_vertices: IMPACT_VERTICES,
-        //     })
-        //     .insert(Health(1))
-        //     .insert(Velocity(FIRE_VELOCITY))
-        //     .insert(Surface {
-        //         topology: Topology::Point,
-        //         hitbox: HitBox {
-        //             half_x: 0.0,
-        //             half_y: 0.0,
-        //         },
-        //     })
-        //     .insert(ColorMesh2dBundle {
-        //         mesh: meshes
-        //             .add(Mesh::from(shape::Circle {
-        //                 radius: FIRE_RADIUS,
-        //                 vertices: FIRE_VERTICES,
-        //             }))
-        //             .into(),
-        //         transform: Transform::from_translation(
-        //             transform.translation + ATTACK_SOURCE * transform.scale,
-        //         ),
-        //         material: materials.add(ATTACK_COLOR.into()),
-        //         ..default()
-        //     });
+        commands
+            .spawn(Fire {
+                impact_radius: IMPACT_RADIUS,
+                impact_vertices: IMPACT_VERTICES,
+            })
+            .insert(Health(1))
+            .insert(Velocity(transform.rotation * FIRE_VELOCITY))
+            .insert(Surface {
+                topology: Topology::Point,
+                hitbox: HitBox {
+                    half_x: 0.0,
+                    half_y: 0.0,
+                },
+            })
+            .insert(ColorMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: FIRE_RADIUS,
+                        vertices: FIRE_VERTICES,
+                    }))
+                    .into(),
+                transform: Transform::from_translation(
+                    transform.translation + transform.rotation * ATTACK_SOURCE,
+                ),
+                material: materials.add(ATTACK_COLOR.into()),
+                ..default()
+            });
     }
 }
 

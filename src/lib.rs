@@ -7,6 +7,7 @@ pub mod blast;
 pub mod boss;
 pub mod collision;
 pub mod debris;
+pub mod fire;
 pub mod map;
 pub mod spaceship;
 
@@ -33,12 +34,6 @@ const CAMERA_REAR_GAP: f32 = 100.0;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
-
-#[derive(Component)]
-pub struct Fire {
-    impact_radius: f32,
-    impact_vertices: usize,
-}
 
 // #[derive(Component)]
 // struct SpawnedTime(Instant);
@@ -249,44 +244,6 @@ pub fn keyboard_input(
                 z: 0.0,
             };
             c_transform.translation += CAMERA_SPEED * direction;
-        }
-    }
-}
-
-// pub fn update_bullets(
-//     mut commands: Commands,
-//     mut query: Query<(&mut Transform, &Velocity, Entity), With<Fire>>,
-// ) {
-//     for (mut transform, velocity, entity) in query.iter_mut() {
-//         transform.translation += velocity.0;
-//         // transform.translation += Vec3 {
-//         //     x: 4.0,
-//         //     y: 0.0,
-//         //     z: 0.0,
-//         // };
-//         if transform.translation.x > WINDOW_WIDTH / 2.0 {
-//             commands.entity(entity).despawn();
-//         }
-//     }
-// }
-
-pub fn move_fire(mut query: Query<(&mut Health, &mut Transform, &Velocity), With<Fire>>) {
-    for (mut health, mut transform, velocity) in query.iter_mut() {
-        transform.translation += velocity.0;
-        if transform.translation.x > WINDOW_WIDTH / 2.0
-            || transform.translation.x < -WINDOW_WIDTH / 2.0
-            || transform.translation.y > WINDOW_HEIGHT / 2.0
-            || transform.translation.y < -WINDOW_HEIGHT / 2.0
-        {
-            health.0 = 0;
-        }
-    }
-}
-
-pub fn despawn_fire(mut commands: Commands, query: Query<(Entity, &Health), With<Fire>>) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
         }
     }
 }

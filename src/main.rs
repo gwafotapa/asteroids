@@ -35,7 +35,7 @@ fn main() {
                 .label("movement")
                 // .with_system(asteroid::asteroids)
                 // .with_system(boss::advance)
-                // .with_system(move_fire)
+                .with_system(fire::advance)
                 .with_system(keyboard_input),
         )
         .add_system_set(
@@ -61,7 +61,7 @@ fn main() {
         // .add_system_to_stage(DESPAWN, boss::despawn)
         .add_system_to_stage(DESPAWN, spaceship::despawn)
         // .add_system_to_stage(DESPAWN, collision::impact::despawn)
-        // .add_system_to_stage(DESPAWN, despawn_fire)
+        .add_system_to_stage(DESPAWN, fire::despawn) // Not necessarily at this stage (not a child)
         .add_system_to_stage(DESPAWN, blast::despawn)
         .run();
 }

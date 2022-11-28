@@ -3,9 +3,9 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use crate::{
     asteroid::Asteroid,
     boss::{BossCore, BossEdge},
-    debris::Debris,
+    fire::Fire,
     spaceship::Spaceship,
-    Enemy, Fire, Health, Velocity,
+    Enemy, Health, Velocity,
 };
 
 use self::{

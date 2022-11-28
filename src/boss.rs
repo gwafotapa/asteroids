@@ -7,8 +7,9 @@ use crate::{
     blast::Blast,
     collision::{impact::Impact, math, HitBox, Surface, Topology, Triangle},
     debris::Debris,
+    fire::Fire,
     spaceship::Spaceship,
-    Direction, Enemy, Fire, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Direction, Enemy, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const INNER_RADIUS: f32 = 100.0;
