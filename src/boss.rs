@@ -5,7 +5,7 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     asteroid::Asteroid,
     blast::Blast,
-    collision::{math, HitBox, Impact, Surface, Topology, Triangle},
+    collision::{impact::Impact, math, HitBox, Surface, Topology, Triangle},
     debris::Debris,
     spaceship::Spaceship,
     Direction, Enemy, Fire, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,

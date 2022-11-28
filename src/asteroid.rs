@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::{
-    collision::{HitBox, Impact, Surface, Topology},
+    collision::{impact::Impact, HitBox, Surface, Topology},
     debris::Debris,
     Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };

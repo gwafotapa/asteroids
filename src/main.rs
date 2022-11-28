@@ -49,7 +49,7 @@ fn main() {
             // .with_system(collision::fire_and_spaceship),
         )
         .add_system(spaceship::attack.after("movement"))
-        // .add_system(collision::update_impacts)
+        // .add_system(collision::impact::update)
         .add_system(debris::update)
         // .add_system(boss::spawn)
         // .add_system(boss::attack.after(boss::advance))
@@ -60,7 +60,7 @@ fn main() {
         // .add_system_to_stage(DESPAWN, asteroid::despawn)
         // .add_system_to_stage(DESPAWN, boss::despawn)
         .add_system_to_stage(DESPAWN, spaceship::despawn)
-        // .add_system_to_stage(DESPAWN, collision::despawn_impacts)
+        // .add_system_to_stage(DESPAWN, collision::impact::despawn)
         // .add_system_to_stage(DESPAWN, despawn_fire)
         .add_system_to_stage(DESPAWN, blast::despawn)
         .run();

@@ -3,14 +3,19 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use crate::{
     asteroid::Asteroid,
     boss::{BossCore, BossEdge},
-    collision::math::{
-        circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
-    },
     debris::Debris,
     spaceship::Spaceship,
     Enemy, Fire, Health, Velocity,
 };
 
+use self::{
+    impact::Impact,
+    math::{
+        circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
+    },
+};
+
+pub mod impact;
 pub mod math;
 
 pub type Triangle = [Vec3; 3];
@@ -33,9 +38,6 @@ pub struct HitBox {
     pub half_x: f32,
     pub half_y: f32,
 }
-
-#[derive(Component)]
-pub struct Impact;
 
 fn collision(
     transform1: &GlobalTransform,
@@ -454,33 +456,6 @@ pub fn asteroid_and_asteroid(
             i += 1;
         } else {
             break;
-        }
-    }
-}
-
-pub fn update_impacts(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Health, Option<&Parent>, &mut Transform), With<Impact>>,
-) {
-    for (entity, mut health, parent, mut transform) in query.iter_mut() {
-        health.0 -= 1;
-        // if health.0 > 5 {
-        // transform.scale += 0.1;
-        // } else if health.0 > 0 {
-        transform.scale -= 0.1;
-        // } else {
-        if health.0 <= 0 {
-            if let Some(parent) = parent {
-                commands.entity(parent.get()).remove_children(&[entity]);
-            }
-        }
-    }
-}
-
-pub fn despawn_impacts(mut commands: Commands, query: Query<(Entity, &Health), With<Impact>>) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
         }
     }
 }
