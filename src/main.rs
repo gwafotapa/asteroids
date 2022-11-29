@@ -18,11 +18,12 @@ fn main() {
             ..default()
         }))
         // .add_plugin(flame::ColoredMesh2dPlugin)
-        .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::single_threaded())
+        .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
         // .add_stage_after(CLEANUP, DESPAWN, SystemStage::single_threaded())
         .add_stage_after(CLEANUP, DESPAWN, SystemStage::parallel())
         .add_startup_system(camera)
         .add_startup_system(spaceship::spawn)
+        .add_startup_system(boss::spawn)
         .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::spawn)
         .add_startup_system_to_stage(StartupStage::PostStartup, compass::setup)
         .add_startup_system(map::setup)
@@ -51,7 +52,6 @@ fn main() {
         .add_system(spaceship::attack.after("movement"))
         .add_system(collision::impact::update) // Stage of this and despawn ?
         .add_system(debris::update)
-        // .add_system(boss::spawn)
         // .add_system(boss::attack.after(boss::advance))
         .add_system_to_stage(CLEANUP, spaceship::explode)
         .add_system_to_stage(CLEANUP, asteroid::explode) // this and despawn maybe not at this stage as long as there are no impact child.

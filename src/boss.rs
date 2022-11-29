@@ -6,7 +6,7 @@ use crate::{
     // asteroid::Asteroid,
     blast::Blast,
     collision::{impact::Impact, math, HitBox, Surface, Topology, Triangle},
-    // compass::Level,
+    // compass::Compass,
     debris::Debris,
     fire::Fire,
     spaceship::Spaceship,
@@ -20,6 +20,7 @@ use crate::{
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
+pub const DISTANCE_TO_BOSS: f32 = 5000.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
@@ -129,12 +130,12 @@ const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
 const IMPACT_RADIUS: f32 = 15.0;
 const IMPACT_VERTICES: usize = 32;
-const INITIAL_POSITION: Vec3 = Vec3 {
-    // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
-    x: WINDOW_WIDTH / 2.0,
-    y: 0.0,
-    z: BOSS_Z,
-};
+// const INITIAL_POSITION: Vec3 = Vec3 {
+//     // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
+//     x: WINDOW_WIDTH / 2.0,
+//     y: 0.0,
+//     z: BOSS_Z,
+// };
 // const ROTATION_SPEED: f32 = 0.05;
 const ROTATION_SPEED: f32 = 0.0;
 
@@ -187,11 +188,19 @@ pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    // mut query_level: Query<&mut Level>,
+    // query: Query<&Compass>,
     // query_asteroid: Query<With<Asteroid>>,
 ) {
-    // let mut level = query_level.single_mut();
+    // Compute boss starting position
+    let mut rng = rand::thread_rng();
+    let x = rng.gen_range(-DISTANCE_TO_BOSS..DISTANCE_TO_BOSS);
+    let y_max = (DISTANCE_TO_BOSS.powi(2) - x.powi(2)).sqrt();
+    let y = rng.gen_range(-y_max..y_max);
+    let translation = Vec3::new(x, y, BOSS_Z);
+
+    // let translation = query.single().target;
     // if !level.boss_spawned && level.distance_to_boss == 0 && query_asteroid.is_empty() {
+
     // Build core
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
@@ -199,22 +208,19 @@ pub fn spawn(
         .flatten()
         .map(|x| x.to_array())
         .collect();
-    let vertices_normal = vec![[0.0, 0.0, 1.0]; 3 * CORE_PARTS];
-    let vertices_uv = vec![[0.0, 0.0]; 3 * CORE_PARTS];
-
+    // let vertices_normal = vec![[0.0, 0.0, 1.0]; 3 * CORE_PARTS];
+    // let vertices_uv = vec![[0.0, 0.0]; 3 * CORE_PARTS];
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
+    // mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
+    // mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
     let boss_core = commands
-        .spawn_empty()
-        .insert(BossCore { edges: EDGES })
+        .spawn(BossCore { edges: EDGES })
         .insert(Health(CORE_HEALTH))
         .insert(Velocity(Vec3::ZERO))
-        .insert(MaterialMesh2dBundle {
+        .insert(ColorMesh2dBundle {
             mesh: meshes.add(mesh).into(),
-            transform: Transform::from_translation(INITIAL_POSITION),
-
+            transform: Transform::from_translation(translation),
             material: materials.add(COLOR.into()),
             ..default()
         })
@@ -231,16 +237,15 @@ pub fn spawn(
     for i in 0..EDGES {
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
         let vertices_position = vec![E1.to_array(), E2.to_array(), E3.to_array()];
-        let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
-        let vertices_uv = vec![[0.0, 0.0]; 3];
+        // let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
+        // let vertices_uv = vec![[0.0, 0.0]; 3];
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
+        // mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
+        // mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
         let boss_edge = commands
-            .spawn_empty()
-            .insert(BossEdge)
+            .spawn(BossEdge)
             .insert(Health(EDGE_HEALTH))
             .insert(MaterialMesh2dBundle {
                 mesh: meshes.add(mesh).into(),
