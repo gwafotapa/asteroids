@@ -9,7 +9,7 @@ use crate::{
     // compass::Compass,
     debris::Debris,
     fire::Fire,
-    spaceship::Spaceship,
+    spaceship::{self, Spaceship},
     Direction,
     Enemy,
     Health,
@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
-pub const DISTANCE_TO_BOSS: f32 = 5000.0;
+pub const DISTANCE_TO_BOSS: f32 = 500.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
@@ -193,9 +193,9 @@ pub fn spawn(
 ) {
     // Compute boss starting position
     let mut rng = rand::thread_rng();
-    let x = rng.gen_range(-DISTANCE_TO_BOSS..DISTANCE_TO_BOSS);
-    let y_max = (DISTANCE_TO_BOSS.powi(2) - x.powi(2)).sqrt();
-    let y = rng.gen_range(-y_max..y_max);
+    let theta = rng.gen_range(0.0..2.0 * PI);
+    let x = DISTANCE_TO_BOSS * theta.cos() + spaceship::POSITION.x;
+    let y = DISTANCE_TO_BOSS * theta.sin() + spaceship::POSITION.y;
     let translation = Vec3::new(x, y, BOSS_Z);
 
     // let translation = query.single().target;
@@ -247,7 +247,7 @@ pub fn spawn(
         let boss_edge = commands
             .spawn(BossEdge)
             .insert(Health(EDGE_HEALTH))
-            .insert(MaterialMesh2dBundle {
+            .insert(ColorMesh2dBundle {
                 mesh: meshes.add(mesh).into(),
                 transform: Transform::from_xyz(
                     INNER_RADIUS * (i as f32 * PI / 4.0).cos(),
@@ -493,11 +493,10 @@ pub fn explode(
                         };
 
                         commands
-                            .spawn_empty()
-                            .insert(Debris)
+                            .spawn(Debris)
                             .insert(Velocity(core_velocity.0 + dv))
                             // .insert(Velocity(dv))
-                            .insert(MaterialMesh2dBundle {
+                            .insert(ColorMesh2dBundle {
                                 mesh: meshes
                                     .add(Mesh::from(shape::Circle {
                                         radius: rng.gen_range(2.0..15.0),

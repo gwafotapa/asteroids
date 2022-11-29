@@ -102,12 +102,12 @@ pub fn update(
     query_boss: Query<&Transform, (With<BossCore>, Without<Compass>, Without<Needle>)>,
     query_camera: Query<&Transform, (With<Camera>, Without<Compass>, Without<Needle>)>,
 ) {
+    let camera = query_camera.single();
+    let (mut compass, mut text) = query_compass.single_mut();
+    compass.translation = camera.translation + COMPASS_POSITION;
     if let Ok(spaceship) = query_spaceship.get_single() {
         if let Ok(boss) = query_boss.get_single() {
-            let camera = query_camera.single();
-            let (mut compass, mut text) = query_compass.single_mut();
             let mut needle = query_needle.single_mut();
-            compass.translation = camera.translation + COMPASS_POSITION;
             needle.rotation = Quat::from_rotation_arc_2d(
                 Vec2::X,
                 (boss.translation - spaceship.translation)

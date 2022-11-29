@@ -105,7 +105,7 @@ const HITBOX: HitBox = HitBox {
 // const VELOCITY_MAX: f32 = 5.0;
 pub const ACCELERATION: f32 = 0.1;
 pub const DRAG: f32 = 0.01;
-const POSITION: Vec3 = Vec3 {
+pub const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
     // x: -WINDOW_WIDTH / 2.0,
     // x: MAP_CENTER_X,
