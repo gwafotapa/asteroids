@@ -118,7 +118,8 @@ const A15: Vec3 = Vec3 {
 //     A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15,
 // ];
 
-const ACCELERATION: f32 = 0.01;
+const ACCELERATION: f32 = 0.15;
+const DRAG: f32 = 0.05;
 const ATTACK_COLOR: Color = Color::RED;
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
@@ -281,57 +282,30 @@ pub fn advance(
     mut query_boss: Query<(&BossCore, &mut Transform, &mut Velocity)>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<BossCore>)>,
 ) {
-    if let Ok((core, mut transform, mut velocity)) = query_boss.get_single_mut() {
-        if core.edges > 0 {
-            let mut rng = rand::thread_rng();
-            let mut acceleration = Vec::new();
-
-            if velocity.0.x > -1.0 && transform.translation.x > -WINDOW_WIDTH / 4.0 {
-                acceleration.push(Direction::Left);
+    if let Ok((boss, mut b_transform, mut velocity)) = query_boss.get_single_mut() {
+        let (acceleration, rotation_speed);
+        if let Ok(s_transform) = query_spaceship.get_single() {
+            if boss.edges > 0 {
+                let mut direction = (s_transform.translation - b_transform.translation).normalize();
+                let mut rng = rand::thread_rng();
+                let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
+                direction = Quat::from_axis_angle(Vec3::new(0.0, 0.0, 1.0), angle) * direction;
+                acceleration = ACCELERATION * direction;
+                rotation_speed = ROTATION_SPEED;
+            } else {
+                let direction = (s_transform.translation - b_transform.translation).normalize();
+                acceleration = 2.0 * ACCELERATION * direction;
+                rotation_speed = 2.0 * ROTATION_SPEED;
             }
-            if velocity.0.x < 1.0 && transform.translation.x < WINDOW_WIDTH / 4.0 {
-                acceleration.push(Direction::Right);
-            }
-            if velocity.0.y > -1.0 && transform.translation.y > -WINDOW_HEIGHT / 3.0 {
-                acceleration.push(Direction::Down);
-            }
-            if velocity.0.y < 1.0 && transform.translation.y < WINDOW_HEIGHT / 3.0 {
-                acceleration.push(Direction::Up);
-            }
-
-            velocity.0 += match acceleration.choose(&mut rng).unwrap() {
-                Direction::Left => Vec3::from([-ACCELERATION, 0.0, 0.0]),
-                Direction::Right => Vec3::from([ACCELERATION, 0.0, 0.0]),
-                Direction::Down => Vec3::from([0.0, -ACCELERATION, 0.0]),
-                Direction::Up => Vec3::from([0.0, ACCELERATION, 0.0]),
-            };
-            transform.rotation *=
-                Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), ROTATION_SPEED);
         } else {
-            if let Ok(s_transform) = query_spaceship.get_single() {
-                let direction = (s_transform.translation - transform.translation).normalize();
-                let acceleration = -velocity.0 / 2.0 + 3.0 * direction;
-                velocity.0 += acceleration;
-                transform.rotation *=
-                    Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 2.0 * ROTATION_SPEED);
-            }
+            acceleration = Vec3::ZERO;
+            rotation_speed = ROTATION_SPEED;
         }
 
-        transform.translation += velocity.0;
-
-        // Don't move out of the screen
-        if transform.translation.x < -WINDOW_WIDTH / 2.0 {
-            transform.translation.x = -WINDOW_WIDTH / 2.0;
-        }
-        if transform.translation.x > WINDOW_WIDTH / 2.0 {
-            transform.translation.x = WINDOW_WIDTH / 2.0;
-        }
-        if transform.translation.y < -WINDOW_HEIGHT / 2.0 {
-            transform.translation.y = -WINDOW_HEIGHT / 2.0;
-        }
-        if transform.translation.y > WINDOW_HEIGHT / 2.0 {
-            transform.translation.y = WINDOW_HEIGHT / 2.0;
-        }
+        velocity.0 += acceleration;
+        velocity.0 *= 1.0 - DRAG;
+        b_transform.translation += velocity.0;
+        b_transform.rotation *= Quat::from_axis_angle(Vec3::new(0.0, 0.0, 1.0), rotation_speed);
     }
 }
 

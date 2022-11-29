@@ -35,7 +35,7 @@ fn main() {
             SystemSet::new()
                 .label("movement")
                 // .with_system(asteroid::asteroids)
-                // .with_system(boss::advance)
+                .with_system(boss::advance)
                 .with_system(fire::update)
                 .with_system(keyboard_input),
         )
