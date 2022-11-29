@@ -3,15 +3,23 @@ use rand::{seq::SliceRandom, Rng};
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    asteroid::Asteroid,
+    // asteroid::Asteroid,
     blast::Blast,
     collision::{impact::Impact, math, HitBox, Surface, Topology, Triangle},
     debris::Debris,
     fire::Fire,
     spaceship::Spaceship,
-    Direction, Enemy, Health, Level, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Direction,
+    Enemy,
+    Health,
+    Level,
+    Velocity,
+    PLANE_Z,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
+pub const BOSS_Z: f32 = PLANE_Z;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
@@ -125,7 +133,7 @@ const INITIAL_POSITION: Vec3 = Vec3 {
     // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
     x: WINDOW_WIDTH / 2.0,
     y: 0.0,
-    z: PLANE_Z,
+    z: BOSS_Z,
 };
 // const ROTATION_SPEED: f32 = 0.05;
 const ROTATION_SPEED: f32 = 0.0;
@@ -179,89 +187,89 @@ pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_level: Query<&mut Level>,
-    query_asteroid: Query<With<Asteroid>>,
+    // mut query_level: Query<&mut Level>,
+    // query_asteroid: Query<With<Asteroid>>,
 ) {
-    let mut level = query_level.single_mut();
-    if !level.boss_spawned && level.distance_to_boss == 0 && query_asteroid.is_empty() {
-        // Build core
+    // let mut level = query_level.single_mut();
+    // if !level.boss_spawned && level.distance_to_boss == 0 && query_asteroid.is_empty() {
+    // Build core
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
+        .iter()
+        .flatten()
+        .map(|x| x.to_array())
+        .collect();
+    let vertices_normal = vec![[0.0, 0.0, 1.0]; 3 * CORE_PARTS];
+    let vertices_uv = vec![[0.0, 0.0]; 3 * CORE_PARTS];
+
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
+
+    let boss_core = commands
+        .spawn_empty()
+        .insert(BossCore { edges: EDGES })
+        .insert(Health(CORE_HEALTH))
+        .insert(Velocity(Vec3::ZERO))
+        .insert(MaterialMesh2dBundle {
+            mesh: meshes.add(mesh).into(),
+            transform: Transform::from_translation(INITIAL_POSITION),
+
+            material: materials.add(COLOR.into()),
+            ..default()
+        })
+        .insert(Surface {
+            topology: Topology::Triangles(&CORE_TRIANGLES),
+            hitbox: HitBox {
+                half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
+                half_y: 108.3,
+            },
+        })
+        .id();
+
+    // Add the edges
+    for i in 0..EDGES {
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
-            .iter()
-            .flatten()
-            .map(|x| x.to_array())
-            .collect();
-        let vertices_normal = vec![[0.0, 0.0, 1.0]; 3 * CORE_PARTS];
-        let vertices_uv = vec![[0.0, 0.0]; 3 * CORE_PARTS];
+        let vertices_position = vec![E1.to_array(), E2.to_array(), E3.to_array()];
+        let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
+        let vertices_uv = vec![[0.0, 0.0]; 3];
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
 
-        let boss_core = commands
+        let boss_edge = commands
             .spawn_empty()
-            .insert(BossCore { edges: EDGES })
-            .insert(Health(CORE_HEALTH))
-            .insert(Velocity(Vec3::ZERO))
+            .insert(BossEdge)
+            .insert(Health(EDGE_HEALTH))
             .insert(MaterialMesh2dBundle {
                 mesh: meshes.add(mesh).into(),
-                transform: Transform::from_translation(INITIAL_POSITION),
-
+                transform: Transform::from_xyz(
+                    INNER_RADIUS * (i as f32 * PI / 4.0).cos(),
+                    INNER_RADIUS * (i as f32 * PI / 4.0).sin(),
+                    0.0,
+                )
+                .with_rotation(Quat::from_axis_angle(
+                    Vec3::from([0.0, 0.0, 1.0]),
+                    (i + 6) as f32 * PI / 4.0,
+                )),
                 material: materials.add(COLOR.into()),
                 ..default()
             })
             .insert(Surface {
-                topology: Topology::Triangles(&CORE_TRIANGLES),
+                topology: Topology::Triangles(&EDGE),
                 hitbox: HitBox {
-                    half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
-                    half_y: 108.3,
+                    half_x: OUTER_RADIUS - INNER_RADIUS,
+                    half_y: OUTER_RADIUS - INNER_RADIUS,
                 },
             })
+            .insert(Attack(E2))
             .id();
 
-        // Add the edges
-        for i in 0..EDGES {
-            let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-            let vertices_position = vec![E1.to_array(), E2.to_array(), E3.to_array()];
-            let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
-            let vertices_uv = vec![[0.0, 0.0]; 3];
-
-            mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
-            mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
-            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
-
-            let boss_edge = commands
-                .spawn_empty()
-                .insert(BossEdge)
-                .insert(Health(EDGE_HEALTH))
-                .insert(MaterialMesh2dBundle {
-                    mesh: meshes.add(mesh).into(),
-                    transform: Transform::from_xyz(
-                        INNER_RADIUS * (i as f32 * PI / 4.0).cos(),
-                        INNER_RADIUS * (i as f32 * PI / 4.0).sin(),
-                        0.0,
-                    )
-                    .with_rotation(Quat::from_axis_angle(
-                        Vec3::from([0.0, 0.0, 1.0]),
-                        (i + 6) as f32 * PI / 4.0,
-                    )),
-                    material: materials.add(COLOR.into()),
-                    ..default()
-                })
-                .insert(Surface {
-                    topology: Topology::Triangles(&EDGE),
-                    hitbox: HitBox {
-                        half_x: OUTER_RADIUS - INNER_RADIUS,
-                        half_y: OUTER_RADIUS - INNER_RADIUS,
-                    },
-                })
-                .insert(Attack(E2))
-                .id();
-
-            commands.entity(boss_core).add_child(boss_edge);
-        }
-        level.boss_spawned = true;
+        commands.entity(boss_core).add_child(boss_edge);
     }
+    // level.boss_spawned = true;
+    // }
 }
 
 pub fn advance(
