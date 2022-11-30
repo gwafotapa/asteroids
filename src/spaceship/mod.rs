@@ -193,8 +193,7 @@ pub fn spawn(
     // spaceship.set_indices(Some(Indices::U32(indices)));
 
     commands
-        .spawn_empty()
-        .insert(Spaceship)
+        .spawn(Spaceship)
         .insert(Health(HEALTH))
         .insert(Velocity(Vec3 {
             x: 0.0,

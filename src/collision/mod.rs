@@ -5,7 +5,7 @@ use crate::{
     boss::{BossCore, BossEdge},
     fire::Fire,
     spaceship::Spaceship,
-    Enemy, Health, Velocity,
+    Enemy, Health,
 };
 
 use self::{
@@ -75,8 +75,46 @@ fn collision(
 
             circle1.translation().distance(circle2.translation()) < radius1 + radius2
         }
-        (_, Topology::Triangles(_triangles1), _, _, Topology::Triangles(_triangles2), _) => {
-            unimplemented!()
+        (
+            transform1,
+            Topology::Triangles(_triangles1),
+            hitbox1,
+            transform2,
+            Topology::Triangles(_triangles2),
+            hitbox2,
+        ) => {
+            if !rectangles_intersect(
+                transform1.translation().truncate(),
+                hitbox1,
+                transform2.translation().truncate(),
+                hitbox2,
+            ) {
+                return false;
+            }
+
+            // for &[a1, b1, c1] in triangles1.iter() {
+            //     for &[a2, b2, c2] in triangles2.iter() {
+            //     if point_in_triangle(
+            //         transform1.transform_point(a1).truncate(),
+            //         transform2.transform_point(a2).truncate(),
+            //         transform2.transform_point(b2).truncate(),
+            //         transform2.transform_point(c2).truncate(),
+            //     ) || point_in_triangle(
+            //         transform1.transform_point(b1).truncate(),
+            //         transform2.transform_point(a2).truncate(),
+            //         transform2.transform_point(b2).truncate(),
+            //         transform2.transform_point(c2).truncate(),
+            //     ) || point_in_triangle(
+            //         transform1.transform_point(c1).truncate(),
+            //         transform2.transform_point(a2).truncate(),
+            //         transform2.transform_point(b2).truncate(),
+            //         transform2.transform_point(c2).truncate(),
+            //     ) {
+            //         return true;
+            //     }
+            // }
+            // }
+            unimplemented!();
         }
         (point, Topology::Point, _, circle, Topology::Circle(radius), hitbox)
         | (circle, Topology::Circle(radius), hitbox, point, Topology::Point, _) => {

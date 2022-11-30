@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::MaterialMesh2dBundle};
-use rand::{seq::SliceRandom, Rng};
+use rand::Rng;
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
@@ -10,13 +10,12 @@ use crate::{
     debris::Debris,
     fire::Fire,
     spaceship::{self, Spaceship},
-    Direction,
     Enemy,
     Health,
     Velocity,
     PLANE_Z,
-    WINDOW_HEIGHT,
-    WINDOW_WIDTH,
+    // WINDOW_HEIGHT,
+    // WINDOW_WIDTH,
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
@@ -138,7 +137,7 @@ const IMPACT_VERTICES: usize = 32;
 //     z: BOSS_Z,
 // };
 // const ROTATION_SPEED: f32 = 0.05;
-const ROTATION_SPEED: f32 = 0.0;
+const ROTATION_SPEED: f32 = 0.01;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
