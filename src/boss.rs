@@ -5,7 +5,7 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     // asteroid::Asteroid,
     blast::Blast,
-    collision::{impact::Impact, math, HitBox, Surface, Topology, Triangle},
+    collision::{impact::Impact, math, HitBox, Topology, Triangle},
     // compass::Compass,
     debris::Debris,
     fire::Fire,
@@ -224,12 +224,17 @@ pub fn spawn(
             material: materials.add(COLOR.into()),
             ..default()
         })
-        .insert(Surface {
-            topology: Topology::Triangles(&CORE_TRIANGLES),
-            hitbox: HitBox {
-                half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
-                half_y: 108.3,
-            },
+        // .insert(Surface {
+        //     topology: Topology::Triangles,
+        //     hitbox: HitBox {
+        //         half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
+        //         half_y: 108.3,
+        //     },
+        // })
+        .insert(Topology::Triangles)
+        .insert(HitBox {
+            half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
+            half_y: 108.3,
         })
         .id();
 
@@ -261,13 +266,13 @@ pub fn spawn(
                 material: materials.add(COLOR.into()),
                 ..default()
             })
-            .insert(Surface {
-                topology: Topology::Triangles(&EDGE),
-                hitbox: HitBox {
-                    half_x: OUTER_RADIUS - INNER_RADIUS,
-                    half_y: OUTER_RADIUS - INNER_RADIUS,
-                },
+            // .insert(Surface {
+            .insert(Topology::Triangles)
+            .insert(HitBox {
+                half_x: OUTER_RADIUS - INNER_RADIUS,
+                half_y: OUTER_RADIUS - INNER_RADIUS,
             })
+            // })
             .insert(Attack(E2))
             .id();
 
@@ -366,13 +371,13 @@ pub fn attack(
                             (s_transform.translation - canon_absolute_position).normalize()
                                 * FIRE_VELOCITY,
                         ))
-                        .insert(Surface {
-                            topology: Topology::Point,
-                            hitbox: HitBox {
-                                half_x: 0.0,
-                                half_y: 0.0,
-                            },
+                        // .insert(Surface {
+                        .insert(Topology::Point)
+                        .insert(HitBox {
+                            half_x: 0.0,
+                            half_y: 0.0,
                         })
+                        // })
                         .insert(MaterialMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
@@ -390,114 +395,114 @@ pub fn attack(
     }
 }
 
-pub fn explode(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss_part: Query<
-        (
-            Option<&BossEdge>,
-            Option<&Children>,
-            Entity,
-            &Handle<ColorMaterial>,
-            &GlobalTransform,
-            &Health,
-            &Surface,
-        ),
-        Or<(With<BossCore>, With<BossEdge>)>,
-    >,
-    mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
-    mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
-) {
-    if let Ok((mut core, core_entity, core_velocity)) = query_boss_core.get_single_mut() {
-        for (maybe_edge, maybe_children, entity, color, transform, health, surface) in
-            query_boss_part.iter()
-        {
-            if health.0 > 0 {
-                continue;
-            }
+// pub fn explode(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     query_boss_part: Query<
+//         (
+//             Option<&BossEdge>,
+//             Option<&Children>,
+//             Entity,
+//             &Handle<ColorMaterial>,
+//             &GlobalTransform,
+//             &Health,
+//             &Surface,
+//         ),
+//         Or<(With<BossCore>, With<BossEdge>)>,
+//     >,
+//     mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
+//     mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
+// ) {
+//     if let Ok((mut core, core_entity, core_velocity)) = query_boss_core.get_single_mut() {
+//         for (maybe_edge, maybe_children, entity, color, transform, health, surface) in
+//             query_boss_part.iter()
+//         {
+//             if health.0 > 0 {
+//                 continue;
+//             }
 
-            if maybe_edge.is_some() {
-                core.edges -= 1;
-                commands.entity(core_entity).remove_children(&[entity]);
-            }
+//             if maybe_edge.is_some() {
+//                 core.edges -= 1;
+//                 commands.entity(core_entity).remove_children(&[entity]);
+//             }
 
-            if let Some(children) = maybe_children {
-                for child in children {
-                    commands.entity(*child).remove::<Parent>();
-                    if let Ok(mut child_transform) =
-                        query_blast_impact.get_component_mut::<Transform>(*child)
-                    {
-                        child_transform.translation =
-                            transform.transform_point(child_transform.translation);
-                    }
-                }
-            }
+//             if let Some(children) = maybe_children {
+//                 for child in children {
+//                     commands.entity(*child).remove::<Parent>();
+//                     if let Ok(mut child_transform) =
+//                         query_blast_impact.get_component_mut::<Transform>(*child)
+//                     {
+//                         child_transform.translation =
+//                             transform.transform_point(child_transform.translation);
+//                     }
+//                 }
+//             }
 
-            let color = materials.get(color).unwrap().color;
-            let mut rng = rand::thread_rng();
+//             let color = materials.get(color).unwrap().color;
+//             let mut rng = rand::thread_rng();
 
-            if let Topology::Triangles(triangles) = surface.topology {
-                let mut triangles = triangles.iter();
-                while let Some(&[a, b, c]) = triangles.next() {
-                    for _ in 0..10 {
-                        let mut debris;
-                        'outer: loop {
-                            debris = Vec3 {
-                                x: rng.gen_range(-surface.hitbox.half_x..surface.hitbox.half_x),
-                                y: rng.gen_range(-surface.hitbox.half_y..surface.hitbox.half_y),
-                                z: 0.0,
-                            };
-                            if math::point_in_triangle(
-                                debris.truncate(),
-                                a.truncate(),
-                                b.truncate(),
-                                c.truncate(),
-                            ) {
-                                break 'outer;
-                            }
-                        }
-                        debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+//             if let Topology::Triangles(triangles) = surface.topology {
+//                 let mut triangles = triangles.iter();
+//                 while let Some(&[a, b, c]) = triangles.next() {
+//                     for _ in 0..10 {
+//                         let mut debris;
+//                         'outer: loop {
+//                             debris = Vec3 {
+//                                 x: rng.gen_range(-surface.hitbox.half_x..surface.hitbox.half_x),
+//                                 y: rng.gen_range(-surface.hitbox.half_y..surface.hitbox.half_y),
+//                                 z: 0.0,
+//                             };
+//                             if math::point_in_triangle(
+//                                 debris.truncate(),
+//                                 a.truncate(),
+//                                 b.truncate(),
+//                                 c.truncate(),
+//                             ) {
+//                                 break 'outer;
+//                             }
+//                         }
+//                         debris.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
 
-                        let dv = Vec3 {
-                            x: rng.gen_range(-0.5..0.5),
-                            y: rng.gen_range(-0.5..0.5),
-                            z: 0.0,
-                        };
+//                         let dv = Vec3 {
+//                             x: rng.gen_range(-0.5..0.5),
+//                             y: rng.gen_range(-0.5..0.5),
+//                             z: 0.0,
+//                         };
 
-                        commands
-                            .spawn(Debris)
-                            .insert(Velocity(core_velocity.0 + dv))
-                            // .insert(Velocity(dv))
-                            .insert(ColorMesh2dBundle {
-                                mesh: meshes
-                                    .add(Mesh::from(shape::Circle {
-                                        radius: rng.gen_range(2.0..15.0),
-                                        vertices: 8,
-                                    }))
-                                    .into(),
-                                transform: Transform::from_translation(
-                                    transform.transform_point(debris),
-                                ),
-                                material: materials.add(color.into()),
-                                ..default()
-                            });
-                    }
-                }
-            } else {
-                panic!("Boss topology should be triangles.");
-            }
-        }
-    }
-}
+//                         commands
+//                             .spawn(Debris)
+//                             .insert(Velocity(core_velocity.0 + dv))
+//                             // .insert(Velocity(dv))
+//                             .insert(ColorMesh2dBundle {
+//                                 mesh: meshes
+//                                     .add(Mesh::from(shape::Circle {
+//                                         radius: rng.gen_range(2.0..15.0),
+//                                         vertices: 8,
+//                                     }))
+//                                     .into(),
+//                                 transform: Transform::from_translation(
+//                                     transform.transform_point(debris),
+//                                 ),
+//                                 material: materials.add(color.into()),
+//                                 ..default()
+//                             });
+//                     }
+//                 }
+//             } else {
+//                 panic!("Boss topology should be triangles.");
+//             }
+//         }
+//     }
+// }
 
-pub fn despawn(
-    mut commands: Commands,
-    query: Query<(Entity, &Health), Or<(With<BossCore>, With<BossEdge>)>>,
-) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn despawn(
+//     mut commands: Commands,
+//     query: Query<(Entity, &Health), Or<(With<BossCore>, With<BossEdge>)>>,
+// ) {
+//     for (entity, health) in query.iter() {
+//         if health.0 <= 0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }

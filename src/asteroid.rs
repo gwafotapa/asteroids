@@ -5,7 +5,7 @@ use crate::{
     collision::{
         //impact::Impact,
         HitBox,
-        Surface,
+        // Surface,
         Topology,
     },
     debris::Debris,
@@ -44,13 +44,13 @@ pub fn spawn(
         .spawn(Asteroid { radius })
         .insert(Health(health))
         // .insert(Velocity(velocity))
-        .insert(Surface {
-            topology: Topology::Circle(radius),
-            hitbox: HitBox {
-                half_x: radius,
-                half_y: radius,
-            },
+        // .insert(Surface {
+        .insert(Topology::Circle)
+        .insert(HitBox {
+            half_x: radius,
+            half_y: radius,
         })
+        // })
         .insert(ColorMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {

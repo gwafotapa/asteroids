@@ -7,7 +7,7 @@ use crate::{
         math::point_in_triangle,
         HitBox,
         //Impact,
-        Surface,
+        // Surface,
         Topology,
         Triangle,
     },
@@ -173,12 +173,12 @@ pub fn spawn(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut spaceship = Mesh::new(PrimitiveTopology::TriangleList);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
     let v_pos: Vec<[f32; 3]> = TRIANGLES.iter().flatten().map(|x| x.to_array()).collect();
     // let v_normals = vec![[0.0, 0.0, 1.0]; 12];
     // let v_uvs = vec![[1.0, 1.0]; 12];
-    spaceship.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
     // spaceship.insert_attribute(Mesh::ATTRIBUTE_NORMAL, v_normals);
     // spaceship.insert_attribute(Mesh::ATTRIBUTE_UV_0, v_uvs);
 
@@ -200,10 +200,12 @@ pub fn spawn(
             y: 0.0,
             z: 0.0,
         }))
-        .insert(Surface {
-            topology: Topology::Triangles(&TRIANGLES),
-            hitbox: HITBOX,
-        })
+        // .insert(Surface {
+        //     topology: Topology::Triangles,
+        //     hitbox: HITBOX,
+        // })
+        .insert(HITBOX)
+        .insert(Topology::Triangles)
         // .insert(Attack {
         //     source: ATTACK_SOURCE,
         //     color: ATTACK_COLOR,
@@ -214,7 +216,7 @@ pub fn spawn(
         // })
         .insert(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
-            mesh: meshes.add(spaceship).into(),
+            mesh: meshes.add(mesh).into(),
             transform: Transform::from_translation(POSITION),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             material: materials.add(SPACESHIP_COLOR.into()),
@@ -259,12 +261,17 @@ pub fn attack(
             })
             .insert(Health(1))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
-            .insert(Surface {
-                topology: Topology::Point,
-                hitbox: HitBox {
-                    half_x: 0.0,
-                    half_y: 0.0,
-                },
+            // .insert(Surface {
+            //     topology: Topology::Point,
+            //     hitbox: HitBox {
+            //         half_x: 0.0,
+            //         half_y: 0.0,
+            //     },
+            // })
+            .insert(Topology::Point)
+            .insert(HitBox {
+                half_x: 0.0,
+                half_y: 0.0,
             })
             .insert(ColorMesh2dBundle {
                 mesh: meshes

@@ -12,13 +12,6 @@ pub mod spaceship;
 
 use spaceship::{Spaceship, SPACESHIP_Z};
 
-pub enum Direction {
-    Left,
-    Down,
-    Up,
-    Right,
-}
-
 const PLANE_Z: f32 = 500.0;
 // pub const WINDOW_WIDTH: f32 = 1920.0;
 // pub const WINDOW_HEIGHT: f32 = 1080.0;
