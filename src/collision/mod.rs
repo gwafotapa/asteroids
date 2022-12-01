@@ -399,100 +399,108 @@ pub fn fire_and_asteroid(
     }
 }
 
-// pub fn fire_and_boss(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     mut query_fire: Query<
-//         (
-//             &Handle<ColorMaterial>,
-//             // Entity,
-//             &Fire,
-//             &GlobalTransform,
-//             &mut Health,
-//             &Surface,
-//             // &mut Velocity,
-//         ),
-//         Without<Enemy>,
-//     >,
-//     // mut query_boss_core: Query<
-//     //     (
-//     //         Option<&Children>,
-//     //         &Handle<ColorMaterial>,
-//     //         Entity,
-//     //         &GlobalTransform,
-//     //         &mut Health,
-//     //         &Surface,
-//     //     ),
-//     //     (With<BossCore>, Without<Fire>),
-//     // >,
-//     mut query_boss_part: Query<
-//         (
-//             Option<&BossCore>,
-//             &Handle<ColorMaterial>,
-//             Entity,
-//             &GlobalTransform,
-//             &mut Health,
-//             &Surface,
-//         ),
-//         (Or<(With<BossEdge>, With<BossCore>)>, Without<Fire>),
-//     >,
-// ) {
-//     // let (bc_children, bc_color, bc_entity, bc_transform, mut bc_health, bc_surface) =
-//     //     query_boss_core.single();
-//     // for (f_color, f_entity, fire, f_transform, mut f_health, f_surface, mut f_velocity) in
-//     //     query_fire.iter_mut()
-//     for (bp_core, bp_color, bp_entity, bp_transform, mut bp_health, bp_surface) in
-//         query_boss_part.iter_mut()
-//     {
-//         for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-//             if collision(f_transform, f_surface, bp_transform, bp_surface) {
-//                 f_health.0 -= 1;
-//                 let f_color = materials.get(f_color).unwrap().color;
+pub fn fire_and_boss(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query_fire: Query<
+        (
+            &Handle<ColorMaterial>,
+            // Entity,
+            &Fire,
+            &Transform,
+            &mut Health,
+            // &mut Velocity,
+        ),
+        Without<Enemy>,
+    >,
+    // mut query_boss_core: Query<
+    //     (
+    //         Option<&Children>,
+    //         &Handle<ColorMaterial>,
+    //         Entity,
+    //         &GlobalTransform,
+    //         &mut Health,
+    //         &Surface,
+    //     ),
+    //     (With<BossCore>, Without<Fire>),
+    // >,
+    mut query_boss_part: Query<
+        (
+            Option<&BossCore>,
+            &Handle<ColorMaterial>,
+            Entity,
+            &Mesh2dHandle,
+            &GlobalTransform,
+            &mut Health,
+            &HitBox,
+        ),
+        (Or<(With<BossEdge>, With<BossCore>)>, Without<Fire>),
+    >,
+) {
+    // let (bc_children, bc_color, bc_entity, bc_transform, mut bc_health, bc_surface) =
+    //     query_boss_core.single();
+    // for (f_color, f_entity, fire, f_transform, mut f_health, f_surface, mut f_velocity) in
+    //     query_fire.iter_mut()
+    for (bp_core, bp_color, bp_entity, bp_mesh, bp_transform, mut bp_health, bp_hitbox) in
+        query_boss_part.iter_mut()
+    {
+        if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+            .get(&bp_mesh.0)
+            .unwrap()
+            .attribute(Mesh::ATTRIBUTE_POSITION)
+        {
+            let bp_transform = bp_transform.compute_transform();
+            for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
+                if collision_point_triangles(f_transform, &bp_transform, vertices, *bp_hitbox) {
+                    f_health.0 -= 1;
+                    let f_color = materials.get(f_color).unwrap().color;
 
-//                 if bp_core.is_none() || bp_core.unwrap().edges == 0 {
-//                     bp_health.0 -= 1;
-//                     let bp_color = materials.get_mut(bp_color).unwrap();
-//                     let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
-//                     let [r2, g2, b2, _] = f_color.as_rgba_f32();
-//                     r += (r2 - r) / (1. + bp_health.0 as f32);
-//                     g += (g2 - g) / (1. + bp_health.0 as f32);
-//                     b += (b2 - b) / (1. + bp_health.0 as f32);
-//                     bp_color.color = Color::rgb(r, g, b);
-//                 }
+                    if bp_core.is_none() || bp_core.unwrap().edges == 0 {
+                        bp_health.0 -= 1;
+                        let bp_color = materials.get_mut(bp_color).unwrap();
+                        let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
+                        let [r2, g2, b2, _] = f_color.as_rgba_f32();
+                        r += (r2 - r) / (1. + bp_health.0 as f32);
+                        g += (g2 - g) / (1. + bp_health.0 as f32);
+                        b += (b2 - b) / (1. + bp_health.0 as f32);
+                        bp_color.color = Color::rgb(r, g, b);
+                    }
 
-//                 let impact = commands
-//                     .spawn(Impact)
-//                     .insert(Health(10))
-//                     .insert(ColorMesh2dBundle {
-//                         mesh: meshes
-//                             .add(Mesh::from(shape::Circle {
-//                                 radius: fire.impact_radius,
-//                                 vertices: fire.impact_vertices,
-//                             }))
-//                             .into(),
-//                         transform: Transform::from_translation(
-//                             bp_transform
-//                                 .to_scale_rotation_translation()
-//                                 .1
-//                                 .inverse()
-//                                 .mul_vec3(f_transform.translation() - bp_transform.translation()),
-//                         ),
-//                         material: materials.add(f_color.into()),
-//                         ..default()
-//                     })
-//                     .id();
+                    let impact = commands
+                        .spawn(Impact)
+                        .insert(Health(10))
+                        .insert(ColorMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(
+                                bp_transform
+                                    .rotation
+                                    .inverse()
+                                    .mul_vec3(f_transform.translation - bp_transform.translation),
+                            ),
+                            material: materials.add(f_color.into()),
+                            ..default()
+                        })
+                        .id();
 
-//                 commands.entity(bp_entity).add_child(impact);
-//                 // } else {
-//                 //     f_velocity.0 = -f_velocity.0;
-//                 //     commands.entity(f_entity).insert(Enemy);
-//                 // }
-//                 break;
-//             }
-//         }
-//     }
-// }
+                    commands.entity(bp_entity).add_child(impact);
+                    // } else {
+                    //     f_velocity.0 = -f_velocity.0;
+                    //     commands.entity(f_entity).insert(Enemy);
+                    // }
+                    break;
+                }
+            }
+        } else {
+            panic!("Cannot find the boss's mesh to compute collision");
+        }
+    }
+}
 
 // pub fn fire_and_spaceship(
 //     mut commands: Commands,
