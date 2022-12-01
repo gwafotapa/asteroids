@@ -291,6 +291,39 @@ pub fn collision_point_circle(point: &Transform, circle: &Transform, radius: f32
     point.translation.distance(circle.translation) < radius
 }
 
+pub fn collision_point_triangles(
+    point: &Transform,
+    triangles: &Transform,
+    vertices: &Vec<[f32; 3]>,
+    hitbox: HitBox,
+) -> bool {
+    if !point_in_rectangle(
+        point.translation.truncate(),
+        triangles.translation.truncate(),
+        hitbox.half_x,
+        hitbox.half_y,
+    ) {
+        return false;
+    }
+
+    for triangle in vertices.chunks(3) {
+        if point_in_triangle(
+            triangles
+                .rotation
+                .inverse()
+                .mul_vec3(point.translation - triangles.translation)
+                .truncate(),
+            Vec3::from(triangle[0]).truncate(),
+            Vec3::from(triangle[1]).truncate(),
+            Vec3::from(triangle[2]).truncate(),
+        ) {
+            return true;
+        }
+    }
+
+    false
+}
+
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
     mut query_spaceship: Query<(&Transform, &mut Health, &HitBox, &Mesh2dHandle), With<Spaceship>>,
