@@ -15,12 +15,12 @@ pub mod math;
 
 pub type Triangle = [Vec3; 3];
 
-#[derive(Clone, Component, Copy)]
-pub enum Topology {
-    Point,
-    Circle,
-    Triangles,
-}
+// #[derive(Clone, Component, Copy)]
+// pub enum Topology {
+//     Point,
+//     Circle,
+//     Triangles,
+// }
 
 // #[derive(Component, Clone)]
 // pub struct Surface {

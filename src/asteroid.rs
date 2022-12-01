@@ -2,19 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{
-    collision::{
-        //impact::Impact,
-        HitBox,
-        // Surface,
-        Topology,
-    },
-    debris::Debris,
-    Health,
-    //Level,
-    Velocity,
-    PLANE_Z,
-    WINDOW_HEIGHT,
-    WINDOW_WIDTH,
+    collision::HitBox, debris::Debris, Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 // const SPEED_MAX: usize = 5;
@@ -44,13 +32,11 @@ pub fn spawn(
         .spawn(Asteroid { radius })
         .insert(Health(health))
         // .insert(Velocity(velocity))
-        // .insert(Surface {
-        .insert(Topology::Circle)
+        // .insert(Topology::Circle)
         .insert(HitBox {
             half_x: radius,
             half_y: radius,
         })
-        // })
         .insert(ColorMesh2dBundle {
             mesh: meshes
                 .add(Mesh::from(shape::Circle {

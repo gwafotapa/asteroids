@@ -30,6 +30,8 @@ fn main() {
         .add_system(bevy::window::close_on_esc)
         .add_system(map::update)
         .add_system(spaceship::flame::update)
+        .add_system(collision::impact::update) // Stage of this and despawn ?
+        .add_system(debris::update)
         .add_system_set(
             SystemSet::new()
                 .label("movement")
@@ -50,11 +52,10 @@ fn main() {
                 // .with_system(collision::fire_and_spaceship),
                 .with_system(collision::spaceship_and_boss),
             // .with_system(collision::asteroid_and_asteroid),
+            // .with_system(collision::boss_and_asteroid),
         )
-        .add_system(spaceship::attack.after("movement"))
-        .add_system(collision::impact::update) // Stage of this and despawn ?
-        .add_system(debris::update)
-        // .add_system(boss::attack.after(boss::advance))
+        .add_system(spaceship::attack.after(spaceship::advance))
+        .add_system(boss::attack.after(boss::advance))
         .add_system_to_stage(CLEANUP, spaceship::explode)
         .add_system_to_stage(CLEANUP, asteroid::explode) // this and despawn maybe not at this stage as long as there are no impact child.
         .add_system_to_stage(CLEANUP, boss::explode)

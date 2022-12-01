@@ -9,7 +9,7 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     // asteroid::Asteroid,
     blast::Blast,
-    collision::{impact::Impact, math, HitBox, Topology},
+    collision::{impact::Impact, math, HitBox},
     // compass::Compass,
     debris::Debris,
     fire::Fire,
@@ -228,14 +228,7 @@ pub fn spawn(
             material: materials.add(COLOR.into()),
             ..default()
         })
-        // .insert(Surface {
-        //     topology: Topology::Triangles,
-        //     hitbox: HitBox {
-        //         half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
-        //         half_y: 108.3,
-        //     },
-        // })
-        .insert(Topology::Triangles)
+        // .insert(Topology::Triangles)
         .insert(HitBox {
             half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
             half_y: 108.3,
@@ -270,13 +263,11 @@ pub fn spawn(
                 material: materials.add(COLOR.into()),
                 ..default()
             })
-            // .insert(Surface {
-            .insert(Topology::Triangles)
+            // .insert(Topology::Triangles)
             .insert(HitBox {
                 half_x: OUTER_RADIUS - INNER_RADIUS,
                 half_y: OUTER_RADIUS - INNER_RADIUS,
             })
-            // })
             .insert(Attack(E2))
             .id();
 
@@ -329,24 +320,21 @@ pub fn attack(
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
-                if rng.gen_range(0..100000) == 0 {
-                    let canon_absolute_position =
+                if rng.gen_range(0..100) == 0 {
+                    let attack_absolute_translation =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
                     // Compute coordinates of vector from boss to spaceship
-                    let vec_boss_spaceship = s_transform.translation - b_transform.translation;
-                    // Compute coordinates of vector from boss to canon
-                    let vec_boss_center_canon = canon_absolute_position - b_transform.translation;
-                    let scalar_product = vec_boss_spaceship.x * vec_boss_center_canon.x
-                        + vec_boss_spaceship.y * vec_boss_center_canon.y;
-                    // Scalar product sign determines whether or not canon has line of sight
-                    if scalar_product < 0.0 {
+                    let bs = s_transform.translation - b_transform.translation;
+                    // Compute coordinates of vector from boss to attack source
+                    let bc = attack_absolute_translation - b_transform.translation;
+                    // Scalar product sign determines whether or not attack has line of sight
+                    if bs.truncate().dot(bc.truncate()) < 0.0 {
                         continue;
                     }
 
                     let blast = commands
-                        .spawn_empty()
-                        .insert(Blast)
+                        .spawn(Blast)
                         .insert(Health(2))
                         .insert(ColorMesh2dBundle {
                             mesh: meshes
@@ -364,24 +352,21 @@ pub fn attack(
                     commands.entity(bp_entity).add_child(blast);
 
                     commands
-                        .spawn_empty()
-                        .insert(Fire {
+                        .spawn(Fire {
                             impact_radius: IMPACT_RADIUS,
                             impact_vertices: IMPACT_VERTICES,
                         })
                         .insert(Health(1))
                         .insert(Enemy)
                         .insert(Velocity(
-                            (s_transform.translation - canon_absolute_position).normalize()
+                            (s_transform.translation - attack_absolute_translation).normalize()
                                 * FIRE_VELOCITY,
                         ))
-                        // .insert(Surface {
-                        .insert(Topology::Point)
+                        // .insert(Topology::Point)
                         .insert(HitBox {
                             half_x: 0.0,
                             half_y: 0.0,
                         })
-                        // })
                         .insert(ColorMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
@@ -389,7 +374,7 @@ pub fn attack(
                                     vertices: FIRE_VERTICES,
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(canon_absolute_position),
+                            transform: Transform::from_translation(attack_absolute_translation),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
                         });

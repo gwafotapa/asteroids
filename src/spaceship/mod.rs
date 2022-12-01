@@ -7,8 +7,7 @@ use crate::{
         math::point_in_triangle,
         HitBox,
         //Impact,
-        // Surface,
-        Topology,
+        // Topology,
         Triangle,
     },
     debris::Debris,
@@ -200,12 +199,8 @@ pub fn spawn(
             y: 0.0,
             z: 0.0,
         }))
-        // .insert(Surface {
-        //     topology: Topology::Triangles,
-        //     hitbox: HITBOX,
-        // })
         .insert(HITBOX)
-        .insert(Topology::Triangles)
+        // .insert(Topology::Triangles)
         // .insert(Attack {
         //     source: ATTACK_SOURCE,
         //     color: ATTACK_COLOR,
@@ -261,18 +256,11 @@ pub fn attack(
             })
             .insert(Health(1))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
-            // .insert(Surface {
-            //     topology: Topology::Point,
-            //     hitbox: HitBox {
-            //         half_x: 0.0,
-            //         half_y: 0.0,
-            //     },
+            // .insert(Topology::Point)
+            // .insert(HitBox {
+            //     half_x: 0.0,
+            //     half_y: 0.0,
             // })
-            .insert(Topology::Point)
-            .insert(HitBox {
-                half_x: 0.0,
-                half_y: 0.0,
-            })
             .insert(ColorMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {
