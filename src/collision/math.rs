@@ -87,3 +87,85 @@ pub fn circle_intersects_triangle(o: Vec2, r: f32, a: Vec2, b: Vec2, c: Vec2) ->
 //         half_y: (y2 - y1) / 2.0,
 //     }
 // }
+
+pub fn collision_circle_triangles(
+    circle_transform: &Transform,
+    radius: f32,
+    circle_hitbox: HitBox,
+    triangles_transform: &Transform,
+    vertices: &Vec<[f32; 3]>,
+    triangles_hitbox: HitBox,
+) -> bool {
+    if !rectangles_intersect(
+        circle_transform.translation.truncate(),
+        circle_hitbox,
+        triangles_transform.translation.truncate(),
+        triangles_hitbox,
+    ) {
+        return false;
+    }
+
+    for triangle in vertices.chunks(3) {
+        if circle_intersects_triangle(
+            triangles_transform
+                .rotation
+                .inverse()
+                .mul_vec3(circle_transform.translation - triangles_transform.translation)
+                .truncate(),
+            radius,
+            Vec3::from(triangle[0]).truncate(),
+            Vec3::from(triangle[1]).truncate(),
+            Vec3::from(triangle[2]).truncate(),
+        ) {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub fn collision_point_circle(point: &Transform, circle: &Transform, radius: f32) -> bool {
+    if !point_in_rectangle(
+        point.translation.truncate(),
+        circle.translation.truncate(),
+        radius,
+        radius,
+    ) {
+        return false;
+    }
+
+    point.translation.distance(circle.translation) < radius
+}
+
+pub fn collision_point_triangles(
+    point: &Transform,
+    triangles: &Transform,
+    vertices: &Vec<[f32; 3]>,
+    hitbox: HitBox,
+) -> bool {
+    if !point_in_rectangle(
+        point.translation.truncate(),
+        triangles.translation.truncate(),
+        hitbox.half_x,
+        hitbox.half_y,
+    ) {
+        return false;
+    }
+
+    for triangle in vertices.chunks(3) {
+        if point_in_triangle(
+            triangles
+                .rotation
+                .inverse()
+                .mul_vec3(point.translation - triangles.translation)
+                .truncate(),
+            Vec3::from(triangle[0]).truncate(),
+            Vec3::from(triangle[1]).truncate(),
+            Vec3::from(triangle[2]).truncate(),
+        ) {
+            return true;
+        }
+    }
+
+    false
+}

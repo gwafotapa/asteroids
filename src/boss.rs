@@ -9,7 +9,7 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     // asteroid::Asteroid,
     blast::Blast,
-    collision::{impact::Impact, math, HitBox, Topology, Triangle},
+    collision::{impact::Impact, math, HitBox, Topology},
     // compass::Compass,
     debris::Debris,
     fire::Fire,
@@ -175,7 +175,7 @@ const E3: Vec3 = Vec3 {
     y: 0.0,
     z: 0.0,
 };
-const EDGE: [Triangle; 1] = [[E1, E2, E3]];
+// const EDGE: [Triangle; 1] = [[E1, E2, E3]];
 
 // pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
 //     let mut triangles = Vec::new();

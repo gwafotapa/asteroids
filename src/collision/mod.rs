@@ -8,12 +8,7 @@ use crate::{
     Enemy, Health,
 };
 
-use self::{
-    impact::Impact,
-    math::{
-        circle_intersects_triangle, point_in_rectangle, point_in_triangle, rectangles_intersect,
-    },
-};
+use impact::Impact;
 
 pub mod impact;
 pub mod math;
@@ -242,88 +237,6 @@ pub struct HitBox {
 //     }
 // }
 
-pub fn collision_circle_triangles(
-    circle_transform: &Transform,
-    radius: f32,
-    circle_hitbox: HitBox,
-    triangles_transform: &Transform,
-    vertices: &Vec<[f32; 3]>,
-    triangles_hitbox: HitBox,
-) -> bool {
-    if !rectangles_intersect(
-        circle_transform.translation.truncate(),
-        circle_hitbox,
-        triangles_transform.translation.truncate(),
-        triangles_hitbox,
-    ) {
-        return false;
-    }
-
-    for triangle in vertices.chunks(3) {
-        if circle_intersects_triangle(
-            triangles_transform
-                .rotation
-                .inverse()
-                .mul_vec3(circle_transform.translation - triangles_transform.translation)
-                .truncate(),
-            radius,
-            Vec3::from(triangle[0]).truncate(),
-            Vec3::from(triangle[1]).truncate(),
-            Vec3::from(triangle[2]).truncate(),
-        ) {
-            return true;
-        }
-    }
-
-    false
-}
-
-pub fn collision_point_circle(point: &Transform, circle: &Transform, radius: f32) -> bool {
-    if !point_in_rectangle(
-        point.translation.truncate(),
-        circle.translation.truncate(),
-        radius,
-        radius,
-    ) {
-        return false;
-    }
-
-    point.translation.distance(circle.translation) < radius
-}
-
-pub fn collision_point_triangles(
-    point: &Transform,
-    triangles: &Transform,
-    vertices: &Vec<[f32; 3]>,
-    hitbox: HitBox,
-) -> bool {
-    if !point_in_rectangle(
-        point.translation.truncate(),
-        triangles.translation.truncate(),
-        hitbox.half_x,
-        hitbox.half_y,
-    ) {
-        return false;
-    }
-
-    for triangle in vertices.chunks(3) {
-        if point_in_triangle(
-            triangles
-                .rotation
-                .inverse()
-                .mul_vec3(point.translation - triangles.translation)
-                .truncate(),
-            Vec3::from(triangle[0]).truncate(),
-            Vec3::from(triangle[1]).truncate(),
-            Vec3::from(triangle[2]).truncate(),
-        ) {
-            return true;
-        }
-    }
-
-    false
-}
-
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
     mut query_spaceship: Query<(&Transform, &mut Health, &HitBox, &Mesh2dHandle), With<Spaceship>>,
@@ -336,7 +249,7 @@ pub fn spaceship_and_asteroid(
             .attribute(Mesh::ATTRIBUTE_POSITION)
         {
             for (asteroid, a_transform, a_hitbox) in query_asteroid.iter() {
-                if collision_circle_triangles(
+                if math::collision_circle_triangles(
                     &a_transform.compute_transform(),
                     asteroid.radius,
                     *a_hitbox,
@@ -363,7 +276,7 @@ pub fn fire_and_asteroid(
 ) {
     for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
         for (asteroid, _a_entity, a_transform, mut a_health) in query_asteroid.iter_mut() {
-            if collision_point_circle(
+            if math::collision_point_circle(
                 f_transform,
                 &a_transform.compute_transform(),
                 asteroid.radius,
@@ -452,7 +365,8 @@ pub fn fire_and_boss(
         {
             let bp_transform = bp_transform.compute_transform();
             for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
-                if collision_point_triangles(f_transform, &bp_transform, vertices, *bp_hitbox) {
+                if math::collision_point_triangles(f_transform, &bp_transform, vertices, *bp_hitbox)
+                {
                     f_health.0 -= 1;
                     let f_color = materials.get(f_color).unwrap().color;
 
