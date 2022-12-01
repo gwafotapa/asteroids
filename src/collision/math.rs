@@ -169,3 +169,37 @@ pub fn collision_point_triangles(
 
     false
 }
+
+pub fn collision_triangles_triangles(
+    triangles1: &Transform,
+    vertices1: &Vec<[f32; 3]>,
+    hitbox1: HitBox,
+    triangles2: &Transform,
+    vertices2: &Vec<[f32; 3]>,
+    hitbox2: HitBox,
+) -> bool {
+    if !rectangles_intersect(
+        triangles1.translation.truncate(),
+        hitbox1,
+        triangles2.translation.truncate(),
+        hitbox2,
+    ) {
+        return false;
+    }
+
+    false
+}
+
+// Determines if line segments [p, p+r] and [q, q+s] intersect
+// without checking for the degenerate overlapping case (and returning false in that case)
+// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> bool {
+    let rs = r.perp_dot(s);
+    if rs == 0.0 {
+        return false;
+    }
+    let t = (q - p).perp_dot(s);
+    let u = (q - p).perp_dot(r);
+
+    t >= 0.0 && u >= 0.0 && t <= rs && u <= rs
+}
