@@ -170,24 +170,86 @@ pub fn collision_point_triangles(
     false
 }
 
+// Determines if any of the transformed triangles given by vertices1 and transform1 intersects
+// any of the transformed triangles given by vertices2 and transform2.
+// hitbox1 is an aabb centered at transform1.translation and containing all the transformed
+// triangles given by vertices1 and transform1.
+// Same for hitbox2 with respect to transform2 and vertices2.
 pub fn collision_triangles_triangles(
-    triangles1: &Transform,
+    transform1: &Transform,
     vertices1: &Vec<[f32; 3]>,
     hitbox1: HitBox,
-    triangles2: &Transform,
+    transform2: &Transform,
     vertices2: &Vec<[f32; 3]>,
     hitbox2: HitBox,
 ) -> bool {
     if !rectangles_intersect(
-        triangles1.translation.truncate(),
+        transform1.translation.truncate(),
         hitbox1,
-        triangles2.translation.truncate(),
+        transform2.translation.truncate(),
         hitbox2,
     ) {
         return false;
     }
 
+    let mut iter1 = vertices1.chunks(3);
+    while let Some(&[a1, b1, c1]) = iter1.next() {
+        // Apply transform1 to triangle1
+        let [a1, b1, c1] = [
+            transform1.transform_point(Vec3::from(a1)),
+            transform1.transform_point(Vec3::from(b1)),
+            transform1.transform_point(Vec3::from(c1)),
+        ];
+
+        // Apply transform2 inverse to triangle1.
+        // We could apply transform2 to triangle2 instead but either
+        // we would have to recompute it in each iteration of the nested for loop
+        // or we would have to allocate to save the results
+        let [a1, b1, c1] = [
+            transform2
+                .rotation
+                .inverse()
+                .mul_vec3(a1 - transform2.translation),
+            transform2
+                .rotation
+                .inverse()
+                .mul_vec3(b1 - transform2.translation),
+            transform2
+                .rotation
+                .inverse()
+                .mul_vec3(c1 - transform2.translation),
+        ];
+        let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
+
+        let mut iter2 = vertices2.chunks(3);
+        while let Some(&[a2, b2, c2]) = iter2.next() {
+            let [a2, b2, c2] = [
+                Vec3::from(a2).truncate(),
+                Vec3::from(b2).truncate(),
+                Vec3::from(c2).truncate(),
+            ];
+            if triangles_intersect(&[a1, b1, c1], &[a2, b2, c2]) {
+                return true;
+            }
+        }
+    }
+
     false
+}
+
+pub fn triangles_intersect(triangle1: &[Vec2; 3], triangle2: &[Vec2; 3]) -> bool {
+    let [a1, b1, c1] = *triangle1;
+    let [a2, b2, c2] = *triangle2;
+
+    // We only need to test 8 line segments intersections.
+    line_segments_intersect(a1, b1 - a1, a2, b2 - a2)
+        || line_segments_intersect(a1, b1 - a1, b2, c2 - b2)
+        || line_segments_intersect(a1, b1 - a1, c2, a2 - c2)
+        || line_segments_intersect(b1, c1 - b1, a2, b2 - a2)
+        || line_segments_intersect(b1, c1 - b1, b2, c2 - b2)
+        || line_segments_intersect(b1, c1 - b1, c2, a2 - c2)
+        || line_segments_intersect(c1, a1 - c1, a2, b2 - a2)
+        || line_segments_intersect(c1, a1 - c1, b2, c2 - b2)
 }
 
 // Determines if line segments [p, p+r] and [q, q+s] intersect

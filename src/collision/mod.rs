@@ -488,3 +488,40 @@ pub fn fire_and_boss(
 //         }
 //     }
 // }
+
+pub fn spaceship_and_boss(
+    meshes: Res<Assets<Mesh>>,
+    mut query_spaceship: Query<(&mut Health, &HitBox, &Mesh2dHandle, &Transform), With<Spaceship>>,
+    query_boss: Query<
+        (&GlobalTransform, &HitBox, &Mesh2dHandle),
+        Or<(With<BossCore>, With<BossEdge>)>,
+    >,
+) {
+    if let Ok((mut s_health, s_hitbox, s_mesh, s_transform)) = query_spaceship.get_single_mut() {
+        if let Some(VertexAttributeValues::Float32x3(s_vertices)) = meshes
+            .get(&s_mesh.0)
+            .unwrap()
+            .attribute(Mesh::ATTRIBUTE_POSITION)
+        {
+            for (b_transform, b_hitbox, b_mesh) in query_boss.iter() {
+                if let Some(VertexAttributeValues::Float32x3(b_vertices)) = meshes
+                    .get(&b_mesh.0)
+                    .unwrap()
+                    .attribute(Mesh::ATTRIBUTE_POSITION)
+                {
+                    if math::collision_triangles_triangles(
+                        s_transform,
+                        s_vertices,
+                        *s_hitbox,
+                        &b_transform.compute_transform(),
+                        b_vertices,
+                        *b_hitbox,
+                    ) {
+                        s_health.0 = 0;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
