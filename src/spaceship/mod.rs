@@ -379,3 +379,59 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spac
         }
     }
 }
+
+pub fn advance(
+    // commands: Commands,
+    // meshes: ResMut<Assets<Mesh>>,
+    // materials: ResMut<Assets<ColorMaterial>>,
+    keys: Res<Input<KeyCode>>,
+    mut query_spaceship: Query<(Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
+) {
+    // if keys.just_pressed(KeyCode::Space) {
+    //     // Space was pressed
+    // }
+
+    // if keys.just_released(KeyCode::LControl) {
+    //     // Left Ctrl was released
+    // }
+
+    if let Ok((_s_id, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
+        if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
+            let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
+            s_transform.rotation *= rotation;
+            // c_transform.rotation *= rotation;
+        } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
+            let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
+            s_transform.rotation *= rotation;
+            // c_transform.rotation *= rotation;
+        }
+
+        if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
+            // accelerate(&*s_transform, &mut s_velocity);
+
+            let direction = s_transform.rotation * Vec3::X;
+            s_velocity.0 += ACCELERATION * direction;
+            // if s_velocity.0.length() > SPEED_MAX {
+            //     s_velocity.0 = SPEED_MAX * s_velocity.0.normalize();
+            // }
+        } else if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
+            // decelerate(&*s_transform, &mut s_velocity);
+            let direction = s_transform.rotation * Vec3::NEG_X;
+            s_velocity.0 += 0.5 * ACCELERATION * direction;
+            // if s_velocity.0.length() > 0.5 * SPEED_MAX {
+            //     s_velocity.0 = 0.5 * SPEED_MAX * s_velocity.0.normalize();
+            // }
+        }
+        // } else {
+        //     decelerate();
+        // }
+        // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
+        //     // Either delete or backspace was just pressed
+        // }
+
+        s_velocity.0 *= 1.0 - DRAG;
+        debug!("Spaceship velocity: {}", s_velocity.0);
+
+        s_transform.translation += s_velocity.0;
+    }
+}

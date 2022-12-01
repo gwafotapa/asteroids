@@ -21,7 +21,7 @@ fn main() {
         .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
         // .add_stage_after(CLEANUP, DESPAWN, SystemStage::single_threaded())
         .add_stage_after(CLEANUP, DESPAWN, SystemStage::parallel())
-        .add_startup_system(camera)
+        .add_startup_system(camera::spawn)
         .add_startup_system(spaceship::spawn)
         .add_startup_system(boss::spawn)
         .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::spawn)
@@ -30,15 +30,16 @@ fn main() {
         .add_system(bevy::window::close_on_esc)
         .add_system(map::update)
         .add_system(spaceship::flame::update)
-        .add_system(compass::update.after(keyboard_input))
         .add_system_set(
             SystemSet::new()
                 .label("movement")
                 // .with_system(asteroid::asteroids)
                 .with_system(boss::advance)
                 .with_system(fire::update)
-                .with_system(keyboard_input),
+                .with_system(spaceship::advance),
         )
+        .add_system(camera::update.after(spaceship::advance))
+        .add_system(compass::update.after(camera::update))
         .add_system_set(
             SystemSet::new()
                 .label("collision")
