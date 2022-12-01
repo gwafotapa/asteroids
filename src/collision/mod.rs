@@ -278,6 +278,19 @@ pub fn collision_circle_triangles(
     false
 }
 
+pub fn collision_point_circle(point: &Transform, circle: &Transform, radius: f32) -> bool {
+    if !point_in_rectangle(
+        point.translation.truncate(),
+        circle.translation.truncate(),
+        radius,
+        radius,
+    ) {
+        return false;
+    }
+
+    point.translation.distance(circle.translation) < radius
+}
+
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
     mut query_spaceship: Query<(&Transform, &mut Health, &HitBox, &Mesh2dHandle), With<Spaceship>>,
@@ -308,55 +321,50 @@ pub fn spaceship_and_asteroid(
     }
 }
 
-// pub fn fire_and_asteroid(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     mut query_fire: Query<
-//         (
-//             &Handle<ColorMaterial>,
-//             &Fire,
-//             &GlobalTransform,
-//             &mut Health,
-//             &Surface,
-//         ),
-//         Without<Asteroid>,
-//     >,
-//     mut query_asteroid: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Asteroid>>,
-// ) {
-//     for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-//         for (_a_entity, a_transform, mut a_health, a_surface) in query_asteroid.iter_mut() {
-//             if collision(f_transform, f_surface, a_transform, a_surface) {
-//                 a_health.0 -= 1;
-//                 f_health.0 -= 1;
-//                 let color = materials.get(f_color).unwrap().color;
+pub fn fire_and_asteroid(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query_fire: Query<(&Handle<ColorMaterial>, &Fire, &Transform, &mut Health)>,
+    mut query_asteroid: Query<(&Asteroid, Entity, &GlobalTransform, &mut Health), Without<Fire>>,
+) {
+    for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
+        for (asteroid, _a_entity, a_transform, mut a_health) in query_asteroid.iter_mut() {
+            if collision_point_circle(
+                f_transform,
+                &a_transform.compute_transform(),
+                asteroid.radius,
+            ) {
+                a_health.0 -= 1;
+                f_health.0 -= 1;
+                let color = materials.get(f_color).unwrap().color;
 
-//                 let _impact = commands
-//                     .spawn(Impact)
-//                     .insert(Health(10))
-//                     .insert(ColorMesh2dBundle {
-//                         mesh: meshes
-//                             .add(Mesh::from(shape::Circle {
-//                                 radius: fire.impact_radius,
-//                                 vertices: fire.impact_vertices,
-//                             }))
-//                             .into(),
-//                         transform: Transform::from_translation(
-//                             // f_transform.translation() - a_transform.translation(),
-//                             f_transform.translation(),
-//                         ),
-//                         material: materials.add(color.into()),
-//                         ..default()
-//                     })
-//                     .id();
+                let _impact = commands
+                    .spawn(Impact)
+                    .insert(Health(10))
+                    .insert(ColorMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: fire.impact_radius,
+                                vertices: fire.impact_vertices,
+                            }))
+                            .into(),
+                        transform: Transform::from_translation(
+                            // f_transform.translation() - a_transform.translation(),
+                            f_transform.translation,
+                        ),
+                        material: materials.add(color.into()),
+                        ..default()
+                    })
+                    .id();
 
-//                 // commands.entity(a_entity).add_child(impact);
+                // commands.entity(a_entity).add_child(impact);
 
-//                 break;
-//             }
-//         }
-//     }
-// }
+                break;
+            }
+        }
+    }
+}
 
 // pub fn fire_and_boss(
 //     mut commands: Commands,
