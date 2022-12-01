@@ -123,8 +123,9 @@ const BLAST_RADIUS: f32 = 8.0;
 const BLAST_VERTICES: usize = 8;
 const FIRE_RADIUS: f32 = 3.0;
 const FIRE_VERTICES: usize = 4;
-const IMPACT_RADIUS: f32 = 12.0;
-const IMPACT_VERTICES: usize = 16;
+const FIRE_HEALTH: i32 = 20;
+const FIRE_IMPACT_RADIUS: f32 = 12.0;
+const FIRE_IMPACT_VERTICES: usize = 16;
 const FIRE_VELOCITY: Vec3 = Vec3 {
     x: 20.0,
     y: 0.0,
@@ -251,10 +252,11 @@ pub fn attack(
 
         commands
             .spawn(Fire {
-                impact_radius: IMPACT_RADIUS,
-                impact_vertices: IMPACT_VERTICES,
+                scale_down: 1.0 / FIRE_HEALTH as f32,
+                impact_radius: FIRE_IMPACT_RADIUS,
+                impact_vertices: FIRE_IMPACT_VERTICES,
             })
-            .insert(Health(1))
+            .insert(Health(FIRE_HEALTH))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
             // .insert(Topology::Point)
             // .insert(HitBox {

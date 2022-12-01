@@ -132,8 +132,9 @@ const EDGE_HEALTH: i32 = 10;
 const FIRE_VELOCITY: f32 = 8.0;
 const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
-const IMPACT_RADIUS: f32 = 15.0;
-const IMPACT_VERTICES: usize = 32;
+const FIRE_HEALTH: i32 = 100;
+const FIRE_IMPACT_RADIUS: f32 = 15.0;
+const FIRE_IMPACT_VERTICES: usize = 32;
 // const INITIAL_POSITION: Vec3 = Vec3 {
 //     // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
 //     x: WINDOW_WIDTH / 2.0,
@@ -353,10 +354,11 @@ pub fn attack(
 
                     commands
                         .spawn(Fire {
-                            impact_radius: IMPACT_RADIUS,
-                            impact_vertices: IMPACT_VERTICES,
+                            scale_down: 1.0 / FIRE_HEALTH as f32,
+                            impact_radius: FIRE_IMPACT_RADIUS,
+                            impact_vertices: FIRE_IMPACT_VERTICES,
                         })
-                        .insert(Health(1))
+                        .insert(Health(FIRE_HEALTH))
                         .insert(Enemy)
                         .insert(Velocity(
                             (s_transform.translation - attack_absolute_translation).normalize()

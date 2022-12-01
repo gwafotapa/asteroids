@@ -282,7 +282,7 @@ pub fn fire_and_asteroid(
                 asteroid.radius,
             ) {
                 a_health.0 -= 1;
-                f_health.0 -= 1;
+                f_health.0 = 0;
                 let color = materials.get(f_color).unwrap().color;
 
                 let _impact = commands
@@ -367,7 +367,7 @@ pub fn fire_and_boss(
             for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
                 if math::collision_point_triangles(f_transform, &bp_transform, vertices, *bp_hitbox)
                 {
-                    f_health.0 -= 1;
+                    f_health.0 = 0;
                     let f_color = materials.get(f_color).unwrap().color;
 
                     if bp_core.is_none() || bp_core.unwrap().edges == 0 {
@@ -435,7 +435,7 @@ pub fn fire_and_boss(
 //     if let Ok((s_entity, s_transform, mut s_health, s_surface)) = query_spaceship.get_single_mut() {
 //         for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
 //             if collision(f_transform, f_surface, s_transform, s_surface) {
-//                 f_health.0 -= 1;
+//                 f_health.0 = 0;
 //                 s_health.0 -= 1;
 //                 let f_color = materials.get(f_color).unwrap().color;
 
