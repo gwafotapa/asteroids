@@ -1,13 +1,14 @@
-use bevy::{prelude::*, render::mesh::PrimitiveTopology};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 use rand::Rng;
 
 use crate::{
     blast::Blast,
     collision::{
         math::point_in_triangle,
-        HitBox,
         //Impact,
-        // Topology,
+        Collider,
+        HitBox,
+        Topology,
         Triangle,
     },
     debris::Debris,
@@ -192,6 +193,8 @@ pub fn spawn(
     // let indices = vec![0, 1, 2, 3, 4, 5];
     // spaceship.set_indices(Some(Indices::U32(indices)));
 
+    let mesh_handle = meshes.add(mesh);
+
     commands
         .spawn(Spaceship)
         .insert(Health(HEALTH))
@@ -200,8 +203,13 @@ pub fn spawn(
             y: 0.0,
             z: 0.0,
         }))
-        .insert(HITBOX)
-        // .insert(Topology::Triangles)
+        // .insert(HITBOX)
+        .insert(Collider {
+            hitbox: HITBOX,
+            topology: Topology::Triangles {
+                mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
+            },
+        })
         // .insert(Attack {
         //     source: ATTACK_SOURCE,
         //     color: ATTACK_COLOR,
@@ -212,7 +220,7 @@ pub fn spawn(
         // })
         .insert(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
-            mesh: meshes.add(mesh).into(),
+            mesh: mesh_handle.into(),
             transform: Transform::from_translation(POSITION),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             material: materials.add(SPACESHIP_COLOR.into()),
@@ -258,11 +266,13 @@ pub fn attack(
             })
             .insert(Health(FIRE_HEALTH))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
-            // .insert(Topology::Point)
-            // .insert(HitBox {
-            //     half_x: 0.0,
-            //     half_y: 0.0,
-            // })
+            .insert(Collider {
+                hitbox: HitBox {
+                    half_x: 0.0,
+                    half_y: 0.0,
+                },
+                topology: Topology::Point,
+            })
             .insert(ColorMesh2dBundle {
                 mesh: meshes
                     .add(Mesh::from(shape::Circle {

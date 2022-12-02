@@ -9,7 +9,7 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     // asteroid::Asteroid,
     blast::Blast,
-    collision::{impact::Impact, math, HitBox},
+    collision::{impact::Impact, math, Collider, HitBox, Topology},
     // compass::Compass,
     debris::Debris,
     fire::Fire,
@@ -218,21 +218,26 @@ pub fn spawn(
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
     // mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
     // mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
+    let mesh_handle = meshes.add(mesh);
 
     let boss_core = commands
         .spawn(BossCore { edges: EDGES })
         .insert(Health(CORE_HEALTH))
         .insert(Velocity(Vec3::ZERO))
+        .insert(Collider {
+            hitbox: HitBox {
+                half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
+                half_y: 108.3,
+            },
+            topology: Topology::Triangles {
+                mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
+            },
+        })
         .insert(ColorMesh2dBundle {
-            mesh: meshes.add(mesh).into(),
+            mesh: mesh_handle.into(),
             transform: Transform::from_translation(translation),
             material: materials.add(COLOR.into()),
             ..default()
-        })
-        // .insert(Topology::Triangles)
-        .insert(HitBox {
-            half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
-            half_y: 108.3,
         })
         .id();
 
@@ -246,12 +251,22 @@ pub fn spawn(
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices_position);
         // mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vertices_normal);
         // mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
+        let mesh_handle = meshes.add(mesh);
 
         let boss_edge = commands
             .spawn(BossEdge)
             .insert(Health(EDGE_HEALTH))
+            .insert(Collider {
+                hitbox: HitBox {
+                    half_x: OUTER_RADIUS - INNER_RADIUS,
+                    half_y: OUTER_RADIUS - INNER_RADIUS,
+                },
+                topology: Topology::Triangles {
+                    mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
+                },
+            })
             .insert(ColorMesh2dBundle {
-                mesh: meshes.add(mesh).into(),
+                mesh: mesh_handle.into(),
                 transform: Transform::from_xyz(
                     INNER_RADIUS * (i as f32 * PI / 4.0).cos(),
                     INNER_RADIUS * (i as f32 * PI / 4.0).sin(),
@@ -263,11 +278,6 @@ pub fn spawn(
                 )),
                 material: materials.add(COLOR.into()),
                 ..default()
-            })
-            // .insert(Topology::Triangles)
-            .insert(HitBox {
-                half_x: OUTER_RADIUS - INNER_RADIUS,
-                half_y: OUTER_RADIUS - INNER_RADIUS,
             })
             .insert(Attack(E2))
             .id();
@@ -365,9 +375,12 @@ pub fn attack(
                                 * FIRE_VELOCITY,
                         ))
                         // .insert(Topology::Point)
-                        .insert(HitBox {
-                            half_x: 0.0,
-                            half_y: 0.0,
+                        .insert(Collider {
+                            hitbox: HitBox {
+                                half_x: 0.0,
+                                half_y: 0.0,
+                            },
+                            topology: Topology::Point,
                         })
                         .insert(ColorMesh2dBundle {
                             mesh: meshes
@@ -392,13 +405,13 @@ pub fn explode(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss_part: Query<
         (
+            &Collider,
             Option<&BossEdge>,
             Option<&Children>,
             Entity,
             &Handle<ColorMaterial>,
             &GlobalTransform,
             &Health,
-            &HitBox,
             &Mesh2dHandle,
         ),
         Or<(With<BossCore>, With<BossEdge>)>,
@@ -407,7 +420,7 @@ pub fn explode(
     mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
 ) {
     if let Ok((mut core, core_entity, core_velocity)) = query_boss_core.get_single_mut() {
-        for (maybe_edge, maybe_children, entity, color, transform, health, hitbox, mesh) in
+        for (collider, maybe_edge, maybe_children, entity, color, transform, health, mesh) in
             query_boss_part.iter()
         {
             if health.0 > 0 {
@@ -445,8 +458,8 @@ pub fn explode(
                         let mut debris_translation;
                         'outer: loop {
                             debris_translation = Vec3 {
-                                x: rng.gen_range(-hitbox.half_x..hitbox.half_x),
-                                y: rng.gen_range(-hitbox.half_y..hitbox.half_y),
+                                x: rng.gen_range(-collider.hitbox.half_x..collider.hitbox.half_x),
+                                y: rng.gen_range(-collider.hitbox.half_y..collider.hitbox.half_y),
                                 z: 0.0,
                             };
                             if math::point_in_triangle(
