@@ -525,3 +525,18 @@ pub fn spaceship_and_boss(
         }
     }
 }
+
+#[cfg(fire)]
+pub fn fire_and_fire(
+    mut query_ally: Query<(&mut Health, &Transform), (With<Fire>, Without<Enemy>)>,
+    mut query_enemy: Query<(&mut Health, &Transform), (With<Fire>, With<Enemy>)>,
+) {
+    for (mut a_health, a_transform) in query_ally.iter_mut() {
+        for (mut e_health, e_transform) in query_enemy.iter_mut() {
+            if (a_transform.translation - e_transform.translation).length() < 5.0 {
+                a_health.0 = 0;
+                e_health.0 = 0;
+            }
+        }
+    }
+}

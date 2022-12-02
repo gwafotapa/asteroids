@@ -36,3 +36,31 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Fire
         }
     }
 }
+
+#[cfg(fire)]
+pub fn explode(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<(&Handle<ColorMaterial>, &Fire, &Health, &Transform)>,
+) {
+    for (color, fire, health, transform) in query.iter() {
+        if health.0 <= 0 {
+            let color = materials.get(color).unwrap().color;
+            commands
+                .spawn(Impact)
+                .insert(Health(10))
+                .insert(ColorMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: fire.impact_radius,
+                            vertices: fire.impact_vertices,
+                        }))
+                        .into(),
+                    transform: *transform,
+                    material: materials.add(color.into()),
+                    ..default()
+                });
+        }
+    }
+}

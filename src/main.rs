@@ -53,6 +53,7 @@ fn main() {
                 .with_system(collision::spaceship_and_boss),
             // .with_system(collision::asteroid_and_asteroid),
             // .with_system(collision::boss_and_asteroid),
+            // .with_system(collision::fire_and_fire),
         )
         .add_system(spaceship::attack.after(spaceship::advance))
         .add_system(boss::attack.after(boss::advance))
@@ -60,6 +61,7 @@ fn main() {
         .add_system_to_stage(CLEANUP, asteroid::explode) // this and despawn maybe not at this stage as long as there are no impact child.
         .add_system_to_stage(CLEANUP, boss::explode)
         .add_system_to_stage(CLEANUP, blast::update)
+        // .add_system_to_stage(CLEANUP, fire::explode)
         .add_system_to_stage(DESPAWN, asteroid::despawn)
         .add_system_to_stage(DESPAWN, boss::despawn)
         .add_system_to_stage(DESPAWN, spaceship::despawn)
