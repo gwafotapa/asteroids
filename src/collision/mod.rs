@@ -358,13 +358,13 @@ pub fn fire_and_boss(
     for (bp_core, bp_color, bp_entity, bp_mesh, bp_transform, mut bp_health, bp_hitbox) in
         query_boss_part.iter_mut()
     {
-        if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-            .get(&bp_mesh.0)
-            .unwrap()
-            .attribute(Mesh::ATTRIBUTE_POSITION)
-        {
-            let bp_transform = bp_transform.compute_transform();
-            for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
+        let bp_transform = bp_transform.compute_transform();
+        for (f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
+            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+                .get(&bp_mesh.0)
+                .unwrap()
+                .attribute(Mesh::ATTRIBUTE_POSITION)
+            {
                 if math::collision_point_triangles(f_transform, &bp_transform, vertices, *bp_hitbox)
                 {
                     f_health.0 = 0;
@@ -397,6 +397,7 @@ pub fn fire_and_boss(
                                     .inverse()
                                     .mul_vec3(f_transform.translation - bp_transform.translation),
                             ),
+                            // transform: *f_transform,
                             material: materials.add(f_color.into()),
                             ..default()
                         })
@@ -407,63 +408,66 @@ pub fn fire_and_boss(
                     //     f_velocity.0 = -f_velocity.0;
                     //     commands.entity(f_entity).insert(Enemy);
                     // }
-                    break;
                 }
+            } else {
+                panic!("Cannot find the boss's mesh to compute collision");
             }
-        } else {
-            panic!("Cannot find the boss's mesh to compute collision");
         }
     }
 }
 
-// pub fn fire_and_spaceship(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     mut query_fire: Query<
-//         (
-//             &Handle<ColorMaterial>,
-//             &Fire,
-//             &GlobalTransform,
-//             &mut Health,
-//             &Surface,
-//         ),
-//         (With<Enemy>, Without<Spaceship>),
-//     >,
-//     mut query_spaceship: Query<(Entity, &GlobalTransform, &mut Health, &Surface), With<Spaceship>>,
-// ) {
-//     if let Ok((s_entity, s_transform, mut s_health, s_surface)) = query_spaceship.get_single_mut() {
-//         for (f_color, fire, f_transform, mut f_health, f_surface) in query_fire.iter_mut() {
-//             if collision(f_transform, f_surface, s_transform, s_surface) {
-//                 f_health.0 = 0;
-//                 s_health.0 -= 1;
-//                 let f_color = materials.get(f_color).unwrap().color;
+pub fn fire_and_spaceship(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query_fire: Query<(&Handle<ColorMaterial>, &Fire, &mut Health, &Transform), With<Enemy>>,
+    mut query_spaceship: Query<
+        (Entity, &mut Health, &HitBox, &Mesh2dHandle, &Transform),
+        (With<Spaceship>, Without<Fire>),
+    >,
+) {
+    if let Ok((s_entity, mut s_health, s_hitbox, s_mesh, s_transform)) =
+        query_spaceship.get_single_mut()
+    {
+        for (f_color, fire, mut f_health, f_transform) in query_fire.iter_mut() {
+            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+                .get(&s_mesh.0)
+                .unwrap()
+                .attribute(Mesh::ATTRIBUTE_POSITION)
+            {
+                if math::collision_point_triangles(f_transform, s_transform, vertices, *s_hitbox) {
+                    f_health.0 = 0;
+                    s_health.0 -= 1;
+                    let f_color = materials.get(f_color).unwrap().color;
 
-//                 let impact = commands
-//                     .spawn_empty()
-//                     .insert(Impact)
-//                     .insert(Health(10))
-//                     .insert(ColorMesh2dBundle {
-//                         mesh: meshes
-//                             .add(Mesh::from(shape::Circle {
-//                                 radius: fire.impact_radius,
-//                                 vertices: fire.impact_vertices,
-//                             }))
-//                             .into(),
-//                         transform: Transform::from_translation(
-//                             f_transform.translation() - s_transform.translation(),
-//                         ),
-//                         // transform: Transform::from_translation(f_transform.translation()),
-//                         material: materials.add(f_color.into()),
-//                         ..default()
-//                     })
-//                     .id();
+                    let impact = commands
+                        .spawn(Impact)
+                        .insert(Health(10))
+                        .insert(ColorMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: fire.impact_radius,
+                                    vertices: fire.impact_vertices,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(
+                                s_transform
+                                    .rotation
+                                    .inverse()
+                                    .mul_vec3(f_transform.translation - s_transform.translation),
+                            ),
+                            // transform: Transform::from_translation(f_transform.translation()),
+                            material: materials.add(f_color.into()),
+                            ..default()
+                        })
+                        .id();
 
-//                 commands.entity(s_entity).add_child(impact);
-//             }
-//         }
-//     }
-// }
+                    commands.entity(s_entity).add_child(impact);
+                }
+            }
+        }
+    }
+}
 
 // pub fn asteroid_and_asteroid(
 //     mut query: Query<(&Asteroid, &GlobalTransform, &mut Health, &Surface)>,
