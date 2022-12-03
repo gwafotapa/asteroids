@@ -105,7 +105,7 @@ pub fn collision_circle_triangles(
         return false;
     }
 
-    for triangle in vertices.chunks(3) {
+    for triangle in vertices.chunks_exact(3) {
         if circle_intersects_triangle(
             triangles_transform
                 .rotation
@@ -152,7 +152,7 @@ pub fn collision_point_triangles(
         return false;
     }
 
-    for triangle in vertices.chunks(3) {
+    for triangle in vertices.chunks_exact(3) {
         if point_in_triangle(
             triangles
                 .rotation
@@ -192,7 +192,7 @@ pub fn collision_triangles_triangles(
         return false;
     }
 
-    let mut iter1 = vertices1.chunks(3);
+    let mut iter1 = vertices1.chunks_exact(3);
     while let Some(&[a1, b1, c1]) = iter1.next() {
         // Apply transform1 to triangle1
         let [a1, b1, c1] = [
@@ -221,7 +221,7 @@ pub fn collision_triangles_triangles(
         ];
         let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
 
-        let mut iter2 = vertices2.chunks(3);
+        let mut iter2 = vertices2.chunks_exact(3);
         while let Some(&[a2, b2, c2]) = iter2.next() {
             let [a2, b2, c2] = [
                 Vec3::from(a2).truncate(),
