@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
+use bevy::prelude::*;
 
 use crate::{
     asteroid::Asteroid,
@@ -9,175 +9,17 @@ use crate::{
 };
 
 use impact::Impact;
+pub use math::{Collider, HitBox, Topology};
 
 pub mod impact;
 pub mod math;
 
 pub type Triangle = [Vec3; 3];
 
-#[derive(Clone, Component)]
-pub struct Collider {
-    pub hitbox: HitBox,
-    pub topology: Topology,
-}
-
-#[derive(Clone, Copy)]
-pub struct HitBox {
-    pub half_x: f32,
-    pub half_y: f32,
-}
-
-#[derive(Clone)]
-pub enum Topology {
-    Point,
-    Circle { radius: f32 },
-    Triangles { mesh_handle: Mesh2dHandle },
-}
-
-pub fn collision(
-    t1: &Transform,
-    t2: &Transform,
-    c1: &Collider,
-    c2: &Collider,
-    meshes: Option<&Assets<Mesh>>,
-) -> bool {
-    if !math::rectangles_intersect(
-        t1.translation.truncate(),
-        c1.hitbox,
-        t2.translation.truncate(),
-        c2.hitbox,
-    ) {
-        return false;
-    }
-
-    match (t1, t2, &c1.topology, &c2.topology) {
-        (_, _, Topology::Point, Topology::Point) => true,
-        (_, _, Topology::Point, Topology::Circle { radius })
-        | (_, _, Topology::Circle { radius }, Topology::Point) => {
-            t1.translation.distance(t2.translation) < *radius
-        }
-        (point, triangles, Topology::Point, Topology::Triangles { mesh_handle })
-        | (triangles, point, Topology::Triangles { mesh_handle }, Topology::Point) => {
-            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-                .unwrap()
-                .get(&mesh_handle.0)
-                .unwrap()
-                .attribute(Mesh::ATTRIBUTE_POSITION)
-            {
-                for triangle in vertices.chunks_exact(3) {
-                    if math::point_in_triangle(
-                        triangles
-                            .rotation
-                            .inverse()
-                            .mul_vec3(point.translation - triangles.translation)
-                            .truncate(),
-                        Vec3::from(triangle[0]).truncate(),
-                        Vec3::from(triangle[1]).truncate(),
-                        Vec3::from(triangle[2]).truncate(),
-                    ) {
-                        return true;
-                    }
-                }
-            }
-
-            false
-        }
-        (_, _, Topology::Circle { radius: radius1 }, Topology::Circle { radius: radius2 }) => {
-            t1.translation.distance(t2.translation) < radius1 + radius2
-        }
-        (circle, triangles, Topology::Circle { radius }, Topology::Triangles { mesh_handle })
-        | (triangles, circle, Topology::Triangles { mesh_handle }, Topology::Circle { radius }) => {
-            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-                .unwrap()
-                .get(&mesh_handle.0)
-                .unwrap()
-                .attribute(Mesh::ATTRIBUTE_POSITION)
-            {
-                for triangle in vertices.chunks_exact(3) {
-                    if math::circle_intersects_triangle(
-                        triangles
-                            .rotation
-                            .inverse()
-                            .mul_vec3(circle.translation - triangles.translation)
-                            .truncate(),
-                        *radius,
-                        Vec3::from(triangle[0]).truncate(),
-                        Vec3::from(triangle[1]).truncate(),
-                        Vec3::from(triangle[2]).truncate(),
-                    ) {
-                        return true;
-                    }
-                }
-            }
-
-            false
-        }
-        (
-            _,
-            _,
-            Topology::Triangles {
-                mesh_handle: mesh_handle1,
-            },
-            Topology::Triangles {
-                mesh_handle: mesh_handle2,
-            },
-        ) => {
-            if let Some(VertexAttributeValues::Float32x3(vertices1)) = meshes
-                .unwrap()
-                .get(&mesh_handle1.0)
-                .unwrap()
-                .attribute(Mesh::ATTRIBUTE_POSITION)
-            {
-                if let Some(VertexAttributeValues::Float32x3(vertices2)) = meshes
-                    .unwrap()
-                    .get(&mesh_handle2.0)
-                    .unwrap()
-                    .attribute(Mesh::ATTRIBUTE_POSITION)
-                {
-                    let mut iter1 = vertices1.chunks_exact(3);
-                    while let Some(&[a1, b1, c1]) = iter1.next() {
-                        // Apply t1 to triangle1
-                        let [a1, b1, c1] = [
-                            t1.transform_point(Vec3::from(a1)),
-                            t1.transform_point(Vec3::from(b1)),
-                            t1.transform_point(Vec3::from(c1)),
-                        ];
-
-                        // Apply t2 inverse to triangle1.
-                        // We could apply t2 to triangle2 instead but either
-                        // we would have to recompute it in each iteration of the nested for loop
-                        // or we would have to allocate to save the results
-                        let [a1, b1, c1] = [
-                            t2.rotation.inverse().mul_vec3(a1 - t2.translation),
-                            t2.rotation.inverse().mul_vec3(b1 - t2.translation),
-                            t2.rotation.inverse().mul_vec3(c1 - t2.translation),
-                        ];
-                        let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
-
-                        let mut iter2 = vertices2.chunks_exact(3);
-                        while let Some(&[a2, b2, c2]) = iter2.next() {
-                            let [a2, b2, c2] = [
-                                Vec3::from(a2).truncate(),
-                                Vec3::from(b2).truncate(),
-                                Vec3::from(c2).truncate(),
-                            ];
-                            if math::triangles_intersect(&[a1, b1, c1], &[a2, b2, c2]) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            false
-        }
-    }
-}
-
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
     mut query_spaceship: Query<(&Collider, &mut Health, &Transform), With<Spaceship>>,
-    query_asteroid: Query<(&Asteroid, &Collider, &GlobalTransform)>,
+    query_asteroid: Query<(&Collider, &GlobalTransform), With<Asteroid>>,
 ) {
     // if let Ok((
     //     Collider {
@@ -197,7 +39,7 @@ pub fn spaceship_and_asteroid(
         //     .unwrap()
         //     .attribute(Mesh::ATTRIBUTE_POSITION)
         // {
-        for (asteroid, a_collider, a_transform) in query_asteroid.iter() {
+        for (a_collider, a_transform) in query_asteroid.iter() {
             // if math::collision_circle_triangles(
             //     &a_transform.compute_transform(),
             //     asteroid.radius,
@@ -206,7 +48,7 @@ pub fn spaceship_and_asteroid(
             //     s_vertices,
             //     *s_hitbox,
             // ) {
-            if collision(
+            if math::collision(
                 &a_transform.compute_transform(),
                 s_transform,
                 a_collider,
@@ -245,7 +87,7 @@ pub fn fire_and_asteroid(
             //     f_transform,
             //     &a_transform.compute_transform(),
             //     asteroid.radius,
-            if collision(
+            if math::collision(
                 f_transform,
                 &a_transform.compute_transform(),
                 f_collider,
@@ -311,14 +153,13 @@ pub fn fire_and_boss(
             &Collider,
             &Handle<ColorMaterial>,
             Entity,
-            &Mesh2dHandle,
             &GlobalTransform,
             &mut Health,
         ),
         (Or<(With<BossEdge>, With<BossCore>)>, Without<Fire>),
     >,
 ) {
-    for (bp_core, bp_collider, bp_color, bp_entity, bp_mesh, bp_transform, mut bp_health) in
+    for (bp_core, bp_collider, bp_color, bp_entity, bp_transform, mut bp_health) in
         query_boss_part.iter_mut()
     {
         let bp_transform = bp_transform.compute_transform();
@@ -333,7 +174,7 @@ pub fn fire_and_boss(
             //     &bp_transform,
             //     vertices,
             //     bp_collider.hitbox,
-            if collision(
+            if math::collision(
                 f_transform,
                 &bp_transform,
                 f_collider,
@@ -404,12 +245,11 @@ pub fn fire_and_spaceship(
         With<Enemy>,
     >,
     mut query_spaceship: Query<
-        (&Collider, Entity, &mut Health, &Mesh2dHandle, &Transform),
+        (&Collider, Entity, &mut Health, &Transform),
         (With<Spaceship>, Without<Fire>),
     >,
 ) {
-    if let Ok((s_collider, s_entity, mut s_health, s_mesh, s_transform)) =
-        query_spaceship.get_single_mut()
+    if let Ok((s_collider, s_entity, mut s_health, s_transform)) = query_spaceship.get_single_mut()
     {
         for (f_collider, f_color, fire, mut f_health, f_transform) in query_fire.iter_mut() {
             // if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
@@ -422,7 +262,7 @@ pub fn fire_and_spaceship(
             //     s_transform,
             //     vertices,
             //     s_collider.hitbox,
-            if collision(
+            if math::collision(
                 f_transform,
                 s_transform,
                 f_collider,
@@ -464,22 +304,16 @@ pub fn fire_and_spaceship(
 
 pub fn spaceship_and_boss(
     meshes: Res<Assets<Mesh>>,
-    mut query_spaceship: Query<
-        (&Collider, &mut Health, &Mesh2dHandle, &Transform),
-        With<Spaceship>,
-    >,
-    query_boss: Query<
-        (&Collider, &GlobalTransform, &Mesh2dHandle),
-        Or<(With<BossCore>, With<BossEdge>)>,
-    >,
+    mut query_spaceship: Query<(&Collider, &mut Health, &Transform), With<Spaceship>>,
+    query_boss: Query<(&Collider, &GlobalTransform), Or<(With<BossCore>, With<BossEdge>)>>,
 ) {
-    if let Ok((s_collider, mut s_health, s_mesh, s_transform)) = query_spaceship.get_single_mut() {
+    if let Ok((s_collider, mut s_health, s_transform)) = query_spaceship.get_single_mut() {
         // if let Some(VertexAttributeValues::Float32x3(s_vertices)) = meshes
         //     .get(&s_mesh.0)
         //     .unwrap()
         //     .attribute(Mesh::ATTRIBUTE_POSITION)
         // {
-        for (b_collider, b_transform, b_mesh) in query_boss.iter() {
+        for (b_collider, b_transform) in query_boss.iter() {
             //         if let Some(VertexAttributeValues::Float32x3(b_vertices)) = meshes
             //             .get(&b_mesh.0)
             //             .unwrap()
@@ -492,7 +326,7 @@ pub fn spaceship_and_boss(
             //     &b_transform.compute_transform(),
             //     b_vertices,
             //     b_collider.hitbox,
-            if collision(
+            if math::collision(
                 s_transform,
                 &b_transform.compute_transform(),
                 s_collider,

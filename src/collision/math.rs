@@ -1,6 +1,23 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
 
-use crate::collision::HitBox;
+#[derive(Clone, Component)]
+pub struct Collider {
+    pub hitbox: HitBox,
+    pub topology: Topology,
+}
+
+#[derive(Clone, Copy)]
+pub struct HitBox {
+    pub half_x: f32,
+    pub half_y: f32,
+}
+
+#[derive(Clone)]
+pub enum Topology {
+    Point,
+    Circle { radius: f32 },
+    Triangles { mesh_handle: Mesh2dHandle },
+}
 
 // Determines if point p is in the rectangle of center c, half width x and half height y
 pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
@@ -175,7 +192,7 @@ pub fn collision_point_triangles(
 // hitbox1 is an aabb centered at transform1.translation and containing all the transformed
 // triangles given by vertices1 and transform1.
 // Same for hitbox2 with respect to transform2 and vertices2.
-pub fn collision_triangles_triangles(
+fn collision_triangles_triangles(
     transform1: &Transform,
     vertices1: &Vec<[f32; 3]>,
     hitbox1: HitBox,
@@ -264,4 +281,178 @@ pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> bool {
     let u = (q - p).perp_dot(r);
 
     t >= 0.0 && u >= 0.0 && t <= rs && u <= rs
+}
+
+fn point_in_transformed_triangles(
+    point: &Transform,
+    triangles_transform: &Transform,
+    vertices: &Vec<[f32; 3]>,
+) -> bool {
+    for triangle in vertices.chunks_exact(3) {
+        if point_in_triangle(
+            triangles_transform
+                .rotation
+                .inverse()
+                .mul_vec3(point.translation - triangles_transform.translation)
+                .truncate(),
+            Vec3::from(triangle[0]).truncate(),
+            Vec3::from(triangle[1]).truncate(),
+            Vec3::from(triangle[2]).truncate(),
+        ) {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn transformed_triangles_intersect(
+    t1: &Transform,
+    t2: &Transform,
+    vertices1: &Vec<[f32; 3]>,
+    vertices2: &Vec<[f32; 3]>,
+) -> bool {
+    let mut iter1 = vertices1.chunks_exact(3);
+    while let Some(&[a1, b1, c1]) = iter1.next() {
+        // Apply t1 to triangle1
+        let [a1, b1, c1] = [
+            t1.transform_point(Vec3::from(a1)),
+            t1.transform_point(Vec3::from(b1)),
+            t1.transform_point(Vec3::from(c1)),
+        ];
+
+        // Apply t2 inverse to triangle1.
+        // We could apply t2 to triangle2 instead but either
+        // we would have to recompute it in each iteration of the nested for loop
+        // or we would have to allocate to save the results
+        let [a1, b1, c1] = [
+            t2.rotation.inverse().mul_vec3(a1 - t2.translation),
+            t2.rotation.inverse().mul_vec3(b1 - t2.translation),
+            t2.rotation.inverse().mul_vec3(c1 - t2.translation),
+        ];
+        let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
+
+        let mut iter2 = vertices2.chunks_exact(3);
+        while let Some(&[a2, b2, c2]) = iter2.next() {
+            let [a2, b2, c2] = [
+                Vec3::from(a2).truncate(),
+                Vec3::from(b2).truncate(),
+                Vec3::from(c2).truncate(),
+            ];
+            if triangles_intersect(&[a1, b1, c1], &[a2, b2, c2]) {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn circle_intersects_transformed_triangles(
+    circle: &Transform,
+    radius: f32,
+    triangles_transform: &Transform,
+    vertices: &Vec<[f32; 3]>,
+) -> bool {
+    for triangle in vertices.chunks_exact(3) {
+        if circle_intersects_triangle(
+            triangles_transform
+                .rotation
+                .inverse()
+                .mul_vec3(circle.translation - triangles_transform.translation)
+                .truncate(),
+            radius,
+            Vec3::from(triangle[0]).truncate(),
+            Vec3::from(triangle[1]).truncate(),
+            Vec3::from(triangle[2]).truncate(),
+        ) {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub fn collision(
+    t1: &Transform,
+    t2: &Transform,
+    c1: &Collider,
+    c2: &Collider,
+    meshes: Option<&Assets<Mesh>>,
+) -> bool {
+    if !rectangles_intersect(
+        t1.translation.truncate(),
+        c1.hitbox,
+        t2.translation.truncate(),
+        c2.hitbox,
+    ) {
+        return false;
+    }
+
+    match (t1, t2, &c1.topology, &c2.topology) {
+        (_, _, Topology::Point, Topology::Point) => true,
+        (_, _, Topology::Point, Topology::Circle { radius })
+        | (_, _, Topology::Circle { radius }, Topology::Point) => {
+            t1.translation.distance(t2.translation) < *radius
+        }
+        (point, triangles, Topology::Point, Topology::Triangles { mesh_handle })
+        | (triangles, point, Topology::Triangles { mesh_handle }, Topology::Point) => {
+            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+                .unwrap()
+                .get(&mesh_handle.0)
+                .unwrap()
+                .attribute(Mesh::ATTRIBUTE_POSITION)
+            {
+                point_in_transformed_triangles(point, triangles, vertices)
+            } else {
+                panic!("Cannot access triangle's mesh");
+            }
+        }
+        (_, _, Topology::Circle { radius: radius1 }, Topology::Circle { radius: radius2 }) => {
+            t1.translation.distance(t2.translation) < radius1 + radius2
+        }
+        (circle, triangles, Topology::Circle { radius }, Topology::Triangles { mesh_handle })
+        | (triangles, circle, Topology::Triangles { mesh_handle }, Topology::Circle { radius }) => {
+            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+                .unwrap()
+                .get(&mesh_handle.0)
+                .unwrap()
+                .attribute(Mesh::ATTRIBUTE_POSITION)
+            {
+                circle_intersects_transformed_triangles(circle, *radius, triangles, vertices)
+            } else {
+                panic!("Cannot access triangle's mesh");
+            }
+        }
+        (
+            _,
+            _,
+            Topology::Triangles {
+                mesh_handle: mesh_handle1,
+            },
+            Topology::Triangles {
+                mesh_handle: mesh_handle2,
+            },
+        ) => {
+            if let Some(VertexAttributeValues::Float32x3(vertices1)) = meshes
+                .unwrap()
+                .get(&mesh_handle1.0)
+                .unwrap()
+                .attribute(Mesh::ATTRIBUTE_POSITION)
+            {
+                if let Some(VertexAttributeValues::Float32x3(vertices2)) = meshes
+                    .unwrap()
+                    .get(&mesh_handle2.0)
+                    .unwrap()
+                    .attribute(Mesh::ATTRIBUTE_POSITION)
+                {
+                    transformed_triangles_intersect(t1, t2, vertices1, vertices2)
+                } else {
+                    panic!("Cannot access triangle's mesh");
+                }
+            } else {
+                panic!("Cannot access triangle's mesh");
+            }
+        }
+    }
 }
