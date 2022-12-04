@@ -9,7 +9,11 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     // asteroid::Asteroid,
     blast::Blast,
-    collision::{impact::Impact, math, Collider, HitBox, Topology},
+    collision::{
+        impact::Impact,
+        math::{self},
+        Collider, HitBox, Topology,
+    },
     // compass::Compass,
     debris::Debris,
     fire::Fire,
@@ -453,7 +457,9 @@ pub fn explode(
                 .unwrap()
                 .attribute(Mesh::ATTRIBUTE_POSITION)
             {
-                for triangle in vertices.chunks(3) {
+                let mut iter = vertices.chunks_exact(3);
+                // for triangle in vertices.chunks(3) {
+                while let Some(&[a, b, c]) = iter.next() {
                     for _ in 0..10 {
                         let mut debris_translation;
                         'outer: loop {
@@ -464,9 +470,10 @@ pub fn explode(
                             };
                             if math::point_in_triangle(
                                 debris_translation.truncate(),
-                                Vec3::from(triangle[0]).truncate(),
-                                Vec3::from(triangle[1]).truncate(),
-                                Vec3::from(triangle[2]).truncate(),
+                                // Vec3::from(triangle[0]).truncate(),
+                                // Vec3::from(triangle[1]).truncate(),
+                                // Vec3::from(triangle[2]).truncate(),
+                                [a, b, c],
                             ) {
                                 break 'outer;
                             }

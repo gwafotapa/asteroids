@@ -14,8 +14,6 @@ pub use math::{Collider, HitBox, Topology};
 pub mod impact;
 pub mod math;
 
-pub type Triangle = [Vec3; 3];
-
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
     mut query_spaceship: Query<(&Collider, &mut Health, &Transform), With<Spaceship>>,

@@ -1,4 +1,149 @@
+// Triangle devrait etre constitue de Vec3 etant donne que ce code est base sur bevy
+// Les modifications doivent etre apportees aux fonctions en consequences :
+// Attention aux calculs de normes, produits scalaires et vectoriels
+// Ou alors Triangle est constitue de Vec2 et implemente le trait From<Vec3> ?
+// Dans le premier cas, faut-il suffixer les fonctions "_2d" ? ou le fichier math2d.rs ?
+
 use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
+
+#[derive(Clone, Copy)]
+pub struct Triangle(pub Vec3, pub Vec3, pub Vec3);
+
+impl Triangle {
+    pub fn to_array(&self) -> [Vec3; 3] {
+        [self.0, self.1, self.2]
+    }
+    //     // fn new(a: Vec3, b: Vec3, c: Vec3) -> Triangle {
+    //     //     Triangle(a, b, c)
+    //     // }
+
+    fn xy(&self) -> TriangleXY {
+        TriangleXY(self.0.truncate(), self.1.truncate(), self.2.truncate())
+    }
+}
+
+// impl From<[Vec3; 3]> for Triangle {
+//     fn from(array: [Vec3; 3]) -> Triangle {
+//         Triangle(array[0], array[1], array[2])
+//     }
+// }
+
+// impl From<&[Vec3; 3]> for Triangle {
+//     fn from(array: &[Vec3; 3]) -> Triangle {
+//         Triangle(array[0], array[1], array[2])
+//     }
+// }
+
+// impl From<[[f32; 3]; 3]> for Triangle {
+//     fn from(array: [[f32; 3]; 3]) -> Triangle {
+//         Triangle(
+//             Vec3::from(array[0]),
+//             Vec3::from(array[1]),
+//             Vec3::from(array[2]),
+//         )
+//     }
+// }
+
+// impl From<&[[f32; 3]; 3]> for Triangle {
+//     fn from(array: &[[f32; 3]; 3]) -> Triangle {
+//         Triangle(
+//             Vec3::from(array[0]),
+//             Vec3::from(array[1]),
+//             Vec3::from(array[2]),
+//         )
+//     }
+// }
+
+#[derive(Clone, Copy)]
+pub struct TriangleXY(Vec2, Vec2, Vec2);
+
+impl TriangleXY {
+    fn to_array(&self) -> [Vec2; 3] {
+        [self.0, self.1, self.2]
+    }
+}
+
+impl From<[Vec2; 3]> for TriangleXY {
+    fn from(array: [Vec2; 3]) -> TriangleXY {
+        TriangleXY(array[0], array[1], array[2])
+    }
+}
+
+impl From<[[f32; 2]; 3]> for TriangleXY {
+    fn from(array: [[f32; 2]; 3]) -> TriangleXY {
+        TriangleXY(
+            Vec2::from(array[0]),
+            Vec2::from(array[1]),
+            Vec2::from(array[2]),
+        )
+    }
+}
+
+impl From<[Vec3; 3]> for TriangleXY {
+    fn from(array: [Vec3; 3]) -> TriangleXY {
+        TriangleXY(
+            array[0].truncate(),
+            array[1].truncate(),
+            array[2].truncate(),
+        )
+    }
+}
+
+impl From<[[f32; 3]; 3]> for TriangleXY {
+    fn from(array: [[f32; 3]; 3]) -> TriangleXY {
+        TriangleXY(
+            Vec3::from(array[0]).truncate(),
+            Vec3::from(array[1]).truncate(),
+            Vec3::from(array[2]).truncate(),
+        )
+    }
+}
+
+impl From<Triangle> for TriangleXY {
+    fn from(triangle: Triangle) -> TriangleXY {
+        triangle.xy()
+    }
+}
+
+// trait Triangle2D {
+//     fn a(&self) -> Vec2;
+//     fn b(&self) -> Vec2;
+//     fn c(&self) -> Vec2;
+//     fn abc(&self) -> [Vec2; 3] {
+//         [self.a(), self.b(), self.c()]
+//     }
+//     fn triangle2D(&self) -> TriangleXY {
+//         TriangleXY::from(self.abc())
+//     }
+// }
+
+// impl Triangle2D for TriangleXY {
+//     fn a(&self) -> Vec2 {
+//         self.0
+//     }
+
+//     fn b(&self) -> Vec2 {
+//         self.1
+//     }
+
+//     fn c(&self) -> Vec2 {
+//         self.2
+//     }
+// }
+
+// impl Triangle2D for Triangle {
+//     fn a(&self) -> Vec2 {
+//         self.0.truncate()
+//     }
+
+//     fn b(&self) -> Vec2 {
+//         self.1.truncate()
+//     }
+
+//     fn c(&self) -> Vec2 {
+//         self.2.truncate()
+//     }
+// }
 
 #[derive(Clone, Component)]
 pub struct Collider {
@@ -24,11 +169,11 @@ pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
     p.x >= c.x - x && p.x <= c.x + x && p.y >= c.y - y && p.y <= c.y + y
 }
 
-// Determines if point p is in the triangle (p1 p2 p3)
-pub fn point_in_triangle(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2) -> bool {
-    let denominator = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
-    let a = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / denominator;
-    let b = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / denominator;
+pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+    let t = t.into();
+    let denominator = (t.1.y - t.2.y) * (t.0.x - t.2.x) + (t.2.x - t.1.x) * (t.0.y - t.2.y);
+    let a = ((t.1.y - t.2.y) * (p.x - t.2.x) + (t.2.x - t.1.x) * (p.y - t.2.y)) / denominator;
+    let b = ((t.2.y - t.0.y) * (p.x - t.2.x) + (t.0.x - t.2.x) * (p.y - t.2.y)) / denominator;
     let c = 1.0 - a - b;
 
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
@@ -83,180 +228,168 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
 }
 
 // Determines if the disk of center o and radius r intersects the triangle abc
-pub fn circle_intersects_triangle(o: Vec2, r: f32, a: Vec2, b: Vec2, c: Vec2) -> bool {
+pub fn circle_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> bool {
+    let triangle = t.into();
+    let [a, b, c] = triangle.to_array();
     a.distance(o) < r
         || circle_intersects_line_segment(o, r, a, b)
         || circle_intersects_line_segment(o, r, b, c)
         || circle_intersects_line_segment(o, r, c, a)
-        || point_in_triangle(o, a, b, c)
+        || point_in_triangle(o, triangle)
 }
 
-// pub fn triangle_hitbox(a: Vec2, b: Vec2, c: Vec2) -> HitBox {
-//     let x1 = a.x.min(b.x).min(c.x);
-//     let x2 = a.x.max(b.x).max(c.x);
-//     let y1 = a.y.min(b.y).min(c.y);
-//     let y2 = a.y.max(b.y).max(c.y);
-
-//     HitBox {
-//         center_x: (x1 + x2) / 2.0,
-//         center_y: (y1 + y2) / 2.0,
-//         half_x: (x2 - x1) / 2.0,
-//         half_y: (y2 - y1) / 2.0,
+// pub fn collision_circle_triangles(
+//     circle_transform: &Transform,
+//     radius: f32,
+//     circle_hitbox: HitBox,
+//     triangles_transform: &Transform,
+//     vertices: &Vec<[f32; 3]>,
+//     triangles_hitbox: HitBox,
+// ) -> bool {
+//     if !rectangles_intersect(
+//         circle_transform.translation.truncate(),
+//         circle_hitbox,
+//         triangles_transform.translation.truncate(),
+//         triangles_hitbox,
+//     ) {
+//         return false;
 //     }
+
+//     for triangle in vertices.chunks_exact(3) {
+//         if circle_intersects_triangle(
+//             triangles_transform
+//                 .rotation
+//                 .inverse()
+//                 .mul_vec3(circle_transform.translation - triangles_transform.translation)
+//                 .truncate(),
+//             radius,
+//             Vec3::from(triangle[0]).truncate(),
+//             Vec3::from(triangle[1]).truncate(),
+//             Vec3::from(triangle[2]).truncate(),
+//         ) {
+//             return true;
+//         }
+//     }
+
+//     false
 // }
 
-pub fn collision_circle_triangles(
-    circle_transform: &Transform,
-    radius: f32,
-    circle_hitbox: HitBox,
-    triangles_transform: &Transform,
-    vertices: &Vec<[f32; 3]>,
-    triangles_hitbox: HitBox,
-) -> bool {
-    if !rectangles_intersect(
-        circle_transform.translation.truncate(),
-        circle_hitbox,
-        triangles_transform.translation.truncate(),
-        triangles_hitbox,
-    ) {
-        return false;
-    }
+// pub fn collision_point_circle(point: &Transform, circle: &Transform, radius: f32) -> bool {
+//     if !point_in_rectangle(
+//         point.translation.truncate(),
+//         circle.translation.truncate(),
+//         radius,
+//         radius,
+//     ) {
+//         return false;
+//     }
 
-    for triangle in vertices.chunks_exact(3) {
-        if circle_intersects_triangle(
-            triangles_transform
-                .rotation
-                .inverse()
-                .mul_vec3(circle_transform.translation - triangles_transform.translation)
-                .truncate(),
-            radius,
-            Vec3::from(triangle[0]).truncate(),
-            Vec3::from(triangle[1]).truncate(),
-            Vec3::from(triangle[2]).truncate(),
-        ) {
-            return true;
-        }
-    }
+//     point.translation.distance(circle.translation) < radius
+// }
 
-    false
-}
+// pub fn collision_point_triangles(
+//     point: &Transform,
+//     triangles: &Transform,
+//     vertices: &Vec<[f32; 3]>,
+//     hitbox: HitBox,
+// ) -> bool {
+//     if !point_in_rectangle(
+//         point.translation.truncate(),
+//         triangles.translation.truncate(),
+//         hitbox.half_x,
+//         hitbox.half_y,
+//     ) {
+//         return false;
+//     }
 
-pub fn collision_point_circle(point: &Transform, circle: &Transform, radius: f32) -> bool {
-    if !point_in_rectangle(
-        point.translation.truncate(),
-        circle.translation.truncate(),
-        radius,
-        radius,
-    ) {
-        return false;
-    }
+//     for triangle in vertices.chunks_exact(3) {
+//         if point_in_triangle(
+//             triangles
+//                 .rotation
+//                 .inverse()
+//                 .mul_vec3(point.translation - triangles.translation)
+//                 .truncate(),
+//             Vec3::from(triangle[0]).truncate(),
+//             Vec3::from(triangle[1]).truncate(),
+//             Vec3::from(triangle[2]).truncate(),
+//         ) {
+//             return true;
+//         }
+//     }
 
-    point.translation.distance(circle.translation) < radius
-}
-
-pub fn collision_point_triangles(
-    point: &Transform,
-    triangles: &Transform,
-    vertices: &Vec<[f32; 3]>,
-    hitbox: HitBox,
-) -> bool {
-    if !point_in_rectangle(
-        point.translation.truncate(),
-        triangles.translation.truncate(),
-        hitbox.half_x,
-        hitbox.half_y,
-    ) {
-        return false;
-    }
-
-    for triangle in vertices.chunks_exact(3) {
-        if point_in_triangle(
-            triangles
-                .rotation
-                .inverse()
-                .mul_vec3(point.translation - triangles.translation)
-                .truncate(),
-            Vec3::from(triangle[0]).truncate(),
-            Vec3::from(triangle[1]).truncate(),
-            Vec3::from(triangle[2]).truncate(),
-        ) {
-            return true;
-        }
-    }
-
-    false
-}
+//     false
+// }
 
 // Determines if any of the transformed triangles given by vertices1 and transform1 intersects
 // any of the transformed triangles given by vertices2 and transform2.
 // hitbox1 is an aabb centered at transform1.translation and containing all the transformed
 // triangles given by vertices1 and transform1.
 // Same for hitbox2 with respect to transform2 and vertices2.
-fn collision_triangles_triangles(
-    transform1: &Transform,
-    vertices1: &Vec<[f32; 3]>,
-    hitbox1: HitBox,
-    transform2: &Transform,
-    vertices2: &Vec<[f32; 3]>,
-    hitbox2: HitBox,
-) -> bool {
-    if !rectangles_intersect(
-        transform1.translation.truncate(),
-        hitbox1,
-        transform2.translation.truncate(),
-        hitbox2,
-    ) {
-        return false;
-    }
+// fn collision_triangles_triangles(
+//     transform1: &Transform,
+//     vertices1: &Vec<[f32; 3]>,
+//     hitbox1: HitBox,
+//     transform2: &Transform,
+//     vertices2: &Vec<[f32; 3]>,
+//     hitbox2: HitBox,
+// ) -> bool {
+//     if !rectangles_intersect(
+//         transform1.translation.truncate(),
+//         hitbox1,
+//         transform2.translation.truncate(),
+//         hitbox2,
+//     ) {
+//         return false;
+//     }
 
-    let mut iter1 = vertices1.chunks_exact(3);
-    while let Some(&[a1, b1, c1]) = iter1.next() {
-        // Apply transform1 to triangle1
-        let [a1, b1, c1] = [
-            transform1.transform_point(Vec3::from(a1)),
-            transform1.transform_point(Vec3::from(b1)),
-            transform1.transform_point(Vec3::from(c1)),
-        ];
+//     let mut iter1 = vertices1.chunks_exact(3);
+//     while let Some(&[a1, b1, c1]) = iter1.next() {
+//         // Apply transform1 to triangle1
+//         let [a1, b1, c1] = [
+//             transform1.transform_point(Vec3::from(a1)),
+//             transform1.transform_point(Vec3::from(b1)),
+//             transform1.transform_point(Vec3::from(c1)),
+//         ];
 
-        // Apply transform2 inverse to triangle1.
-        // We could apply transform2 to triangle2 instead but either
-        // we would have to recompute it in each iteration of the nested for loop
-        // or we would have to allocate to save the results
-        let [a1, b1, c1] = [
-            transform2
-                .rotation
-                .inverse()
-                .mul_vec3(a1 - transform2.translation),
-            transform2
-                .rotation
-                .inverse()
-                .mul_vec3(b1 - transform2.translation),
-            transform2
-                .rotation
-                .inverse()
-                .mul_vec3(c1 - transform2.translation),
-        ];
-        let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
+//         // Apply transform2 inverse to triangle1.
+//         // We could apply transform2 to triangle2 instead but either
+//         // we would have to recompute it in each iteration of the nested for loop
+//         // or we would have to allocate to save the results
+//         let triangle1 = Triangle::from([
+//             transform2
+//                 .rotation
+//                 .inverse()
+//                 .mul_vec3(a1 - transform2.translation),
+//             transform2
+//                 .rotation
+//                 .inverse()
+//                 .mul_vec3(b1 - transform2.translation),
+//             transform2
+//                 .rotation
+//                 .inverse()
+//                 .mul_vec3(c1 - transform2.translation),
+//         ]);
+//         let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
 
-        let mut iter2 = vertices2.chunks_exact(3);
-        while let Some(&[a2, b2, c2]) = iter2.next() {
-            let [a2, b2, c2] = [
-                Vec3::from(a2).truncate(),
-                Vec3::from(b2).truncate(),
-                Vec3::from(c2).truncate(),
-            ];
-            if triangles_intersect(&[a1, b1, c1], &[a2, b2, c2]) {
-                return true;
-            }
-        }
-    }
+//         let mut iter2 = vertices2.chunks_exact(3);
+//         while let Some(&[a2, b2, c2]) = iter2.next() {
+//             let triangle2 = TriangleXY::from([
+//                 Vec3::from(a2).truncate(),
+//                 Vec3::from(b2).truncate(),
+//                 Vec3::from(c2).truncate(),
+//             ]);
+//             if triangles_intersect(&triangle1, &triangle2) {
+//                 return true;
+//             }
+//         }
+//     }
 
-    false
-}
+//     false
+// }
 
-pub fn triangles_intersect(triangle1: &[Vec2; 3], triangle2: &[Vec2; 3]) -> bool {
-    let [a1, b1, c1] = *triangle1;
-    let [a2, b2, c2] = *triangle2;
+pub fn triangles_intersect(t1: impl Into<TriangleXY>, t2: impl Into<TriangleXY>) -> bool {
+    let [a1, b1, c1] = t1.into().to_array();
+    let [a2, b2, c2] = t2.into().to_array();
 
     // We only need to test 8 line segments intersections.
     line_segments_intersect(a1, b1 - a1, a2, b2 - a2)
@@ -288,16 +421,15 @@ fn point_in_transformed_triangles(
     triangles_transform: &Transform,
     vertices: &Vec<[f32; 3]>,
 ) -> bool {
-    for triangle in vertices.chunks_exact(3) {
+    let mut iter = vertices.chunks_exact(3);
+    while let Some(&[a, b, c]) = iter.next() {
         if point_in_triangle(
             triangles_transform
                 .rotation
                 .inverse()
                 .mul_vec3(point.translation - triangles_transform.translation)
                 .truncate(),
-            Vec3::from(triangle[0]).truncate(),
-            Vec3::from(triangle[1]).truncate(),
-            Vec3::from(triangle[2]).truncate(),
+            [a, b, c],
         ) {
             return true;
         }
@@ -339,7 +471,7 @@ fn transformed_triangles_intersect(
                 Vec3::from(b2).truncate(),
                 Vec3::from(c2).truncate(),
             ];
-            if triangles_intersect(&[a1, b1, c1], &[a2, b2, c2]) {
+            if triangles_intersect([a1, b1, c1], [a2, b2, c2]) {
                 return true;
             }
         }
@@ -354,7 +486,8 @@ fn circle_intersects_transformed_triangles(
     triangles_transform: &Transform,
     vertices: &Vec<[f32; 3]>,
 ) -> bool {
-    for triangle in vertices.chunks_exact(3) {
+    let mut iter = vertices.chunks_exact(3);
+    while let Some(&[a, b, c]) = iter.next() {
         if circle_intersects_triangle(
             triangles_transform
                 .rotation
@@ -362,9 +495,7 @@ fn circle_intersects_transformed_triangles(
                 .mul_vec3(circle.translation - triangles_transform.translation)
                 .truncate(),
             radius,
-            Vec3::from(triangle[0]).truncate(),
-            Vec3::from(triangle[1]).truncate(),
-            Vec3::from(triangle[2]).truncate(),
+            [a, b, c],
         ) {
             return true;
         }

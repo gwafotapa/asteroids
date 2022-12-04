@@ -4,12 +4,11 @@ use rand::Rng;
 use crate::{
     blast::Blast,
     collision::{
-        math::point_in_triangle,
+        math::{point_in_triangle, Triangle},
         //Impact,
         Collider,
         HitBox,
         Topology,
-        Triangle,
     },
     debris::Debris,
     fire::Fire,
@@ -78,7 +77,12 @@ const S8: Vec3 = Vec3 {
 //     z: (D.z + B.z) / 2.0,
 // };
 // pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-pub const TRIANGLES: [Triangle; 4] = [[S1, S2, S3], [S4, S3, S2], [S5, S6, S7], [S8, S7, S6]];
+pub const TRIANGLES: [Triangle; 4] = [
+    Triangle(S1, S2, S3),
+    Triangle(S4, S3, S2),
+    Triangle(S5, S6, S7),
+    Triangle(S8, S7, S6),
+];
 const HITBOX: HitBox = HitBox {
     half_x: -S5.x,
     half_y: S4.y,
@@ -176,7 +180,12 @@ pub fn spawn(
 ) {
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
-    let v_pos: Vec<[f32; 3]> = TRIANGLES.iter().flatten().map(|x| x.to_array()).collect();
+    let v_pos: Vec<[f32; 3]> = TRIANGLES
+        .iter()
+        .map(|triangle| triangle.to_array())
+        .flatten()
+        .map(|vertex| vertex.to_array())
+        .collect();
     // let v_normals = vec![[0.0, 0.0, 1.0]; 12];
     // let v_uvs = vec![[1.0, 1.0]; 12];
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
@@ -335,13 +344,8 @@ pub fn explode(
                     z: 0.0,
                 };
                 let mut triangles = TRIANGLES.iter();
-                while let Some(&[a, b, c]) = triangles.next() {
-                    if point_in_triangle(
-                        debris_translation_ship.truncate(),
-                        a.truncate(),
-                        b.truncate(),
-                        c.truncate(),
-                    ) {
+                while let Some(&triangle) = triangles.next() {
+                    if point_in_triangle(debris_translation_ship.truncate(), triangle) {
                         break 'outer;
                     }
                 }
