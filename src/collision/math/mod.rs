@@ -71,6 +71,27 @@ fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     s + t <= ab.perp_dot(ac)
 }
 
+// Determines if point p is in CCW triangle (abc).
+//
+// p lies in (abc) iff for all three lines (ab), (bc) and (ca),
+// p lies on the same side of each line (left or right looking for example from a to b for (ab)).
+// Equivalently, p lies in (abc) iff (det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0) or
+// (det(pa, pb) <= 0, det(pb, pc) <= 0 and det(pc, pa) <= 0).
+//
+// Since (abc) is CCW, this is equivalent to
+// det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0
+fn point_in_triangle_1(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+    let [a, b, c] = t.into().to_array();
+    let [pa, pb, pc] = [a - p, b - p, c - p];
+    if pa.perp_dot(pb) < 0.0 {
+        return false;
+    }
+    if pb.perp_dot(pc) < 0.0 {
+        return false;
+    }
+    pc.perp_dot(pa) < 0.0
+}
+
 pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aabb) -> bool {
     let intersect_x = (center1.x - center2.x).abs() <= aabb1.hw + aabb2.hw;
     let intersect_y = (center1.y - center2.y).abs() <= aabb1.hh + aabb2.hh;
