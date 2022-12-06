@@ -182,8 +182,7 @@ pub fn spawn(
 
     let v_pos: Vec<[f32; 3]> = TRIANGLES
         .iter()
-        .map(|triangle| triangle.to_array())
-        .flatten()
+        .flat_map(|triangle| triangle.to_array())
         .map(|vertex| vertex.to_array())
         .collect();
     // let v_normals = vec![[0.0, 0.0, 1.0]; 12];
@@ -340,8 +339,7 @@ pub fn explode(
                     y: rng.gen_range(S1.y..S4.y),
                     z: 0.0,
                 };
-                let mut triangles = TRIANGLES.iter();
-                while let Some(&triangle) = triangles.next() {
+                for triangle in TRIANGLES {
                     if point_in_triangle(debris_translation_ship.truncate(), triangle) {
                         break 'outer;
                     }

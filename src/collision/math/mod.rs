@@ -35,7 +35,7 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let b = ((t.2.y - t.0.y) * (p.x - t.2.x) + (t.0.x - t.2.x) * (p.y - t.2.y)) / denominator;
     let c = 1.0 - a - b;
 
-    a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
+    (0.0..=1.0).contains(&a) && (0.0..=1.0).contains(&b) && (0.0..=1.0).contains(&c)
 }
 
 // Determines if point p is in CCW triangle (abc) using barycentric coordinates.
@@ -96,7 +96,7 @@ pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aa
     let intersect_x = (center1.x - center2.x).abs() <= aabb1.hw + aabb2.hw;
     let intersect_y = (center1.y - center2.y).abs() <= aabb1.hh + aabb2.hh;
 
-    return intersect_x && intersect_y;
+    intersect_x && intersect_y
 }
 
 // Determines if the circle of center o and radius r intersects the line segment [mn].
@@ -117,7 +117,7 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
     let t1 = (-b - delta.sqrt()) / (2.0 * a);
     let t2 = (-b + delta.sqrt()) / (2.0 * a);
 
-    if t1 >= 0.0 && t1 <= 1.0 {
+    if (0.0..1.0).contains(&t1) {
         // t1 is the intersection.
         // Moreover, if t2 is another intersection, t1 is closer to point m than t2 since t1 < t2.
         // Geometrically, line segment [mn] either impales or pokes the circle.
@@ -125,7 +125,7 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
     }
 
     // Here t1 didn't intersect so we are either started inside the circle or completely past it
-    if t2 >= 0.0 && t2 <= 1.0 {
+    if (0.0..1.0).contains(&t2) {
         // Geometrically, this is the called the "exit wound" case.
         return true;
     }
@@ -372,7 +372,7 @@ pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> bool {
 fn point_in_transformed_triangles(
     point: &Transform,
     triangles_transform: &Transform,
-    vertices: &Vec<[f32; 3]>,
+    vertices: &[[f32; 3]],
 ) -> bool {
     let mut iter = vertices.chunks_exact(3);
     while let Some(&[a, b, c]) = iter.next() {
@@ -394,8 +394,8 @@ fn point_in_transformed_triangles(
 fn transformed_triangles_intersect(
     t1: &Transform,
     t2: &Transform,
-    vertices1: &Vec<[f32; 3]>,
-    vertices2: &Vec<[f32; 3]>,
+    vertices1: &[[f32; 3]],
+    vertices2: &[[f32; 3]],
 ) -> bool {
     let mut iter1 = vertices1.chunks_exact(3);
     while let Some(&[a1, b1, c1]) = iter1.next() {
@@ -431,7 +431,7 @@ fn circle_intersects_transformed_triangles(
     circle: &Transform,
     radius: f32,
     triangles_transform: &Transform,
-    vertices: &Vec<[f32; 3]>,
+    vertices: &[[f32; 3]],
 ) -> bool {
     let mut iter = vertices.chunks_exact(3);
     while let Some(&[a, b, c]) = iter.next() {

@@ -16,7 +16,7 @@ const NEEDLE_POSITION: Vec3 = Vec3 {
     z: 0.0,
 };
 // const DISTANCE_TO_TARGET: f32 = 5000.0;
-const FONT: &'static str = "fonts/FiraSans-Bold.ttf";
+const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const FONT_SIZE: f32 = 20.0;
 const COLOR: Color = Color::DARK_GRAY;
 const NEEDLE_SCALE: f32 = 0.13;

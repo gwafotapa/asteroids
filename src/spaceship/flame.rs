@@ -98,11 +98,9 @@ pub fn update(
                     // vertices[3][0] += 100.0;
                 }
                 // println!("{:?}", vertices[0]);
-            } else {
-                if vertices[0][0] < 0.0 {
-                    vertices[0][0] += 4.0;
-                    // vertices[3][0] += 100.0;
-                }
+            } else if vertices[0][0] < 0.0 {
+                vertices[0][0] += 4.0;
+                // vertices[3][0] += 100.0;
             }
         }
 
