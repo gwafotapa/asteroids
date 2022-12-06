@@ -9,7 +9,7 @@ use crate::{
 };
 
 use impact::Impact;
-pub use math::{Collider, HitBox, Topology};
+pub use math::{Aabb, Collider, Topology};
 
 pub mod impact;
 pub mod math;
@@ -21,7 +21,7 @@ pub fn spaceship_and_asteroid(
 ) {
     // if let Ok((
     //     Collider {
-    //         hitbox: s_hitbox,
+    //         aabb: s_aabb,
     //         topology:
     //             Topology::Triangles {
     //                 mesh_handle: Mesh2dHandle(s_handle_mesh),
@@ -41,10 +41,10 @@ pub fn spaceship_and_asteroid(
             // if math::collision_circle_triangles(
             //     &a_transform.compute_transform(),
             //     asteroid.radius,
-            //     a_collider.hitbox,
+            //     a_collider.aabb,
             //     s_transform,
             //     s_vertices,
-            //     *s_hitbox,
+            //     *s_aabb,
             // ) {
             if math::collision(
                 &a_transform.compute_transform(),
@@ -171,7 +171,7 @@ pub fn fire_and_boss(
             //     f_transform,
             //     &bp_transform,
             //     vertices,
-            //     bp_collider.hitbox,
+            //     bp_collider.aabb,
             if math::collision(
                 f_transform,
                 &bp_transform,
@@ -259,7 +259,7 @@ pub fn fire_and_spaceship(
             //     f_transform,
             //     s_transform,
             //     vertices,
-            //     s_collider.hitbox,
+            //     s_collider.aabb,
             if math::collision(
                 f_transform,
                 s_transform,
@@ -320,10 +320,10 @@ pub fn spaceship_and_boss(
             // if math::collision_triangles_triangles(
             //     s_transform,
             //     s_vertices,
-            //     s_collider.hitbox,
+            //     s_collider.aabb,
             //     &b_transform.compute_transform(),
             //     b_vertices,
-            //     b_collider.hitbox,
+            //     b_collider.aabb,
             if math::collision(
                 s_transform,
                 &b_transform.compute_transform(),

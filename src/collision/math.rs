@@ -147,14 +147,14 @@ impl From<Triangle> for TriangleXY {
 
 #[derive(Clone, Component)]
 pub struct Collider {
-    pub hitbox: HitBox,
+    pub aabb: Aabb,
     pub topology: Topology,
 }
 
 #[derive(Clone, Copy)]
-pub struct HitBox {
-    pub half_x: f32,
-    pub half_y: f32,
+pub struct Aabb {
+    pub hw: f32, // half width
+    pub hh: f32, // half height
 }
 
 #[derive(Clone)]
@@ -179,14 +179,9 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
 }
 
-pub fn rectangles_intersect(
-    position1: Vec2,
-    hitbox1: HitBox,
-    position2: Vec2,
-    hitbox2: HitBox,
-) -> bool {
-    let intersect_x = (position1.x - position2.x).abs() <= hitbox1.half_x + hitbox2.half_x;
-    let intersect_y = (position1.y - position2.y).abs() <= hitbox1.half_y + hitbox2.half_y;
+pub fn rectangles_intersect(position1: Vec2, aabb1: Aabb, position2: Vec2, aabb2: Aabb) -> bool {
+    let intersect_x = (position1.x - position2.x).abs() <= aabb1.hw + aabb2.hw;
+    let intersect_y = (position1.y - position2.y).abs() <= aabb1.hh + aabb2.hh;
 
     return intersect_x && intersect_y;
 }
@@ -241,16 +236,16 @@ pub fn circle_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> 
 // pub fn collision_circle_triangles(
 //     circle_transform: &Transform,
 //     radius: f32,
-//     circle_hitbox: HitBox,
+//     circle_aabb: Aabb,
 //     triangles_transform: &Transform,
 //     vertices: &Vec<[f32; 3]>,
-//     triangles_hitbox: HitBox,
+//     triangles_aabb: Aabb,
 // ) -> bool {
 //     if !rectangles_intersect(
 //         circle_transform.translation.truncate(),
-//         circle_hitbox,
+//         circle_aabb,
 //         triangles_transform.translation.truncate(),
-//         triangles_hitbox,
+//         triangles_aabb,
 //     ) {
 //         return false;
 //     }
@@ -291,13 +286,13 @@ pub fn circle_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> 
 //     point: &Transform,
 //     triangles: &Transform,
 //     vertices: &Vec<[f32; 3]>,
-//     hitbox: HitBox,
+//     aabb: Aabb,
 // ) -> bool {
 //     if !point_in_rectangle(
 //         point.translation.truncate(),
 //         triangles.translation.truncate(),
-//         hitbox.half_x,
-//         hitbox.half_y,
+//         aabb.hw,
+//         aabb.hh,
 //     ) {
 //         return false;
 //     }
@@ -322,22 +317,22 @@ pub fn circle_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> 
 
 // Determines if any of the transformed triangles given by vertices1 and transform1 intersects
 // any of the transformed triangles given by vertices2 and transform2.
-// hitbox1 is an aabb centered at transform1.translation and containing all the transformed
+// aabb1 is an aabb centered at transform1.translation and containing all the transformed
 // triangles given by vertices1 and transform1.
-// Same for hitbox2 with respect to transform2 and vertices2.
+// Same for aabb2 with respect to transform2 and vertices2.
 // fn collision_triangles_triangles(
 //     transform1: &Transform,
 //     vertices1: &Vec<[f32; 3]>,
-//     hitbox1: HitBox,
+//     aabb1: Aabb,
 //     transform2: &Transform,
 //     vertices2: &Vec<[f32; 3]>,
-//     hitbox2: HitBox,
+//     aabb2: Aabb,
 // ) -> bool {
 //     if !rectangles_intersect(
 //         transform1.translation.truncate(),
-//         hitbox1,
+//         aabb1,
 //         transform2.translation.truncate(),
-//         hitbox2,
+//         aabb2,
 //     ) {
 //         return false;
 //     }
@@ -513,9 +508,9 @@ pub fn collision(
 ) -> bool {
     if !rectangles_intersect(
         t1.translation.truncate(),
-        c1.hitbox,
+        c1.aabb,
         t2.translation.truncate(),
-        c2.hitbox,
+        c2.aabb,
     ) {
         return false;
     }

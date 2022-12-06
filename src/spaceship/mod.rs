@@ -5,9 +5,9 @@ use crate::{
     blast::Blast,
     collision::{
         math::{point_in_triangle, Triangle},
+        Aabb,
         //Impact,
         Collider,
-        HitBox,
         Topology,
     },
     debris::Debris,
@@ -83,9 +83,9 @@ pub const TRIANGLES: [Triangle; 4] = [
     Triangle(S5, S6, S7),
     Triangle(S8, S7, S6),
 ];
-const HITBOX: HitBox = HitBox {
-    half_x: -S5.x,
-    half_y: S4.y,
+const AABB: Aabb = Aabb {
+    hw: -S5.x,
+    hh: S4.y,
 };
 // pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const TRIANGLELIST: [[f32; 3]; 6] = [
@@ -212,9 +212,9 @@ pub fn spawn(
             y: 0.0,
             z: 0.0,
         }))
-        // .insert(HITBOX)
+        // .insert(AABB)
         .insert(Collider {
-            hitbox: HITBOX,
+            aabb: AABB,
             topology: Topology::Triangles {
                 mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
             },
@@ -276,10 +276,7 @@ pub fn attack(
             .insert(Health(FIRE_HEALTH))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
             .insert(Collider {
-                hitbox: HitBox {
-                    half_x: 0.0,
-                    half_y: 0.0,
-                },
+                aabb: Aabb { hw: 0.0, hh: 0.0 },
                 topology: Topology::Point,
             })
             .insert(ColorMesh2dBundle {

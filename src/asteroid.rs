@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{
-    collision::{Collider, HitBox, Topology},
+    collision::{Aabb, Collider, Topology},
     debris::Debris,
     Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -36,9 +36,9 @@ pub fn spawn(
         // .insert(Velocity(velocity))
         // .insert(Topology::Circle)
         .insert(Collider {
-            hitbox: HitBox {
-                half_x: radius,
-                half_y: radius,
+            aabb: Aabb {
+                hw: radius,
+                hh: radius,
             },
             topology: Topology::Circle { radius },
         })
@@ -82,9 +82,9 @@ pub fn spawn(
 //             .insert(Velocity(velocity))
 //             .insert(Surface {
 //                 topology: Topology::Circle(radius),
-//                 hitbox: HitBox {
-//                     half_x: radius,
-//                     half_y: radius,
+//                 aabb: Aabb {
+//                     hw: radius,
+//                     hh: radius,
 //                 },
 //             })
 //             .insert(ColorMesh2dBundle {

@@ -12,7 +12,7 @@ use crate::{
     collision::{
         impact::Impact,
         math::{self},
-        Collider, HitBox, Topology,
+        Aabb, Collider, Topology,
     },
     // compass::Compass,
     debris::Debris,
@@ -229,9 +229,9 @@ pub fn spawn(
         .insert(Health(CORE_HEALTH))
         .insert(Velocity(Vec3::ZERO))
         .insert(Collider {
-            hitbox: HitBox {
-                half_x: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
-                half_y: 108.3,
+            aabb: Aabb {
+                hw: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
+                hh: 108.3,
             },
             topology: Topology::Triangles {
                 mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
@@ -261,9 +261,9 @@ pub fn spawn(
             .spawn(BossEdge)
             .insert(Health(EDGE_HEALTH))
             .insert(Collider {
-                hitbox: HitBox {
-                    half_x: OUTER_RADIUS - INNER_RADIUS,
-                    half_y: OUTER_RADIUS - INNER_RADIUS,
+                aabb: Aabb {
+                    hw: OUTER_RADIUS - INNER_RADIUS,
+                    hh: OUTER_RADIUS - INNER_RADIUS,
                 },
                 topology: Topology::Triangles {
                     mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
@@ -380,10 +380,7 @@ pub fn attack(
                         ))
                         // .insert(Topology::Point)
                         .insert(Collider {
-                            hitbox: HitBox {
-                                half_x: 0.0,
-                                half_y: 0.0,
-                            },
+                            aabb: Aabb { hw: 0.0, hh: 0.0 },
                             topology: Topology::Point,
                         })
                         .insert(ColorMesh2dBundle {
@@ -464,8 +461,8 @@ pub fn explode(
                         let mut debris_translation;
                         'outer: loop {
                             debris_translation = Vec3 {
-                                x: rng.gen_range(-collider.hitbox.half_x..collider.hitbox.half_x),
-                                y: rng.gen_range(-collider.hitbox.half_y..collider.hitbox.half_y),
+                                x: rng.gen_range(-collider.aabb.hw..collider.aabb.hw),
+                                y: rng.gen_range(-collider.aabb.hh..collider.aabb.hh),
                                 z: 0.0,
                             };
                             if math::point_in_triangle(
