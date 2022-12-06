@@ -54,7 +54,7 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
 // s = det(ap, ac)
 // t = det(ab, ap)
 // and check that 0 <= s, 0 <= t and s+t <= det(ab, ac)
-fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+pub fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let [a, b, c] = t.into().to_array();
     let [ab, ac, ap] = [b - a, c - a, p - a];
 
@@ -80,7 +80,7 @@ fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
 //
 // Since (abc) is CCW, this is equivalent to
 // det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0
-fn point_in_triangle_1(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+pub fn point_in_triangle_1(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let [a, b, c] = t.into().to_array();
     let [pa, pb, pc] = [a - p, b - p, c - p];
     if pa.perp_dot(pb) < 0.0 {
@@ -151,11 +151,11 @@ pub fn circle_intersects_line_segment_0(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bo
     }
 
     let delta_sqrt = delta.sqrt();
-    let t1_2a = -b - delta_sqrt;
-    let t2_2a = -b + delta_sqrt;
+    let t1 = -b - delta_sqrt;
+    let t2 = -b + delta_sqrt;
 
-    (a >= 0.0 && ((t1_2a >= 0.0 && t1_2a <= 2.0 * a) || (t2_2a >= 0.0 && t2_2a <= 2.0 * a)))
-        || ((t1_2a <= 0.0 && t1_2a >= 2.0 * a) || (t2_2a <= 0.0 && t2_2a >= 2.0 * a))
+    (a > 0.0 && ((t1 > 0.0 && t1 < 2.0 * a) || (t2 > 0.0 && t2 < 2.0 * a)))
+        || ((t1 < 0.0 && t1 > 2.0 * a) || (t2 < 0.0 && t2 > 2.0 * a))
 }
 
 // Determines if the circle of center c and radius r intersects the line segment [ab].
