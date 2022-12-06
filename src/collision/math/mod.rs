@@ -29,16 +29,16 @@ pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
 
 // https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
 pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
-    let t = t.into();
-    let denominator = (t.1.y - t.2.y) * (t.0.x - t.2.x) + (t.2.x - t.1.x) * (t.0.y - t.2.y);
-    let a = ((t.1.y - t.2.y) * (p.x - t.2.x) + (t.2.x - t.1.x) * (p.y - t.2.y)) / denominator;
-    let b = ((t.2.y - t.0.y) * (p.x - t.2.x) + (t.0.x - t.2.x) * (p.y - t.2.y)) / denominator;
-    let c = 1.0 - a - b;
+    let [a, b, c] = t.into().to_array();
+    let denominator = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    let s = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) / denominator;
+    let t = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) / denominator;
+    let u = 1.0 - s - t;
 
-    (0.0..=1.0).contains(&a) && (0.0..=1.0).contains(&b) && (0.0..=1.0).contains(&c)
+    (0.0..=1.0).contains(&s) && (0.0..=1.0).contains(&t) && (0.0..=1.0).contains(&u)
 }
 
-// Determines if point p is in CCW triangle (abc) using barycentric coordinates.
+// Determines if point p is in CCW triangle (abc).
 //
 // p lies in (abc) iff there exists (s, t) such that p = a + s(b-a) + t(c-a)
 // with 0 <= s <= 1, 0 <= t <= 1 and 0 <= s+t <=1
@@ -74,7 +74,7 @@ pub fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
 // Determines if point p is in CCW triangle (abc).
 //
 // p lies in (abc) iff for all three lines (ab), (bc) and (ca),
-// p lies on the same side of each line (left or right looking for example from a to b for (ab)).
+// p lies on the same side (either left or right) of each line.
 // Equivalently, p lies in (abc) iff (det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0) or
 // (det(pa, pb) <= 0, det(pb, pc) <= 0 and det(pc, pa) <= 0).
 //
@@ -90,6 +90,13 @@ pub fn point_in_triangle_1(p: Vec2, t: impl Into<TriangleXY>) -> bool {
         return false;
     }
     pc.perp_dot(pa) >= 0.0
+}
+
+pub fn point_in_triangle_2(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+    let [a, b, c] = t.into().to_array();
+    let [pa, pb, pc] = [a - p, b - p, c - p];
+
+    pa.perp_dot(pb) > 0.0 && pb.perp_dot(pc) > 0.0 && pc.perp_dot(pa) > 0.0
 }
 
 pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aabb) -> bool {
@@ -181,13 +188,12 @@ pub fn circle_intersects_line_segment_1(c: Vec2, r: f32, a: Vec2, b: Vec2) -> bo
 
 // Determines if the disk of center o and radius r intersects the triangle abc
 pub fn circle_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> bool {
-    let triangle = t.into();
-    let [a, b, c] = triangle.to_array();
+    let [a, b, c] = t.into().to_array();
     a.distance(o) < r
         || circle_intersects_line_segment(o, r, a, b)
         || circle_intersects_line_segment(o, r, b, c)
         || circle_intersects_line_segment(o, r, c, a)
-        || point_in_triangle(o, triangle)
+        || point_in_triangle(o, [a, b, c])
 }
 
 // pub fn collision_circle_triangles(

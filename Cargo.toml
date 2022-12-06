@@ -17,3 +17,10 @@ rand = "0.8.5"
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 # [profile.dev.package."*"]
 # opt-level = 3
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "point_in_triangle"
+harness = false
