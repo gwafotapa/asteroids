@@ -27,18 +27,27 @@ pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
     p.x >= c.x - x && p.x <= c.x + x && p.y >= c.y - y && p.y <= c.y + y
 }
 
-// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
+// Determines if point p is in CCW triangle (abc).
+//
+// p lies in (abc) iff for all three lines (ab), (bc) and (ca),
+// p lies on the same side (either left or right) of each line.
+// Equivalently, p lies in (abc) iff (det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0) or
+// (det(pa, pb) <= 0, det(pb, pc) <= 0 and det(pc, pa) <= 0).
+//
+// Since (abc) is CCW, this is equivalent to
+// det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0
 pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let [a, b, c] = t.into().to_array();
-    let denominator = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
-    let s = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) / denominator;
-    let t = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) / denominator;
-    let u = 1.0 - s - t;
+    let [pa, pb, pc] = [a - p, b - p, c - p];
 
-    (0.0..=1.0).contains(&s) && (0.0..=1.0).contains(&t) && (0.0..=1.0).contains(&u)
+    pa.perp_dot(pb) > 0.0 && pb.perp_dot(pc) > 0.0 && pc.perp_dot(pa) > 0.0
 }
 
 // Determines if point p is in CCW triangle (abc).
+//
+// We approach the problem differently here with barycentric coordinates.
+// Overall this costs us an extra addition compared to the previous method,
+// but we're keeping it for bookkeeping purposes.
 //
 // p lies in (abc) iff there exists (s, t) such that p = a + s(b-a) + t(c-a)
 // with 0 <= s <= 1, 0 <= t <= 1 and 0 <= s+t <=1
@@ -54,7 +63,7 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
 // s = det(ap, ac)
 // t = det(ab, ap)
 // and check that 0 <= s, 0 <= t and s+t <= det(ab, ac)
-pub fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+pub fn point_in_triangle_bis(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let [a, b, c] = t.into().to_array();
     let [ab, ac, ap] = [b - a, c - a, p - a];
 
@@ -69,34 +78,6 @@ pub fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     }
 
     s + t <= ab.perp_dot(ac)
-}
-
-// Determines if point p is in CCW triangle (abc).
-//
-// p lies in (abc) iff for all three lines (ab), (bc) and (ca),
-// p lies on the same side (either left or right) of each line.
-// Equivalently, p lies in (abc) iff (det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0) or
-// (det(pa, pb) <= 0, det(pb, pc) <= 0 and det(pc, pa) <= 0).
-//
-// Since (abc) is CCW, this is equivalent to
-// det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0
-pub fn point_in_triangle_1(p: Vec2, t: impl Into<TriangleXY>) -> bool {
-    let [a, b, c] = t.into().to_array();
-    let [pa, pb, pc] = [a - p, b - p, c - p];
-    if pa.perp_dot(pb) < 0.0 {
-        return false;
-    }
-    if pb.perp_dot(pc) < 0.0 {
-        return false;
-    }
-    pc.perp_dot(pa) >= 0.0
-}
-
-pub fn point_in_triangle_2(p: Vec2, t: impl Into<TriangleXY>) -> bool {
-    let [a, b, c] = t.into().to_array();
-    let [pa, pb, pc] = [a - p, b - p, c - p];
-
-    pa.perp_dot(pb) > 0.0 && pb.perp_dot(pc) > 0.0 && pc.perp_dot(pa) > 0.0
 }
 
 pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aabb) -> bool {

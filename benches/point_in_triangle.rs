@@ -14,29 +14,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
 }
 
-pub fn criterion_benchmark_0(c: &mut Criterion) {
+pub fn criterion_benchmark_bis(c: &mut Criterion) {
     c.bench_function("point in triangle", |b| {
-        b.iter(|| math::point_in_triangle_0(black_box(D), black_box([A, B, C])))
+        b.iter(|| math::point_in_triangle_bis(black_box(D), black_box([A, B, C])))
     });
 }
 
-pub fn criterion_benchmark_1(c: &mut Criterion) {
-    c.bench_function("point in triangle", |b| {
-        b.iter(|| math::point_in_triangle_1(black_box(D), black_box([A, B, C])))
-    });
-}
-
-pub fn criterion_benchmark_2(c: &mut Criterion) {
-    c.bench_function("point in triangle", |b| {
-        b.iter(|| math::point_in_triangle_2(black_box(D), black_box([A, B, C])))
-    });
-}
-
-criterion_group!(
-    benches,
-    criterion_benchmark,
-    criterion_benchmark_0,
-    criterion_benchmark_1,
-    criterion_benchmark_2
-);
+criterion_group!(benches, criterion_benchmark, criterion_benchmark_bis,);
 criterion_main!(benches);
