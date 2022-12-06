@@ -1,4 +1,4 @@
-use asteroids::collision::math::point_in_triangle_1;
+use asteroids::collision::math::point_in_triangle;
 use bevy::prelude::*;
 
 const O: Vec2 = Vec2::ZERO;
@@ -19,22 +19,22 @@ const N: Vec2 = Vec2 { x: 2.0, y: 0.0 };
 
 #[test]
 fn points_in_triangles() {
-    assert!(point_in_triangle_1(D, [A, B, C]));
-    assert!(!point_in_triangle_1(E, [A, B, C]));
-    assert!(point_in_triangle_1(F, [A, B, C]));
-    assert!(point_in_triangle_1(G, [A, B, C]));
-    assert!(point_in_triangle_1(H, [A, B, C]));
-    assert!(!point_in_triangle_1(I, [A, B, C]));
-    assert!(!point_in_triangle_1(J, [A, B, C]));
-    assert!(!point_in_triangle_1(K, [A, B, C]));
-    assert!(!point_in_triangle_1(L, [A, B, C]));
-    assert!(!point_in_triangle_1(M, [A, B, C]));
-    assert!(!point_in_triangle_1(N, [A, B, C]));
-    assert!(point_in_triangle_1(O, [A, B, C]));
-    assert!(point_in_triangle_1(A, [J, K, M]));
-    assert!(point_in_triangle_1(N, [J, K, M]));
-    assert!(point_in_triangle_1(H, [J, K, M]));
-    assert!(!point_in_triangle_1(F, [J, K, M]));
-    assert!(!point_in_triangle_1(I, [J, K, M]));
-    assert!(!point_in_triangle_1(D, [J, K, M]));
+    assert!(point_in_triangle(D, [A, B, C]));
+    assert!(!point_in_triangle(E, [A, B, C]));
+    assert!(point_in_triangle(F, [A, B, C]));
+    assert!(point_in_triangle(G, [A, B, C]));
+    assert!(point_in_triangle(H, [A, B, C]));
+    assert!(!point_in_triangle(I, [A, B, C]));
+    assert!(!point_in_triangle(J, [A, B, C]));
+    assert!(!point_in_triangle(K, [A, B, C]));
+    assert!(!point_in_triangle(L, [A, B, C]));
+    assert!(!point_in_triangle(M, [A, B, C]));
+    assert!(!point_in_triangle(N, [A, B, C]));
+    assert!(point_in_triangle(O, [A, B, C]));
+    assert!(point_in_triangle(A, [J, K, M]));
+    assert!(point_in_triangle(N, [J, K, M]));
+    assert!(point_in_triangle(H, [J, K, M]));
+    assert!(!point_in_triangle(F, [J, K, M]));
+    assert!(!point_in_triangle(I, [J, K, M]));
+    assert!(!point_in_triangle(D, [J, K, M]));
 }

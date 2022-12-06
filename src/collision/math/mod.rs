@@ -22,9 +22,9 @@ pub enum Topology {
     Triangles { mesh_handle: Mesh2dHandle },
 }
 
-// Determines if point p is in the rectangle of center c, half width x and half height y
-pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
-    p.x >= c.x - x && p.x <= c.x + x && p.y >= c.y - y && p.y <= c.y + y
+// Determines if point p is in the rectangle of center c, half width hw and half height hh
+pub fn point_in_rectangle(p: Vec2, c: Vec2, hw: f32, hh: f32) -> bool {
+    p.x >= c.x - hw && p.x <= c.x + hw && p.y >= c.y - hh && p.y <= c.y + hh
 }
 
 // Determines if point p is in CCW triangle (abc).
@@ -142,7 +142,7 @@ pub fn circle_intersects_line_segment_0(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bo
     let t1 = -b - delta_sqrt;
     let t2 = -b + delta_sqrt;
 
-    (a > 0.0 && ((t1 > 0.0 && t1 < 2.0 * a) || (t2 > 0.0 && t2 < 2.0 * a)))
+    (a > 0.0 && (((0.0..2.0 * a).contains(&t1)) || (t2 > 0.0 && t2 < 2.0 * a)))
         || ((t1 < 0.0 && t1 > 2.0 * a) || (t2 < 0.0 && t2 > 2.0 * a))
 }
 

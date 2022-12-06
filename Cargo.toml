@@ -19,8 +19,12 @@ rand = "0.8.5"
 # opt-level = 3
 
 [dev-dependencies]
-criterion = "0.4"
+criterion = "0.4.0"
 
 [[bench]]
 name = "point_in_triangle"
+harness = false
+
+[[bench]]
+name = "circle_intersects_line_segment"
 harness = false
