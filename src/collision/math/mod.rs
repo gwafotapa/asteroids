@@ -27,7 +27,7 @@ pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
     p.x >= c.x - x && p.x <= c.x + x && p.y >= c.y - y && p.y <= c.y + y
 }
 
-// http://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html
+// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
 pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let t = t.into();
     let denominator = (t.1.y - t.2.y) * (t.0.x - t.2.x) + (t.2.x - t.1.x) * (t.0.y - t.2.y);
@@ -36,6 +36,39 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let c = 1.0 - a - b;
 
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
+}
+
+// Determines if point p is in CCW triangle (abc) using barycentric coordinates.
+//
+// p lies in (abc) iff there exists (s, t) such that p = a + s(b-a) + t(c-a)
+// with 0 <= s <= 1, 0 <= t <= 1 and 0 <= s+t <=1
+//
+// Remark that checking 0 <= s, 0 <= t and s+t <= 1 is enough.
+//
+// Solving gives :
+// s = det(ap, ac) / det(ab, ac)
+// t = det(ab, ap) / det(ab, ac)
+//
+// Since (abc) is CCW, det(ab, ac) >= 0
+// Thus to avoid division, we compute instead:
+// s = det(ap, ac)
+// t = det(ab, ap)
+// and check that 0 <= s, 0 <= t and s+t <= det(ab, ac)
+fn point_in_triangle_0(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+    let [a, b, c] = t.into().to_array();
+    let [ab, ac, ap] = [b - a, c - a, p - a];
+
+    let s = ap.perp_dot(ac);
+    if s < 0.0 {
+        return false;
+    }
+
+    let t = ab.perp_dot(ap);
+    if t < 0.0 {
+        return false;
+    }
+
+    s + t <= ab.perp_dot(ac)
 }
 
 pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aabb) -> bool {
