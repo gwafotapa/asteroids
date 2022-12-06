@@ -89,7 +89,7 @@ fn point_in_triangle_1(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     if pb.perp_dot(pc) < 0.0 {
         return false;
     }
-    pc.perp_dot(pa) < 0.0
+    pc.perp_dot(pa) >= 0.0
 }
 
 pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aabb) -> bool {
