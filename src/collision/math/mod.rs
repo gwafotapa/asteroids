@@ -135,6 +135,50 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
     false
 }
 
+// Determines if the circle of center o and radius r intersects the line segment [mn].
+// This is an optimized version of the previous function.
+pub fn circle_intersects_line_segment_0(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool {
+    let mn = n - m;
+    let om = m - o;
+
+    let a = mn.dot(mn);
+    let b = 2.0 * om.dot(mn);
+    let c = om.dot(om) - r * r;
+
+    let delta = b * b - 4.0 * a * c;
+    if delta < 0.0 {
+        return false;
+    }
+
+    let delta_sqrt = delta.sqrt();
+    let t1_2a = -b - delta_sqrt;
+    let t2_2a = -b + delta_sqrt;
+
+    (a >= 0.0 && ((t1_2a >= 0.0 && t1_2a <= 2.0 * a) || (t2_2a >= 0.0 && t2_2a <= 2.0 * a)))
+        || ((t1_2a <= 0.0 && t1_2a >= 2.0 * a) || (t2_2a <= 0.0 && t2_2a >= 2.0 * a))
+}
+
+// Determines if the circle of center c and radius r intersects the line segment [ab].
+//
+// This happens iff the projection d of c onto (ab) lies in [ab] and the length of cd is less than r.
+// https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
+pub fn circle_intersects_line_segment_1(c: Vec2, r: f32, a: Vec2, b: Vec2) -> bool {
+    let [ab, ac] = [b - a, c - a];
+    let ad = ac.project_onto(ab);
+
+    // Check that d is on line segment [AB],
+    // i.e. the real k such that ad = k.ab verifies 0 < k < 1
+    // Since we have ad.x = k(ab.x), the condition 0 < k < 1 is equivalent to
+    // ad.x and ab.x have the same sign (k > 0) and ad.x < sign(k) * ab.x (k < 1)
+    // where sign(k) is -1 is k < 0 and +1 otherwise
+    if ad.x < 0.0 && (ab.x > 0.0 || ad.x < ab.x) || (ab.x < 0.0 || ad.x > ab.x) {
+        return false;
+    }
+
+    let d = a + ad;
+    (d - c).length() <= r
+}
+
 // Determines if the disk of center o and radius r intersects the triangle abc
 pub fn circle_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> bool {
     let triangle = t.into();
