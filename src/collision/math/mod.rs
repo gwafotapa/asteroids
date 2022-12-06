@@ -399,7 +399,7 @@ fn transformed_triangles_intersect(
     let mut iter1 = vertices1.chunks_exact(3);
     while let Some(&[a1, b1, c1]) = iter1.next() {
         // Apply t1 to triangle1
-        let [a1, b1, c1] = [
+        let [mut a1, mut b1, mut c1] = [
             t1.transform_point(Vec3::from(a1)),
             t1.transform_point(Vec3::from(b1)),
             t1.transform_point(Vec3::from(c1)),
@@ -409,20 +409,14 @@ fn transformed_triangles_intersect(
         // We could apply t2 to triangle2 instead but either
         // we would have to recompute it in each iteration of the nested for loop
         // or we would have to allocate to save the results
-        let [a1, b1, c1] = [
+        [a1, b1, c1] = [
             t2.rotation.inverse().mul_vec3(a1 - t2.translation),
             t2.rotation.inverse().mul_vec3(b1 - t2.translation),
             t2.rotation.inverse().mul_vec3(c1 - t2.translation),
         ];
-        let [a1, b1, c1] = [a1.truncate(), b1.truncate(), c1.truncate()];
 
         let mut iter2 = vertices2.chunks_exact(3);
         while let Some(&[a2, b2, c2]) = iter2.next() {
-            let [a2, b2, c2] = [
-                Vec3::from(a2).truncate(),
-                Vec3::from(b2).truncate(),
-                Vec3::from(c2).truncate(),
-            ];
             if triangles_intersect([a1, b1, c1], [a2, b2, c2]) {
                 return true;
             }
