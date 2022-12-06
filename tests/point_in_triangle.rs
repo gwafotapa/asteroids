@@ -19,22 +19,22 @@ const N: Vec2 = Vec2 { x: 2.0, y: 0.0 };
 
 #[test]
 fn points_in_triangles() {
-    assert!(point_in_triangle(D, A, B, C));
-    assert!(!point_in_triangle(E, A, B, C));
-    assert!(point_in_triangle(F, A, B, C));
-    assert!(point_in_triangle(G, A, B, C));
-    assert!(point_in_triangle(H, A, B, C));
-    assert!(!point_in_triangle(I, A, B, C));
-    assert!(!point_in_triangle(J, A, B, C));
-    assert!(!point_in_triangle(K, A, B, C));
-    assert!(!point_in_triangle(L, A, B, C));
-    assert!(!point_in_triangle(M, A, B, C));
-    assert!(!point_in_triangle(N, A, B, C));
-    assert!(point_in_triangle(O, A, B, C));
-    assert!(point_in_triangle(A, J, M, K));
-    assert!(point_in_triangle(N, J, M, K));
-    assert!(point_in_triangle(H, J, M, K));
-    assert!(!point_in_triangle(F, J, M, K));
-    assert!(!point_in_triangle(I, J, M, K));
-    assert!(!point_in_triangle(D, J, M, K));
+    assert!(point_in_triangle(D, [A, B, C]));
+    assert!(!point_in_triangle(E, [A, B, C]));
+    assert!(point_in_triangle(F, [A, B, C]));
+    assert!(point_in_triangle(G, [A, B, C]));
+    assert!(point_in_triangle(H, [A, B, C]));
+    assert!(!point_in_triangle(I, [A, B, C]));
+    assert!(!point_in_triangle(J, [A, B, C]));
+    assert!(!point_in_triangle(K, [A, B, C]));
+    assert!(!point_in_triangle(L, [A, B, C]));
+    assert!(!point_in_triangle(M, [A, B, C]));
+    assert!(!point_in_triangle(N, [A, B, C]));
+    assert!(point_in_triangle(O, [A, B, C]));
+    assert!(point_in_triangle(A, [J, M, K]));
+    assert!(point_in_triangle(N, [J, M, K]));
+    assert!(point_in_triangle(H, [J, M, K]));
+    assert!(!point_in_triangle(F, [J, M, K]));
+    assert!(!point_in_triangle(I, [J, M, K]));
+    assert!(!point_in_triangle(D, [J, M, K]));
 }

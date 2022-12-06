@@ -365,7 +365,8 @@ pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> bool {
     let t = (q - p).perp_dot(s);
     let u = (q - p).perp_dot(r);
 
-    t >= 0.0 && u >= 0.0 && t <= rs && u <= rs
+    (rs > 0.0 && (t > 0.0 && u > 0.0 && t < rs && u < rs))
+        || (t < 0.0 && u < 0.0 && t > rs && u > rs)
 }
 
 fn point_in_transformed_triangles(
