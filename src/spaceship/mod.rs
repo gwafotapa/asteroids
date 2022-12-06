@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::{
     blast::Blast,
     collision::{
-        math::{point_in_triangle, Triangle},
+        math::{point_in_triangle, triangle::Triangle},
         Aabb,
         //Impact,
         Collider,

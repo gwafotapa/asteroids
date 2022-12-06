@@ -1,149 +1,7 @@
-// Triangle devrait etre constitue de Vec3 etant donne que ce code est base sur bevy
-// Les modifications doivent etre apportees aux fonctions en consequences :
-// Attention aux calculs de normes, produits scalaires et vectoriels
-// Ou alors Triangle est constitue de Vec2 et implemente le trait From<Vec3> ?
-// Dans le premier cas, faut-il suffixer les fonctions "_2d" ? ou le fichier math2d.rs ?
-
 use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
+use triangle::TriangleXY;
 
-#[derive(Clone, Copy)]
-pub struct Triangle(pub Vec3, pub Vec3, pub Vec3);
-
-impl Triangle {
-    pub fn to_array(&self) -> [Vec3; 3] {
-        [self.0, self.1, self.2]
-    }
-    //     // fn new(a: Vec3, b: Vec3, c: Vec3) -> Triangle {
-    //     //     Triangle(a, b, c)
-    //     // }
-
-    fn xy(&self) -> TriangleXY {
-        TriangleXY(self.0.truncate(), self.1.truncate(), self.2.truncate())
-    }
-}
-
-// impl From<[Vec3; 3]> for Triangle {
-//     fn from(array: [Vec3; 3]) -> Triangle {
-//         Triangle(array[0], array[1], array[2])
-//     }
-// }
-
-// impl From<&[Vec3; 3]> for Triangle {
-//     fn from(array: &[Vec3; 3]) -> Triangle {
-//         Triangle(array[0], array[1], array[2])
-//     }
-// }
-
-// impl From<[[f32; 3]; 3]> for Triangle {
-//     fn from(array: [[f32; 3]; 3]) -> Triangle {
-//         Triangle(
-//             Vec3::from(array[0]),
-//             Vec3::from(array[1]),
-//             Vec3::from(array[2]),
-//         )
-//     }
-// }
-
-// impl From<&[[f32; 3]; 3]> for Triangle {
-//     fn from(array: &[[f32; 3]; 3]) -> Triangle {
-//         Triangle(
-//             Vec3::from(array[0]),
-//             Vec3::from(array[1]),
-//             Vec3::from(array[2]),
-//         )
-//     }
-// }
-
-#[derive(Clone, Copy)]
-pub struct TriangleXY(Vec2, Vec2, Vec2);
-
-impl TriangleXY {
-    fn to_array(&self) -> [Vec2; 3] {
-        [self.0, self.1, self.2]
-    }
-}
-
-impl From<[Vec2; 3]> for TriangleXY {
-    fn from(array: [Vec2; 3]) -> TriangleXY {
-        TriangleXY(array[0], array[1], array[2])
-    }
-}
-
-impl From<[[f32; 2]; 3]> for TriangleXY {
-    fn from(array: [[f32; 2]; 3]) -> TriangleXY {
-        TriangleXY(
-            Vec2::from(array[0]),
-            Vec2::from(array[1]),
-            Vec2::from(array[2]),
-        )
-    }
-}
-
-impl From<[Vec3; 3]> for TriangleXY {
-    fn from(array: [Vec3; 3]) -> TriangleXY {
-        TriangleXY(
-            array[0].truncate(),
-            array[1].truncate(),
-            array[2].truncate(),
-        )
-    }
-}
-
-impl From<[[f32; 3]; 3]> for TriangleXY {
-    fn from(array: [[f32; 3]; 3]) -> TriangleXY {
-        TriangleXY(
-            Vec3::from(array[0]).truncate(),
-            Vec3::from(array[1]).truncate(),
-            Vec3::from(array[2]).truncate(),
-        )
-    }
-}
-
-impl From<Triangle> for TriangleXY {
-    fn from(triangle: Triangle) -> TriangleXY {
-        triangle.xy()
-    }
-}
-
-// trait Triangle2D {
-//     fn a(&self) -> Vec2;
-//     fn b(&self) -> Vec2;
-//     fn c(&self) -> Vec2;
-//     fn abc(&self) -> [Vec2; 3] {
-//         [self.a(), self.b(), self.c()]
-//     }
-//     fn triangle2D(&self) -> TriangleXY {
-//         TriangleXY::from(self.abc())
-//     }
-// }
-
-// impl Triangle2D for TriangleXY {
-//     fn a(&self) -> Vec2 {
-//         self.0
-//     }
-
-//     fn b(&self) -> Vec2 {
-//         self.1
-//     }
-
-//     fn c(&self) -> Vec2 {
-//         self.2
-//     }
-// }
-
-// impl Triangle2D for Triangle {
-//     fn a(&self) -> Vec2 {
-//         self.0.truncate()
-//     }
-
-//     fn b(&self) -> Vec2 {
-//         self.1.truncate()
-//     }
-
-//     fn c(&self) -> Vec2 {
-//         self.2.truncate()
-//     }
-// }
+pub mod triangle;
 
 #[derive(Clone, Component)]
 pub struct Collider {
@@ -169,6 +27,7 @@ pub fn point_in_rectangle(p: Vec2, c: Vec2, x: f32, y: f32) -> bool {
     p.x >= c.x - x && p.x <= c.x + x && p.y >= c.y - y && p.y <= c.y + y
 }
 
+// http://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html
 pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     let t = t.into();
     let denominator = (t.1.y - t.2.y) * (t.0.x - t.2.x) + (t.2.x - t.1.x) * (t.0.y - t.2.y);
@@ -179,9 +38,9 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
 }
 
-pub fn rectangles_intersect(position1: Vec2, aabb1: Aabb, position2: Vec2, aabb2: Aabb) -> bool {
-    let intersect_x = (position1.x - position2.x).abs() <= aabb1.hw + aabb2.hw;
-    let intersect_y = (position1.y - position2.y).abs() <= aabb1.hh + aabb2.hh;
+pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aabb) -> bool {
+    let intersect_x = (center1.x - center2.x).abs() <= aabb1.hw + aabb2.hw;
+    let intersect_y = (center1.y - center2.y).abs() <= aabb1.hh + aabb2.hh;
 
     return intersect_x && intersect_y;
 }
