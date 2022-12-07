@@ -83,10 +83,7 @@ pub const TRIANGLES: [Triangle; 4] = [
     Triangle(S5, S6, S7),
     Triangle(S8, S7, S6),
 ];
-const AABB: Aabb = Aabb {
-    hw: -S5.x,
-    hh: S4.y,
-};
+const AABB: Aabb = Aabb { hw: S2.x, hh: S4.y };
 // pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
 // const TRIANGLELIST: [[f32; 3]; 6] = [
 //     [40.0, -5.0, 0.0],
