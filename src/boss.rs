@@ -11,7 +11,7 @@ use crate::{
     blast::Blast,
     collision::{
         impact::Impact,
-        math::{self},
+        math::{self, triangle::Triangle},
         Aabb, Collider, Topology,
     },
     // compass::Compass,
@@ -153,13 +153,13 @@ pub struct Attack(Vec3);
 
 // The body is a collection of 6 triangles. It is a single part of the boss.
 const CORE_PARTS: usize = 6;
-const CORE_TRIANGLES: [[Vec3; 3]; CORE_PARTS] = [
-    [A1, A3, A15],
-    [A3, A13, A15],
-    [A3, A11, A13],
-    [A3, A5, A11],
-    [A5, A9, A11],
-    [A5, A7, A9],
+const CORE_TRIANGLES: [Triangle; CORE_PARTS] = [
+    Triangle(A1, A3, A15),
+    Triangle(A3, A13, A15),
+    Triangle(A3, A11, A13),
+    Triangle(A3, A5, A11),
+    Triangle(A5, A9, A11),
+    Triangle(A5, A7, A9),
 ];
 
 // There are 8 egdes.
@@ -180,7 +180,7 @@ const E3: Vec3 = Vec3 {
     y: 0.0,
     z: 0.0,
 };
-// const EDGE: [Triangle; 1] = [[E1, E2, E3]];
+const EDGE_TRIANGLE: Triangle = Triangle(E1, E2, E3);
 
 // pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
 //     let mut triangles = Vec::new();
@@ -214,8 +214,8 @@ pub fn spawn(
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     let vertices_position: Vec<[f32; 3]> = CORE_TRIANGLES
         .iter()
-        .flatten()
-        .map(|x| x.to_array())
+        .flat_map(|triangle| triangle.to_array())
+        .map(|vertex| vertex.to_array())
         .collect();
     // let vertices_normal = vec![[0.0, 0.0, 1.0]; 3 * CORE_PARTS];
     // let vertices_uv = vec![[0.0, 0.0]; 3 * CORE_PARTS];
@@ -248,7 +248,8 @@ pub fn spawn(
     // Add the edges
     for i in 0..EDGES {
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position = vec![E1.to_array(), E2.to_array(), E3.to_array()];
+        let vertices_position = EDGE_TRIANGLE.to_array().to_vec();
+        // vec![E1.to_array(), E2.to_array(), E3.to_array()];
         // let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
         // let vertices_uv = vec![[0.0, 0.0]; 3];
 
