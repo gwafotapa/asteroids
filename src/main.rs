@@ -24,12 +24,14 @@ fn main() {
         .add_startup_system(camera::spawn)
         .add_startup_system(spaceship::spawn)
         .add_startup_system(boss::spawn)
-        .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::spawn)
+        .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::front_spawn)
+        .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::rear_spawn)
         .add_startup_system_to_stage(StartupStage::PostStartup, compass::setup)
         .add_startup_system(map::setup)
         .add_system(bevy::window::close_on_esc)
         .add_system(map::update)
-        .add_system(spaceship::flame::update)
+        .add_system(spaceship::flame::front_update)
+        .add_system(spaceship::flame::rear_update)
         .add_system(collision::impact::update) // Stage of this and despawn ?
         .add_system(debris::update)
         .add_system_set(

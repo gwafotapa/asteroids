@@ -66,22 +66,43 @@ const S8: Vec3 = Vec3 {
     y: 20.0 - SG.y,
     z: 0.0 - SG.z,
 };
-// const MIDPOINT_AB: Vec3 = Vec3 {
-//     x: (A.x + B.x) / 2.0,
-//     y: (A.y + B.y) / 2.0,
-//     z: (A.z + B.z) / 2.0,
-// };
-// const MIDPOINT_DB: Vec3 = Vec3 {
-//     x: (D.x + B.x) / 2.0,
-//     y: (D.y + B.y) / 2.0,
-//     z: (D.z + B.z) / 2.0,
-// };
-// pub const TRIANGLE_LIST: [Vec3; 12] = [A, B, C, D, C, B, E, O, F, G, F, O];
-pub const TRIANGLES: [Triangle; 4] = [
+const S9: Vec3 = Vec3 {
+    x: 8.0,
+    y: 16.0,
+    z: 0.0 - SG.z,
+};
+const S10: Vec3 = Vec3 {
+    x: 8.0,
+    y: 22.0,
+    z: 0.0 - SG.z,
+};
+const S11: Vec3 = Vec3 {
+    x: -4.0,
+    y: 22.0,
+    z: 0.0 - SG.z,
+};
+const S12: Vec3 = Vec3 {
+    x: -4.0,
+    y: -22.0,
+    z: 0.0 - SG.z,
+};
+const S13: Vec3 = Vec3 {
+    x: 8.0,
+    y: -22.0,
+    z: 0.0 - SG.z,
+};
+const S14: Vec3 = Vec3 {
+    x: 8.0,
+    y: -16.0,
+    z: 0.0 - SG.z,
+};
+pub const TRIANGLES: [Triangle; 6] = [
     Triangle(S1, S2, S3),
     Triangle(S4, S3, S2),
     Triangle(S5, S6, S7),
     Triangle(S8, S7, S6),
+    Triangle(S9, S10, S11),
+    Triangle(S12, S13, S14),
 ];
 const AABB: Aabb = Aabb { hw: S2.x, hh: S4.y };
 // pub const ENVELOP: [Vec3; 7] = [E, A, B, D, G, MIDPOINT_AB, MIDPOINT_DB];
@@ -392,17 +413,17 @@ pub fn advance(
     // }
 
     if let Ok((_s_id, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
-        if keys.any_pressed([KeyCode::H, KeyCode::Left]) {
+        if keys.any_pressed([KeyCode::K, KeyCode::Left]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
             s_transform.rotation *= rotation;
             // c_transform.rotation *= rotation;
-        } else if keys.any_pressed([KeyCode::L, KeyCode::Right]) {
+        } else if keys.any_pressed([KeyCode::M, KeyCode::Right]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
             s_transform.rotation *= rotation;
             // c_transform.rotation *= rotation;
         }
 
-        if keys.any_pressed([KeyCode::K, KeyCode::Up]) {
+        if keys.any_pressed([KeyCode::O, KeyCode::Up]) {
             // accelerate(&*s_transform, &mut s_velocity);
 
             let direction = s_transform.rotation * Vec3::X;
@@ -410,7 +431,7 @@ pub fn advance(
             // if s_velocity.0.length() > SPEED_MAX {
             //     s_velocity.0 = SPEED_MAX * s_velocity.0.normalize();
             // }
-        } else if keys.any_pressed([KeyCode::J, KeyCode::Down]) {
+        } else if keys.any_pressed([KeyCode::L, KeyCode::Down]) {
             // decelerate(&*s_transform, &mut s_velocity);
             let direction = s_transform.rotation * Vec3::NEG_X;
             s_velocity.0 += 0.5 * ACCELERATION * direction;
