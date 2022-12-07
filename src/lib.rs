@@ -28,6 +28,3 @@ pub struct Velocity(Vec3);
 
 #[derive(Component)]
 pub struct Health(i32);
-
-#[derive(Component)]
-pub struct Enemy;

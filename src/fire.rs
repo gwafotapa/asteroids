@@ -9,6 +9,9 @@ pub struct Fire {
     pub impact_vertices: usize,
 }
 
+#[derive(Component)]
+pub struct Enemy;
+
 pub fn update(mut query: Query<(&Fire, &mut Health, &mut Transform, &Velocity)>) {
     for (fire, mut health, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;

@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use crate::{
     asteroid::Asteroid,
     boss::{BossCore, BossEdge},
-    fire::Fire,
+    fire::{Enemy, Fire},
     spaceship::Spaceship,
-    Enemy, Health,
+    Health,
 };
 
 use impact::Impact;
