@@ -47,8 +47,8 @@ pub fn spaceship_and_asteroid(
             //     *s_aabb,
             // ) {
             if math::collision(
-                &a_transform.compute_transform(),
-                s_transform,
+                a_transform.compute_transform(),
+                *s_transform,
                 a_collider,
                 s_collider,
                 Some(&meshes),
@@ -86,8 +86,8 @@ pub fn fire_and_asteroid(
             //     &a_transform.compute_transform(),
             //     asteroid.radius,
             if math::collision(
-                f_transform,
-                &a_transform.compute_transform(),
+                *f_transform,
+                a_transform.compute_transform(),
                 f_collider,
                 a_collider,
                 None,
@@ -173,8 +173,8 @@ pub fn fire_and_boss(
             //     vertices,
             //     bp_collider.aabb,
             if math::collision(
-                f_transform,
-                &bp_transform,
+                *f_transform,
+                bp_transform,
                 f_collider,
                 bp_collider,
                 Some(&meshes),
@@ -261,8 +261,8 @@ pub fn fire_and_spaceship(
             //     vertices,
             //     s_collider.aabb,
             if math::collision(
-                f_transform,
-                s_transform,
+                *f_transform,
+                *s_transform,
                 f_collider,
                 s_collider,
                 Some(&meshes),
@@ -325,8 +325,8 @@ pub fn spaceship_and_boss(
             //     b_vertices,
             //     b_collider.aabb,
             if math::collision(
-                s_transform,
-                &b_transform.compute_transform(),
+                *s_transform,
+                b_transform.compute_transform(),
                 s_collider,
                 b_collider,
                 Some(&meshes),

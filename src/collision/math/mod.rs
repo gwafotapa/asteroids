@@ -185,8 +185,8 @@ pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> bool {
 }
 
 fn point_in_transformed_triangles(
-    point: &Transform,
-    triangles_transform: &Transform,
+    point: Transform,
+    triangles_transform: Transform,
     vertices: &[[f32; 3]],
 ) -> bool {
     let mut iter = vertices.chunks_exact(3);
@@ -207,8 +207,8 @@ fn point_in_transformed_triangles(
 }
 
 fn transformed_triangles_intersect(
-    t1: &Transform,
-    t2: &Transform,
+    t1: Transform,
+    t2: Transform,
     vertices1: &[[f32; 3]],
     vertices2: &[[f32; 3]],
 ) -> bool {
@@ -243,9 +243,9 @@ fn transformed_triangles_intersect(
 }
 
 fn disk_intersects_transformed_triangles(
-    disk: &Transform,
+    disk: Transform,
     radius: f32,
-    triangles_transform: &Transform,
+    triangles_transform: Transform,
     vertices: &[[f32; 3]],
 ) -> bool {
     let mut iter = vertices.chunks_exact(3);
@@ -267,8 +267,8 @@ fn disk_intersects_transformed_triangles(
 }
 
 pub fn collision(
-    t1: &Transform,
-    t2: &Transform,
+    t1: Transform,
+    t2: Transform,
     c1: &Collider,
     c2: &Collider,
     meshes: Option<&Assets<Mesh>>,
