@@ -34,13 +34,13 @@ pub fn spawn(
         .spawn(Asteroid { radius })
         .insert(Health(health))
         // .insert(Velocity(velocity))
-        // .insert(Topology::Circle)
+        // .insert(Topology::Disk)
         .insert(Collider {
             aabb: Aabb {
                 hw: radius,
                 hh: radius,
             },
-            topology: Topology::Circle { radius },
+            topology: Topology::Disk { radius },
         })
         .insert(ColorMesh2dBundle {
             mesh: meshes
@@ -81,7 +81,7 @@ pub fn spawn(
 //             .insert(Health(health))
 //             .insert(Velocity(velocity))
 //             .insert(Surface {
-//                 topology: Topology::Circle(radius),
+//                 topology: Topology::Disk(radius),
 //                 aabb: Aabb {
 //                     hw: radius,
 //                     hh: radius,
