@@ -134,8 +134,11 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
 
     // We have an intersection for each root of the trinomial in [0,1],
     // i.e. when 0 <= t1/(2a) <= 1 or 0 <= t2/(2a) <= 1
-    (a > 0.0 && ((0.0..2.0 * a).contains(&t1) || (0.0..2.0 * a).contains(&t2)))
-        || (a < 0.0 && ((2.0 * a..0.0).contains(&t1) || (2.0 * a..0.0).contains(&t2)))
+    if a > 0.0 {
+        (0.0..2.0 * a).contains(&t1) || (0.0..2.0 * a).contains(&t2)
+    } else {
+        (2.0 * a..0.0).contains(&t1) || (2.0 * a..0.0).contains(&t2)
+    }
 }
 
 // Determines if the disk of center o and radius r intersects the CCW triangle abc

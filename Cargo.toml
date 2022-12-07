@@ -26,5 +26,5 @@ name = "point_in_triangle"
 harness = false
 
 [[bench]]
-name = "circle_intersects_line_segment"
+name = "disk_intersects_line_segment"
 harness = false

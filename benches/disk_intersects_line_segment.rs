@@ -31,23 +31,18 @@ const INPUTS: [(Vec2, f32, Vec2, Vec2); 7] = [
 ];
 
 fn benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("circle_intersects_line_segment");
+    let mut group = c.benchmark_group("disk_intersects_line_segment");
     let mut count = 0;
     for input in INPUTS {
         group.bench_with_input(
-            BenchmarkId::new("original", format!("input #{}", count)),
+            BenchmarkId::from_parameter(format!("input #{}", count)),
             &input,
-            |b, &(c, r, m, n)| b.iter(|| math::circle_intersects_line_segment(c, r, m, n)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("alternative", format!("input #{}", count)),
-            &input,
-            |b, &(c, r, m, n)| b.iter(|| math::circle_intersects_line_segment_bis(c, r, m, n)),
+            |b, &(c, r, m, n)| b.iter(|| math::disk_intersects_line_segment(c, r, m, n)),
         );
         count += 1;
     }
     group.finish();
 }
 
-criterion_group!(benches, benchmark,);
+criterion_group!(benches, benchmark);
 criterion_main!(benches);
