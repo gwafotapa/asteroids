@@ -1,7 +1,8 @@
-use bevy::prelude::*;
+use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
+const SIZE: f32 = 24.0;
 const COLOR_HIGHLIGHTED: Color = Color::ORANGE_RED;
 const COLOR_DEFAULT: Color = Color::GRAY;
 const PAUSE_MENU_ITEMS: usize = 2;
@@ -63,7 +64,7 @@ pub fn pause_menu_spawn(mut commands: Commands, asset_server: Res<AssetServer>) 
                 "Resume",
                 TextStyle {
                     font: font.clone(),
-                    font_size: 24.0,
+                    font_size: SIZE,
                     color: COLOR_HIGHLIGHTED,
                 },
             ),
@@ -79,11 +80,11 @@ pub fn pause_menu_spawn(mut commands: Commands, asset_server: Res<AssetServer>) 
                 "Exit Game",
                 TextStyle {
                     font,
-                    font_size: 24.0,
+                    font_size: SIZE,
                     color: COLOR_DEFAULT,
                 },
             ),
-            style: item_style.clone(),
+            style: item_style,
             ..Default::default()
         })
         .id();
@@ -98,6 +99,7 @@ pub fn pause_menu(
     mut query_camera: Query<&mut UiCameraConfig>,
     mut query_menu: Query<(&Children, &mut PauseMenu)>,
     mut query_item: Query<&mut Text, With<PauseMenuItem>>,
+    mut exit: EventWriter<AppExit>,
 ) {
     let mut camera = query_camera.single_mut();
     if game_state.0 == GameState::InGame && input.just_pressed(KeyCode::P) {
@@ -143,7 +145,9 @@ pub fn pause_menu(
                     commands.insert_resource(NextState(GameState::InGame));
                     camera.show_ui = false;
                 }
-                1 => {}
+                1 => {
+                    exit.send(AppExit);
+                }
                 _ => unreachable!(),
             }
         }
