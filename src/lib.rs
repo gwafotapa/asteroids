@@ -9,8 +9,11 @@ pub mod collision;
 pub mod compass;
 pub mod debris;
 pub mod fire;
+pub mod gamestate;
 pub mod map;
 pub mod spaceship;
+
+pub use gamestate::GameState;
 
 const PLANE_Z: f32 = 500.0;
 // pub const WINDOW_WIDTH: f32 = 1920.0;
