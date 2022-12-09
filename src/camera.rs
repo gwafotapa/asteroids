@@ -23,7 +23,8 @@ pub fn spawn(mut commands: Commands) {
             transform: Transform::from_xyz(WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, CAMERA_Z),
             ..default()
         })
-        .insert(CameraPositioning::Center);
+        .insert(CameraPositioning::Center)
+        .insert(UiCameraConfig { show_ui: false });
 }
 
 pub fn update(

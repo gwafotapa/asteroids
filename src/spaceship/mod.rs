@@ -397,7 +397,7 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spac
     }
 }
 
-pub fn advance(
+pub fn movement(
     // commands: Commands,
     // meshes: ResMut<Assets<Mesh>>,
     // materials: ResMut<Assets<ColorMaterial>>,

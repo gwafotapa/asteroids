@@ -292,7 +292,7 @@ pub fn spawn(
     // }
 }
 
-pub fn advance(
+pub fn movement(
     mut query_boss: Query<(&BossCore, &mut Transform, &mut Velocity)>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<BossCore>)>,
 ) {
