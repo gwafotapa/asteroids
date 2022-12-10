@@ -29,8 +29,9 @@ pub fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
             // background_color: BackgroundColor(Color::rgb(0.5, 0.5, 0.5)),
             background_color: BACKGROUND_COLOR.into(),
             style: Style {
-                // size: Size::new(Val::Auto, Val::Percent(100.0)),
-                size: Size::new(Val::Auto, Val::Auto),
+                // size: Size::new(Val::Auto, Val::Auto),
+                // size: Size::new(Val::Auto, Val::Auto),
+                // position_type: PositionType::Absolute,
                 margin: UiRect::all(Val::Auto),
                 // padding: UiRect::all(Val::Px(300.0)),
                 // margin: UiRect::all(Val::Px(100.0)),
@@ -91,10 +92,10 @@ pub fn update(
     mut query_item: Query<&mut Text, With<MainMenuItem>>,
     mut exit: EventWriter<AppExit>,
 ) {
-    let mut camera = query_camera.single_mut();
     if game_state.0 != GameState::MainMenu {
         panic!("Trying to update the main menu in the wrong game state");
     }
+    let mut camera = query_camera.single_mut();
     let (children, id, mut menu) = query_menu.single_mut();
     if input.any_just_pressed([KeyCode::Up, KeyCode::O]) {
         if menu.0 > 0 {
@@ -119,9 +120,9 @@ pub fn update(
     } else if input.any_just_pressed([KeyCode::Return, KeyCode::R]) {
         match menu.0 {
             0 => {
+                commands.entity(id).despawn_recursive();
                 commands.insert_resource(NextState(GameState::PreGame));
                 camera.show_ui = false;
-                commands.entity(id).despawn_recursive();
             }
             1 => {
                 exit.send(AppExit);

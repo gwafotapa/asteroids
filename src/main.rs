@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
 fn main() {
+    static SPAWN: &str = "spawn";
     static DESPAWN: &str = "despawn";
     static CLEANUP: &str = "cleanup";
 
@@ -18,20 +19,21 @@ fn main() {
             },
             ..default()
         }))
-        .add_loopless_state(gamestate::GameState::MainMenu)
+        // .add_stage_before(CoreStage::Update, SPAWN, SystemStage::parallel())
         .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
         .add_stage_after(CLEANUP, DESPAWN, SystemStage::parallel())
         .add_startup_system(camera::spawn)
-        .add_startup_system(gamestate::main_menu::spawn)
+        .add_loopless_state(game_state::GameState::MainMenu)
+        .add_enter_system(GameState::MainMenu, game_state::main_menu::spawn)
         .add_system(bevy::window::close_on_esc)
-        .add_system(gamestate::main_menu::update.run_in_state(GameState::MainMenu))
+        .add_system(game_state::main_menu::update.run_in_state(GameState::MainMenu))
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::PreGame)
-                .label("Game Setup 0")
+                .label("PreGame 0")
+                .with_system(game_state::pause_menu::spawn)
                 .with_system(spaceship::spawn)
                 .with_system(boss::spawn)
-                .with_system(gamestate::pause_menu::spawn)
                 .with_system(map::setup)
                 .into(),
         )
@@ -39,19 +41,15 @@ fn main() {
             CLEANUP,
             ConditionSet::new()
                 .run_in_state(GameState::PreGame)
-                .label("Game Setup 1")
-                .after("Game Setup 0")
+                .label("PreGame 1")
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
                 .with_system(compass::setup)
-                .with_system(gamestate::from_pregame_to_ingame)
+                .with_system(game_state::from_pregame_to_ingame)
                 .into(),
         )
-        .add_system(
-            gamestate::pause_menu::update
-                .run_not_in_state(GameState::MainMenu)
-                .run_not_in_state(GameState::PreGame),
-        )
+        .add_system(game_state::pause_menu::in_game.run_in_state(GameState::InGame))
+        .add_system(game_state::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
