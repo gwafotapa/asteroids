@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
 fn main() {
-    static SPAWN: &str = "spawn";
+    // static SPAWN: &str = "spawn";
     static DESPAWN: &str = "despawn";
     static CLEANUP: &str = "cleanup";
 
@@ -27,25 +27,25 @@ fn main() {
         .add_enter_system(GameState::MainMenu, game_state::main_menu::spawn)
         .add_system(bevy::window::close_on_esc)
         .add_system(game_state::main_menu::update.run_in_state(GameState::MainMenu))
-        .add_system_set(
+        .add_enter_system_set(
+            GameState::GameSetup,
             ConditionSet::new()
-                .run_in_state(GameState::PreGame)
-                .label("PreGame 0")
+                // .run_in_state(GameState::GameSetup)
+                .label("GameSetup -1")
                 .with_system(game_state::pause_menu::spawn)
                 .with_system(spaceship::spawn)
                 .with_system(boss::spawn)
                 .with_system(map::setup)
                 .into(),
         )
-        .add_system_set_to_stage(
-            CLEANUP,
+        .add_system_set(
             ConditionSet::new()
-                .run_in_state(GameState::PreGame)
-                .label("PreGame 1")
+                .run_in_state(GameState::GameSetup)
+                .label("GameSetup")
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
                 .with_system(compass::setup)
-                .with_system(game_state::from_pregame_to_ingame)
+                .with_system(game_state::from_gamesetup_to_ingame)
                 .into(),
         )
         .add_system(game_state::pause_menu::in_game.run_in_state(GameState::InGame))
@@ -56,6 +56,8 @@ fn main() {
                 .label("free")
                 .with_system(map::update)
                 .with_system(debris::update)
+                .with_system(dim_light)
+                .with_system(game_state::game_cleanup)
                 .into(),
         )
         .add_system_set(
@@ -108,7 +110,7 @@ fn main() {
         .add_system(
             camera::update
                 .run_not_in_state(GameState::MainMenu)
-                .run_not_in_state(GameState::PreGame)
+                .run_not_in_state(GameState::GameSetup)
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
@@ -126,7 +128,6 @@ fn main() {
                 .with_system(boss::explode)
                 .with_system(blast::update)
                 // .with_system(fire::explode)
-                .with_system(dim_light)
                 .into(),
         )
         .add_system_set_to_stage(

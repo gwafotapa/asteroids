@@ -121,7 +121,7 @@ pub fn update(
         match menu.0 {
             0 => {
                 commands.entity(id).despawn_recursive();
-                commands.insert_resource(NextState(GameState::PreGame));
+                commands.insert_resource(NextState(GameState::GameSetup));
                 camera.show_ui = false;
             }
             1 => {

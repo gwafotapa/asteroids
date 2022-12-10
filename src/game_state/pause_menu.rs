@@ -185,6 +185,7 @@ pub fn paused(
                 camera.show_ui = false;
             }
             1 => {
+                // commands.insert_resource(NextState(GameState::GameCleanup));
                 commands.insert_resource(NextState(GameState::MainMenu));
                 // *visibility = Visibility::INVISIBLE;
                 for id in &query_all {
