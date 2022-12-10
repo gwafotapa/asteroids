@@ -126,6 +126,7 @@ fn main() {
                 .with_system(boss::explode)
                 .with_system(blast::update)
                 // .with_system(fire::explode)
+                .with_system(dim_light)
                 .into(),
         )
         .add_system_set_to_stage(
