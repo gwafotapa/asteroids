@@ -1,17 +1,14 @@
 use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
+use super::GameState;
+
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
 const COLOR_HIGHLIGHTED: Color = Color::ORANGE_RED;
 const COLOR_DEFAULT: Color = Color::GRAY;
 const PAUSE_MENU_ITEMS: usize = 2;
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum GameState {
-    InGame,
-    Paused,
-}
+const BACKGROUND_COLOR: Color = Color::NONE;
 
 #[derive(Clone, Component, Copy, Debug)]
 pub struct PauseMenu(pub usize);
@@ -19,7 +16,7 @@ pub struct PauseMenu(pub usize);
 #[derive(Clone, Component, Copy, Debug)]
 pub struct PauseMenuItem;
 
-pub fn pause_menu_spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load(FONT);
     // let item_textstyle = TextStyle {
     //     font,
@@ -39,7 +36,7 @@ pub fn pause_menu_spawn(mut commands: Commands, asset_server: Res<AssetServer>) 
         .spawn(PauseMenu(0))
         .insert(NodeBundle {
             // background_color: BackgroundColor(Color::rgb(0.5, 0.5, 0.5)),
-            background_color: Color::NONE.into(),
+            background_color: BACKGROUND_COLOR.into(),
             style: Style {
                 // size: Size::new(Val::Auto, Val::Percent(100.0)),
                 size: Size::new(Val::Auto, Val::Auto),
@@ -92,7 +89,7 @@ pub fn pause_menu_spawn(mut commands: Commands, asset_server: Res<AssetServer>) 
     commands.entity(pause_menu).push_children(&[resume, exit]);
 }
 
-pub fn pause_menu(
+pub fn update(
     input: Res<Input<KeyCode>>,
     game_state: Res<CurrentState<GameState>>,
     mut commands: Commands,

@@ -18,21 +18,40 @@ fn main() {
             },
             ..default()
         }))
-        // .add_plugin(flame::ColoredMesh2dPlugin)
-        .add_loopless_state(gamestate::GameState::InGame)
+        .add_loopless_state(gamestate::GameState::MainMenu)
         .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
-        // .add_stage_after(CLEANUP, DESPAWN, SystemStage::single_threaded())
         .add_stage_after(CLEANUP, DESPAWN, SystemStage::parallel())
         .add_startup_system(camera::spawn)
-        .add_startup_system(spaceship::spawn)
-        .add_startup_system(boss::spawn)
-        .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::front_spawn)
-        .add_startup_system_to_stage(StartupStage::PostStartup, spaceship::flame::rear_spawn)
-        .add_startup_system_to_stage(StartupStage::PostStartup, compass::setup)
-        .add_startup_system(gamestate::pause_menu_spawn)
-        .add_startup_system(map::setup)
-        .add_system(gamestate::pause_menu)
+        .add_startup_system(gamestate::main_menu::spawn)
         .add_system(bevy::window::close_on_esc)
+        .add_system(gamestate::main_menu::update.run_in_state(GameState::MainMenu))
+        .add_system_set(
+            ConditionSet::new()
+                .run_in_state(GameState::PreGame)
+                .label("Game Setup 0")
+                .with_system(spaceship::spawn)
+                .with_system(boss::spawn)
+                .with_system(gamestate::pause_menu::spawn)
+                .with_system(map::setup)
+                .into(),
+        )
+        .add_system_set_to_stage(
+            CLEANUP,
+            ConditionSet::new()
+                .run_in_state(GameState::PreGame)
+                .label("Game Setup 1")
+                .after("Game Setup 0")
+                .with_system(spaceship::flame::front_spawn)
+                .with_system(spaceship::flame::rear_spawn)
+                .with_system(compass::setup)
+                .with_system(gamestate::from_pregame_to_ingame)
+                .into(),
+        )
+        .add_system(
+            gamestate::pause_menu::update
+                .run_not_in_state(GameState::MainMenu)
+                .run_not_in_state(GameState::PreGame),
+        )
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
@@ -42,7 +61,6 @@ fn main() {
                 .into(),
         )
         .add_system_set(
-            // SystemSet::new()
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
                 .label("movement")
@@ -89,8 +107,18 @@ fn main() {
                 .with_system(boss::attack) // .after(boss::movement)
                 .into(),
         )
-        .add_system(camera::update.after("movement")) // .after(spaceship::movement)
-        .add_system(compass::update.after(camera::update))
+        .add_system(
+            camera::update
+                .run_not_in_state(GameState::MainMenu)
+                .run_not_in_state(GameState::PreGame)
+                .label("camera")
+                .after("movement"),
+        ) // .after(spaceship::movement)
+        .add_system(
+            compass::update
+                .run_in_state(GameState::InGame)
+                .after("camera"),
+        )
         .add_system_set_to_stage(
             CLEANUP,
             ConditionSet::new()
@@ -99,9 +127,9 @@ fn main() {
                 .with_system(asteroid::explode) // this and despawn maybe not at this stage as long as there are no impact child.
                 .with_system(boss::explode)
                 .with_system(blast::update)
+                // .with_system(fire::explode)
                 .into(),
         )
-        // .with_system(fire::explode)
         .add_system_set_to_stage(
             DESPAWN,
             ConditionSet::new()

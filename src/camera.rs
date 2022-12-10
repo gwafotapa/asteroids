@@ -24,7 +24,7 @@ pub fn spawn(mut commands: Commands) {
             ..default()
         })
         .insert(CameraPositioning::Center)
-        .insert(UiCameraConfig { show_ui: false });
+        .insert(UiCameraConfig { show_ui: true });
 }
 
 pub fn update(
