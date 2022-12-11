@@ -55,7 +55,6 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .label("free")
                 .with_system(map::update)
-                .with_system(debris::update)
                 .with_system(dim_light)
                 .with_system(game_state::game_cleanup)
                 .into(),
@@ -140,6 +139,7 @@ fn main() {
                 .with_system(collision::impact::despawn)
                 .with_system(fire::despawn) // Not necessarily at this stage (not a child)
                 .with_system(blast::despawn)
+                .with_system(debris::scale_down)
                 .into(),
         )
         .run();

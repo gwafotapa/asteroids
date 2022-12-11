@@ -5,7 +5,7 @@ use crate::Velocity;
 #[derive(Component)]
 pub struct Debris;
 
-pub fn update(
+pub fn scale_down(
     mut commands: Commands,
     mut query: Query<(Entity, &mut Transform, &Velocity), With<Debris>>,
 ) {
