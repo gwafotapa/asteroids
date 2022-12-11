@@ -309,7 +309,7 @@ pub fn attack(
 pub fn before_despawn(
     mut commands: Commands,
     query_spaceship: Query<(Option<&Children>, &Health, &Transform), With<Spaceship>>,
-    mut query_children: Query<
+    mut query_blast_impact: Query<
         &mut Transform,
         (Or<(With<Blast>, With<Impact>)>, Without<Spaceship>),
     >,
@@ -322,7 +322,7 @@ pub fn before_despawn(
         if let Some(children) = s_children {
             for child in children {
                 if let Ok(mut child_transform) =
-                    query_children.get_component_mut::<Transform>(*child)
+                    query_blast_impact.get_component_mut::<Transform>(*child)
                 {
                     commands.entity(*child).remove::<Parent>();
                     child_transform.translation =

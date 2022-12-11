@@ -124,8 +124,8 @@ fn main() {
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
                 .with_system(spaceship::before_despawn)
-                .with_system(boss::explode)
                 .with_system(blast::before_despawn)
+                .with_system(boss::before_despawn)
                 // .with_system(asteroid::before_despawn)
                 .into(),
         )
@@ -140,6 +140,7 @@ fn main() {
                 .with_system(fire::despawn)
                 .with_system(asteroid::explode)
                 .with_system(asteroid::despawn)
+                .with_system(boss::explode)
                 .with_system(boss::despawn)
                 .with_system(collision::impact::despawn)
                 // .with_system(despawn)

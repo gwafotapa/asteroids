@@ -1,19 +1,11 @@
-use bevy::{
-    prelude::*,
-    render::mesh::{PrimitiveTopology, VertexAttributeValues},
-    sprite::Mesh2dHandle,
-};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 use rand::Rng;
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     // asteroid::Asteroid,
     blast::Blast,
-    collision::{
-        impact::Impact,
-        math::{self, triangle::Triangle},
-        Aabb, Collider, Topology,
-    },
+    collision::{impact::Impact, math::triangle::Triangle, Aabb, Collider, Topology},
     // compass::Compass,
     debris::Debris,
     fire::{Enemy, Fire},
@@ -179,7 +171,7 @@ const E3: Vec3 = Vec3 {
     y: 0.0,
     z: 0.0,
 };
-const EDGE_TRIANGLE: Triangle = Triangle(E1, E2, E3);
+const EDGE_TRIANGLES: [Triangle; 1] = [Triangle(E1, E2, E3)];
 
 // pub fn triangles_from_polygon(polygon: &[Vec3], center: Vec3) -> Vec<Vec3> {
 //     let mut triangles = Vec::new();
@@ -247,7 +239,12 @@ pub fn spawn(
     // Add the edges
     for i in 0..EDGES {
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-        let vertices_position = EDGE_TRIANGLE.to_array().to_vec();
+        let vertices_position: Vec<[f32; 3]> = EDGE_TRIANGLES
+            .iter()
+            .flat_map(|triangle| triangle.to_array())
+            .map(|vertex| vertex.to_array())
+            .collect();
+
         // vec![E1.to_array(), E2.to_array(), E3.to_array()];
         // let vertices_normal = vec![[0.0, 0.0, 1.0]; 3];
         // let vertices_uv = vec![[0.0, 0.0]; 3];
@@ -400,114 +397,116 @@ pub fn attack(
     }
 }
 
-pub fn explode(
+pub fn before_despawn(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss_part: Query<
         (
-            &Collider,
             Option<&BossEdge>,
             Option<&Children>,
             Entity,
-            &Handle<ColorMaterial>,
             &GlobalTransform,
             &Health,
-            &Mesh2dHandle,
         ),
         Or<(With<BossCore>, With<BossEdge>)>,
     >,
     mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
-    mut query_boss_core: Query<(&mut BossCore, Entity, &Velocity)>,
+    mut query_boss_core: Query<(&mut BossCore, Entity)>,
 ) {
-    if let Ok((mut core, core_entity, core_velocity)) = query_boss_core.get_single_mut() {
-        for (collider, maybe_edge, maybe_children, entity, color, transform, health, mesh) in
-            query_boss_part.iter()
-        {
+    if let Ok((mut core, core_id)) = query_boss_core.get_single_mut() {
+        for (maybe_edge, maybe_children, id, transform, health) in query_boss_part.iter() {
             if health.0 > 0 {
                 continue;
             }
 
             if maybe_edge.is_some() {
                 core.edges -= 1;
-                commands.entity(core_entity).remove_children(&[entity]);
+                commands.entity(core_id).remove_children(&[id]);
             }
 
             if let Some(children) = maybe_children {
                 for child in children {
-                    commands.entity(*child).remove::<Parent>();
                     if let Ok(mut child_transform) =
                         query_blast_impact.get_component_mut::<Transform>(*child)
                     {
+                        commands.entity(*child).remove::<Parent>();
                         child_transform.translation =
                             transform.transform_point(child_transform.translation);
                     }
                 }
             }
+        }
+    }
+}
+
+pub fn explode(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query_boss_part: Query<
+        (
+            Option<&BossCore>,
+            &Handle<ColorMaterial>,
+            &GlobalTransform,
+            &Health,
+        ),
+        Or<(With<BossCore>, With<BossEdge>)>,
+    >,
+    mut query_boss_core: Query<&Velocity, With<BossCore>>,
+) {
+    if let Ok(core_velocity) = query_boss_core.get_single_mut() {
+        for (maybe_core, color, transform, health) in query_boss_part.iter() {
+            if health.0 > 0 {
+                continue;
+            }
 
             let color = materials.get(color).unwrap().color;
             let mut rng = rand::thread_rng();
-            let mut debris: Vec<(Vec3, Vec3)> = Vec::new();
-
-            if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-                .get(&mesh.0)
-                .unwrap()
-                .attribute(Mesh::ATTRIBUTE_POSITION)
-            {
-                let mut iter = vertices.chunks_exact(3);
-                // for triangle in vertices.chunks(3) {
-                while let Some(&[a, b, c]) = iter.next() {
-                    for _ in 0..10 {
-                        let mut debris_translation;
-                        'outer: loop {
-                            debris_translation = Vec3 {
-                                x: rng.gen_range(-collider.aabb.hw..collider.aabb.hw),
-                                y: rng.gen_range(-collider.aabb.hh..collider.aabb.hh),
-                                z: 0.0,
-                            };
-                            if math::point_in_triangle(
-                                debris_translation.truncate(),
-                                // Vec3::from(triangle[0]).truncate(),
-                                // Vec3::from(triangle[1]).truncate(),
-                                // Vec3::from(triangle[2]).truncate(),
-                                [a, b, c],
-                            ) {
-                                break 'outer;
-                            }
-                        }
-                        debris_translation.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-
-                        let debris_velocity = Vec3 {
-                            x: rng.gen_range(-0.5..0.5),
-                            y: rng.gen_range(-0.5..0.5),
-                            z: 0.0,
-                        };
-
-                        debris.push((debris_translation, debris_velocity));
-                    }
-                }
+            let triangles = if maybe_core.is_some() {
+                CORE_TRIANGLES.iter()
             } else {
-                panic!("Cannot find boss' mesh to create debris.");
-            }
+                EDGE_TRIANGLES.iter()
+            };
 
-            for (translation, velocity) in debris {
-                commands
-                    .spawn(Debris)
-                    .insert(Velocity(core_velocity.0 + velocity))
-                    // .insert(Velocity(dv))
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: rng.gen_range(2.0..15.0),
-                                vertices: 8,
-                            }))
-                            .into(),
-                        transform: Transform::from_translation(
-                            transform.transform_point(translation),
-                        ),
-                        material: materials.add(color.into()),
-                        ..default()
-                    });
+            for &Triangle(a, b, c) in triangles {
+                let [ab, ac] = [(b - a).truncate(), (c - a).truncate()];
+                let area = ab.perp_dot(ac) / 2.0; // .abs() unnecessary since triangles are CCW
+
+                // Arbitrary number of debris per triangle : area/16
+                for _ in 0..(area / 16.0).round() as usize {
+                    let x = rng.gen_range(0.0..=1.0);
+                    let y = rng.gen_range(0.0..=1.0 - x);
+
+                    // Debris translation in 2d relatively to the spaceship
+                    let debris_relative_2d = a.truncate() + x * ab + y * ac;
+
+                    let debris_relative = Vec3::new(
+                        debris_relative_2d.x,
+                        debris_relative_2d.y,
+                        if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                    );
+                    let debris = transform.transform_point(debris_relative);
+
+                    let dv = Vec3 {
+                        x: rng.gen_range(-0.5..0.5),
+                        y: rng.gen_range(-0.5..0.5),
+                        z: 0.0,
+                    };
+
+                    commands
+                        .spawn(Debris)
+                        .insert(Velocity(core_velocity.0 + dv))
+                        .insert(ColorMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: rng.gen_range(2.0..15.0),
+                                    vertices: 8,
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(debris),
+                            material: materials.add(color.into()),
+                            ..default()
+                        });
+                }
             }
         }
     }
