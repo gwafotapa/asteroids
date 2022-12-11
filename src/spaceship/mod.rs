@@ -349,42 +349,46 @@ pub fn explode(
         let color = materials.get(s_color).unwrap().color;
         let mut rng = rand::thread_rng();
 
-        for _ in 1..100 {
-            let mut debris_translation_ship; // Translation of the debris relative to the spaceship
-            'outer: loop {
-                debris_translation_ship = Vec3 {
-                    x: rng.gen_range(S5.x..S2.x),
-                    y: rng.gen_range(S1.y..S4.y),
+        for Triangle(a, b, c) in TRIANGLES {
+            let [ab, ac] = [(b - a).truncate(), (c - a).truncate()];
+            let area = ab.perp_dot(ac) / 2.0; // .abs() unnecessary since triangles are CCW
+                                              // println!("{}", area);
+                                              // Arbitrary number of debris per triangle : area/16
+            for _ in 0..(area / 16.0).round() as usize {
+                let x = rng.gen_range(0.0..=1.0);
+                let y = rng.gen_range(0.0..=1.0 - x);
+                // Debris translation in 2d relatively to the spaceship
+                let debris_relative_2d = a.truncate() + x * ab + y * ac;
+                // if !point_in_triangle(debris_relative_2d, [a, b, c]) {
+                //     println!("debris not in triangle");
+                // }
+                let debris_relative = Vec3::new(
+                    debris_relative_2d.x,
+                    debris_relative_2d.y,
+                    if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
+                );
+                let debris = s_transform.transform_point(debris_relative);
+                let dv = Vec3 {
+                    x: rng.gen_range(-0.5..0.5),
+                    y: rng.gen_range(-0.5..0.5),
                     z: 0.0,
                 };
-                for triangle in TRIANGLES {
-                    if point_in_triangle(debris_translation_ship.truncate(), triangle) {
-                        break 'outer;
-                    }
-                }
-            }
-            debris_translation_ship.z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-            let debris_translation = debris_translation_ship + s_transform.translation();
-            let dv = Vec3 {
-                x: rng.gen_range(-0.5..0.5),
-                y: rng.gen_range(-0.5..0.5),
-                z: 0.0,
-            };
 
-            commands
-                .spawn(Debris)
-                .insert(Velocity(s_velocity.0 + dv))
-                .insert(ColorMesh2dBundle {
-                    mesh: meshes
-                        .add(Mesh::from(shape::Circle {
-                            radius: rng.gen_range(1.0..10.0),
-                            vertices: 4 * rng.gen_range(1..5),
-                        }))
-                        .into(),
-                    transform: Transform::from_translation(debris_translation),
-                    material: materials.add(color.into()),
-                    ..default()
-                });
+                commands
+                    .spawn(Debris)
+                    .insert(Velocity(s_velocity.0 + dv))
+                    .insert(ColorMesh2dBundle {
+                        mesh: meshes
+                            .add(Mesh::from(shape::Circle {
+                                radius: rng.gen_range(1.0..10.0),
+                                vertices: 4 * rng.gen_range(1..5),
+                            }))
+                            .into(),
+                        transform: Transform::from_translation(debris),
+                        material: materials.add(color.into()),
+                        ..default()
+                    });
+            }
         }
     }
 }
