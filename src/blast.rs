@@ -5,7 +5,7 @@ use crate::Health;
 #[derive(Component)]
 pub struct Blast;
 
-pub fn update(
+pub fn before_despawn(
     mut commands: Commands,
     mut query: Query<(Entity, &mut Health, Option<&Parent>), With<Blast>>,
 ) {

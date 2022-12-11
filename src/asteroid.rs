@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{
-    collision::{Aabb, Collider, Topology},
+    collision::{impact::Impact, Aabb, Collider, Topology},
     debris::Debris,
     Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -108,35 +108,44 @@ pub fn spawn(
 //     }
 // }
 
+pub fn before_despawn(
+    mut commands: Commands,
+    query_asteroid: Query<(Option<&Children>, &GlobalTransform, &Health), With<Asteroid>>,
+    mut query_impact: Query<&mut Transform, With<Impact>>,
+) {
+    for (a_children, a_transform, a_health) in query_asteroid.iter() {
+        if a_health.0 > 0 {
+            continue;
+        }
+
+        if let Some(children) = a_children {
+            for child in children {
+                commands.entity(*child).remove::<Parent>();
+                query_impact
+                    .get_component_mut::<Transform>(*child)
+                    .unwrap()
+                    .translation += a_transform.translation();
+            }
+        }
+    }
+}
+
 pub fn explode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_asteroid: Query<(
         &Asteroid,
-        // Option<&Children>,
         &Handle<ColorMaterial>,
         &GlobalTransform,
         &Health,
         // &Velocity,
     )>,
-    // mut query_impact: Query<&mut Transform, With<Impact>>,
 ) {
-    // for (asteroid, children, color, transform, health, velocity) in query_asteroid.iter() {
     for (asteroid, color, transform, health) in query_asteroid.iter() {
         if health.0 > 0 {
             continue;
         }
-
-        // if let Some(children) = children {
-        //     for child in children {
-        //         commands.entity(*child).remove::<Parent>();
-        //         query_impact
-        //             .get_component_mut::<Transform>(*child)
-        //             .unwrap()
-        //             .translation += transform.translation();
-        //     }
-        // }
 
         let color = materials.get(color).unwrap().color;
         let mut rng = rand::thread_rng();

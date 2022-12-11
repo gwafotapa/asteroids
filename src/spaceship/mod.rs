@@ -3,13 +3,7 @@ use rand::Rng;
 
 use crate::{
     blast::Blast,
-    collision::{
-        math::{point_in_triangle, triangle::Triangle},
-        Aabb,
-        //Impact,
-        Collider,
-        Topology,
-    },
+    collision::{impact::Impact, math::triangle::Triangle, Aabb, Collider, Topology},
     debris::Debris,
     fire::Fire,
     Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
@@ -312,39 +306,43 @@ pub fn attack(
     }
 }
 
-pub fn explode(
+pub fn before_despawn(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<
-        (
-            // Option<&Children>,
-            &Handle<ColorMaterial>,
-            &GlobalTransform,
-            &Health,
-            &Velocity,
-        ),
-        With<Spaceship>,
+    query_spaceship: Query<(Option<&Children>, &Health, &Transform), With<Spaceship>>,
+    mut query_children: Query<
+        &mut Transform,
+        (Or<(With<Blast>, With<Impact>)>, Without<Spaceship>),
     >,
-    // mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
 ) {
-    // if let Ok((s_children, s_color, s_health, s_transform, s_velocity)) = query.get_single() {
-    if let Ok((s_color, s_transform, s_health, s_velocity)) = query.get_single() {
+    if let Ok((s_children, s_health, s_transform)) = query_spaceship.get_single() {
         if s_health.0 > 0 {
             return;
         }
 
-        // if let Some(children) = s_children {
-        //     for child in children {
-        //         commands.entity(*child).remove::<Parent>();
-        //         if let Ok(mut child_transform) =
-        //             query_blast_impact.get_component_mut::<Transform>(*child)
-        //         {
-        //             child_transform.translation =
-        //                 s_transform.transform_point(child_transform.translation);
-        //         }
-        //     }
-        // }
+        if let Some(children) = s_children {
+            for child in children {
+                if let Ok(mut child_transform) =
+                    query_children.get_component_mut::<Transform>(*child)
+                {
+                    commands.entity(*child).remove::<Parent>();
+                    child_transform.translation =
+                        s_transform.transform_point(child_transform.translation);
+                }
+            }
+        }
+    }
+}
+
+pub fn explode(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<(&Handle<ColorMaterial>, &Transform, &Health, &Velocity), With<Spaceship>>,
+) {
+    if let Ok((s_color, s_transform, s_health, s_velocity)) = query.get_single() {
+        if s_health.0 > 0 {
+            return;
+        }
 
         let color = materials.get(s_color).unwrap().color;
         let mut rng = rand::thread_rng();
@@ -352,22 +350,22 @@ pub fn explode(
         for Triangle(a, b, c) in TRIANGLES {
             let [ab, ac] = [(b - a).truncate(), (c - a).truncate()];
             let area = ab.perp_dot(ac) / 2.0; // .abs() unnecessary since triangles are CCW
-                                              // println!("{}", area);
-                                              // Arbitrary number of debris per triangle : area/16
+
+            // Arbitrary number of debris per triangle : area/16
             for _ in 0..(area / 16.0).round() as usize {
                 let x = rng.gen_range(0.0..=1.0);
                 let y = rng.gen_range(0.0..=1.0 - x);
+
                 // Debris translation in 2d relatively to the spaceship
                 let debris_relative_2d = a.truncate() + x * ab + y * ac;
-                // if !point_in_triangle(debris_relative_2d, [a, b, c]) {
-                //     println!("debris not in triangle");
-                // }
+
                 let debris_relative = Vec3::new(
                     debris_relative_2d.x,
                     debris_relative_2d.y,
                     if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
                 );
                 let debris = s_transform.transform_point(debris_relative);
+
                 let dv = Vec3 {
                     x: rng.gen_range(-0.5..0.5),
                     y: rng.gen_range(-0.5..0.5),
@@ -396,7 +394,7 @@ pub fn explode(
 pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
     for (entity, health) in query.iter() {
         if health.0 <= 0 {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

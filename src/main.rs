@@ -5,7 +5,7 @@ use iyes_loopless::prelude::*;
 fn main() {
     // static SPAWN: &str = "spawn";
     static DESPAWN: &str = "despawn";
-    static CLEANUP: &str = "cleanup";
+    static BEFORE_DESPAWN: &str = "cleanup";
 
     App::new()
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
@@ -20,8 +20,8 @@ fn main() {
             ..default()
         }))
         // .add_stage_before(CoreStage::Update, SPAWN, SystemStage::parallel())
-        .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
-        .add_stage_after(CLEANUP, DESPAWN, SystemStage::parallel())
+        .add_stage_after(CoreStage::Update, BEFORE_DESPAWN, SystemStage::parallel())
+        .add_stage_after(BEFORE_DESPAWN, DESPAWN, SystemStage::parallel())
         .add_startup_system(camera::spawn)
         .add_loopless_state(game_state::GameState::MainMenu)
         .add_enter_system(GameState::MainMenu, game_state::main_menu::spawn)
@@ -118,27 +118,30 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .after("camera"),
         )
+        // Remove parent/children component of an entity whose relative is about to be despawned
         .add_system_set_to_stage(
-            CLEANUP,
+            BEFORE_DESPAWN,
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
-                .with_system(spaceship::explode)
-                .with_system(asteroid::explode) // this and despawn maybe not at this stage as long as there are no impact child.
+                .with_system(spaceship::before_despawn)
                 .with_system(boss::explode)
-                .with_system(blast::update)
-                // .with_system(fire::explode)
+                .with_system(blast::before_despawn)
+                // .with_system(asteroid::before_despawn)
                 .into(),
         )
         .add_system_set_to_stage(
             DESPAWN,
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
+                .with_system(spaceship::explode)
+                .with_system(spaceship::despawn)
+                .with_system(blast::despawn)
+                // .with_system(fire::explode)
+                .with_system(fire::despawn)
+                .with_system(asteroid::explode)
                 .with_system(asteroid::despawn)
                 .with_system(boss::despawn)
-                .with_system(spaceship::despawn)
                 .with_system(collision::impact::despawn)
-                .with_system(fire::despawn) // Not necessarily at this stage (not a child)
-                .with_system(blast::despawn)
                 // .with_system(despawn)
                 .with_system(debris::scale_down)
                 .into(),
