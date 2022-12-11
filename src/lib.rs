@@ -45,3 +45,11 @@ pub fn dim_light(
         }
     }
 }
+
+pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health)>) {
+    for (id, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(id).despawn();
+        }
+    }
+}
