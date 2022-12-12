@@ -23,16 +23,16 @@ fn main() {
         .add_stage_after(CoreStage::Update, BEFORE_DESPAWN, SystemStage::parallel())
         .add_stage_after(BEFORE_DESPAWN, DESPAWN, SystemStage::parallel())
         .add_startup_system(camera::spawn)
-        .add_loopless_state(game_state::GameState::MainMenu)
-        .add_enter_system(GameState::MainMenu, game_state::main_menu::spawn)
+        .add_loopless_state(GameState::MainMenu)
+        .add_enter_system(GameState::MainMenu, ui::main_menu::spawn)
         .add_system(bevy::window::close_on_esc)
-        .add_system(game_state::main_menu::update.run_in_state(GameState::MainMenu))
+        .add_system(ui::main_menu::update.run_in_state(GameState::MainMenu))
         .add_enter_system_set(
             GameState::GameSetup,
             ConditionSet::new()
                 // .run_in_state(GameState::GameSetup)
                 .label("GameSetup -1")
-                .with_system(game_state::pause_menu::spawn)
+                .with_system(ui::pause_menu::spawn)
                 .with_system(spaceship::spawn)
                 .with_system(boss::spawn)
                 .with_system(map::setup)
@@ -45,18 +45,18 @@ fn main() {
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
                 .with_system(compass::setup)
-                .with_system(game_state::from_gamesetup_to_ingame)
+                .with_system(from_gamesetup_to_ingame)
                 .into(),
         )
-        .add_system(game_state::pause_menu::in_game.run_in_state(GameState::InGame))
-        .add_system(game_state::pause_menu::paused.run_in_state(GameState::Paused))
+        .add_system(ui::pause_menu::in_game.run_in_state(GameState::InGame))
+        .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
                 .label("free")
                 .with_system(map::update)
                 .with_system(dim_light)
-                .with_system(game_state::game_cleanup)
+                .with_system(game_cleanup)
                 .into(),
         )
         .add_system_set(
