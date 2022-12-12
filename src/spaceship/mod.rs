@@ -347,30 +347,14 @@ pub fn explode(
         let color = materials.get(s_color).unwrap().color;
         let mut rng = rand::thread_rng();
 
-        for Triangle(a, b, c) in TRIANGLES {
-            let [ab, ac] = [(b - a).truncate(), (c - a).truncate()];
-            let area = ab.perp_dot(ac) / 2.0; // .abs() unnecessary since triangles are CCW
-
+        for triangle in TRIANGLES {
             // Arbitrary number of debris per triangle : area/16
-            for _ in 0..(area / 16.0).round() as usize {
-                let x = rng.gen_range(0.0..=1.0);
-                let y = rng.gen_range(0.0..=1.0 - x);
-
-                // Debris translation in 2d relatively to the spaceship
-                let debris_relative_2d = a.truncate() + x * ab + y * ac;
-
-                let debris_relative = Vec3::new(
-                    debris_relative_2d.x,
-                    debris_relative_2d.y,
-                    if rng.gen_bool(0.5) { 1.0 } else { -1.0 },
-                );
+            for _ in 0..(triangle.area() / 16.0).round() as usize {
+                let p = triangle.xy().random_point();
+                let debris_relative =
+                    Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
                 let debris = s_transform.transform_point(debris_relative);
-
-                let dv = Vec3 {
-                    x: rng.gen_range(-0.5..0.5),
-                    y: rng.gen_range(-0.5..0.5),
-                    z: 0.0,
-                };
+                let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
                 commands
                     .spawn(Debris)

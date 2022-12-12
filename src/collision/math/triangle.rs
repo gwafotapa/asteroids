@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use rand::Rng;
 
 #[derive(Clone, Copy)]
 pub struct Triangle(pub Vec3, pub Vec3, pub Vec3);
@@ -11,8 +12,22 @@ impl Triangle {
     //     //     Triangle(a, b, c)
     //     // }
 
-    fn xy(&self) -> TriangleXY {
+    pub fn xy(&self) -> TriangleXY {
         TriangleXY(self.0.truncate(), self.1.truncate(), self.2.truncate())
+    }
+
+    // Area of CCW triangle
+    pub fn area(&self) -> f32 {
+        self.xy().area()
+    }
+
+    pub fn random_point(&self) -> Vec3 {
+        let [a, b, c] = self.to_array();
+        let mut rng = rand::thread_rng();
+        let x = rng.gen_range(0.0..=1.0);
+        let y = rng.gen_range(0.0..=1.0 - x);
+
+        a + x * (b - a) + y * (c - a)
     }
 }
 
@@ -54,6 +69,21 @@ pub struct TriangleXY(pub Vec2, pub Vec2, pub Vec2);
 impl TriangleXY {
     pub fn to_array(&self) -> [Vec2; 3] {
         [self.0, self.1, self.2]
+    }
+
+    // Area of CCW triangle
+    pub fn area(&self) -> f32 {
+        let [a, b, c] = self.to_array();
+        (b - a).perp_dot(c - a) / 2.0 // .abs() unnecessary since triangle is CCW
+    }
+
+    pub fn random_point(&self) -> Vec2 {
+        let [a, b, c] = self.to_array();
+        let mut rng = rand::thread_rng();
+        let x = rng.gen_range(0.0..=1.0);
+        let y = rng.gen_range(0.0..=1.0 - x);
+
+        a + x * (b - a) + y * (c - a)
     }
 }
 
