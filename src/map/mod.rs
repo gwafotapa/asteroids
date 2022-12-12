@@ -19,7 +19,7 @@ pub struct Sector {
 #[derive(Debug, Resource)]
 pub struct CurrentSectorId(Entity);
 
-pub fn setup(
+pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

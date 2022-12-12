@@ -34,7 +34,7 @@ pub struct Compass;
 #[derive(Component)]
 pub struct Needle;
 
-pub fn setup(
+pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

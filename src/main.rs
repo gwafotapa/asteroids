@@ -22,8 +22,8 @@ fn main() {
         // .add_stage_before(CoreStage::Update, SPAWN, SystemStage::parallel())
         .add_stage_after(CoreStage::Update, BEFORE_DESPAWN, SystemStage::parallel())
         .add_stage_after(BEFORE_DESPAWN, DESPAWN, SystemStage::parallel())
-        .add_startup_system(camera::spawn)
         .add_loopless_state(GameState::MainMenu)
+        .add_startup_system(camera::spawn)
         .add_enter_system(GameState::MainMenu, ui::main_menu::spawn)
         .add_system(bevy::window::close_on_esc)
         .add_system(ui::main_menu::update.run_in_state(GameState::MainMenu))
@@ -35,7 +35,7 @@ fn main() {
                 .with_system(ui::pause_menu::spawn)
                 .with_system(spaceship::spawn)
                 .with_system(boss::spawn)
-                .with_system(map::setup)
+                .with_system(map::spawn)
                 .into(),
         )
         .add_system_set(
@@ -44,7 +44,7 @@ fn main() {
                 .label("GameSetup")
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
-                .with_system(compass::setup)
+                .with_system(compass::spawn)
                 .with_system(from_gamesetup_to_ingame)
                 .into(),
         )
