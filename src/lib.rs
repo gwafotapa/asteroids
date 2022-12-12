@@ -62,6 +62,28 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health)>) {
     }
 }
 
+pub fn despawn_with<C: Component>(
+    mut commands: Commands,
+    query: Query<(Entity, &Health), With<C>>,
+) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn despawn_recursive_with<C: Component>(
+    mut commands: Commands,
+    query: Query<(Entity, &Health), With<C>>,
+) {
+    for (entity, health) in query.iter() {
+        if health.0 <= 0 {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
+
 pub fn from_gamesetup_to_ingame(mut commands: Commands) {
     commands.insert_resource(NextState(GameState::InGame));
 }
