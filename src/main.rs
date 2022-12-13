@@ -107,14 +107,19 @@ fn main() {
         )
         .add_system(
             camera::update
-                .run_not_in_state(GameState::MainMenu)
-                .run_not_in_state(GameState::GameSetup)
+                // .run_not_in_state(GameState::MainMenu)
+                // .run_not_in_state(GameState::GameSetup)
+                .run_if(ingame_or_paused)
+                // .run_if(spaceship_exists)
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
         .add_system(
             compass::update
-                .run_in_state(GameState::InGame)
+                // .run_in_state(GameState::InGame)
+                // .run_if(spaceship_exists)
+                // .run_not_in_state(GameState::GameSetup)
+                .run_if(ingame_or_paused)
                 .after("camera"),
         )
         .add_system(dim_light.run_in_state(GameState::GameOver))

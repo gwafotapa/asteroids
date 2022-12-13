@@ -24,6 +24,8 @@ pub const WINDOW_WIDTH: f32 = 1280.0;
 pub const WINDOW_HEIGHT: f32 = 720.0;
 // pub const WINDOW_WIDTH: f32 = 800.0;
 // pub const WINDOW_HEIGHT: f32 = 600.0;
+pub const DIM_FACTOR: f32 = 0.92;
+pub const DIM_TIMER: u32 = 50;
 
 #[derive(Component)]
 pub struct Velocity(Vec3);
@@ -51,12 +53,13 @@ pub fn dim_light(
 ) {
     for (color_material, visibility) in &mut query_visible_entities {
         if visibility.is_visible() {
-            materials.get_mut(&color_material).unwrap().color *= [0.95, 0.95, 0.95];
+            materials.get_mut(&color_material).unwrap().color *=
+                [DIM_FACTOR, DIM_FACTOR, DIM_FACTOR];
         }
     }
 
     *timer += 1;
-    if *timer == 50 {
+    if *timer == DIM_TIMER {
         commands.insert_resource(NextState(GameState::MainMenu));
         *timer = 0;
     }
@@ -120,4 +123,12 @@ pub fn game_over(
     {
         commands.insert_resource(NextState(GameState::GameOver))
     }
+}
+
+pub fn spaceship_exists(query: Query<With<spaceship::Spaceship>>) -> bool {
+    !query.is_empty()
+}
+
+pub fn ingame_or_paused(game_state: Res<CurrentState<GameState>>) -> bool {
+    game_state.0 == GameState::InGame || game_state.0 == GameState::Paused
 }

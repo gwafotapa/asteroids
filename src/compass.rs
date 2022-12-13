@@ -107,14 +107,10 @@ pub fn update(
     compass.translation = camera.translation + COMPASS_POSITION;
     if let Ok(spaceship) = query_spaceship.get_single() {
         if let Ok(boss) = query_boss.get_single() {
+            let trajectory = (boss.translation - spaceship.translation).truncate();
             let mut needle = query_needle.single_mut();
-            needle.rotation = Quat::from_rotation_arc_2d(
-                Vec2::X,
-                (boss.translation - spaceship.translation)
-                    .truncate()
-                    .normalize(),
-            );
-            let distance = (boss.translation - spaceship.translation).length();
+            needle.rotation = Quat::from_rotation_arc_2d(Vec2::X, trajectory.normalize());
+            let distance = trajectory.length();
             text.sections[0].value = format!("Target: {:<7.0}", distance);
         }
     }
