@@ -1,5 +1,8 @@
 #![allow(clippy::type_complexity)]
-use bevy::prelude::*;
+use bevy::{
+    input::{keyboard::KeyboardInput, ButtonState},
+    prelude::*,
+};
 use iyes_loopless::prelude::*;
 
 pub mod asteroid;
@@ -37,20 +40,25 @@ pub enum GameState {
     GameSetup,
     InGame,
     Paused,
-    // GameCleanup,
+    GameOver,
 }
 
 pub fn dim_light(
-    query_spaceship: Query<With<spaceship::Spaceship>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_visible_entities: Query<(&mut Handle<ColorMaterial>, &ComputedVisibility)>,
+    mut timer: Local<u32>,
+    mut commands: Commands,
 ) {
-    if query_spaceship.get_single().is_err() {
-        for (color_material, visibility) in &mut query_visible_entities {
-            if visibility.is_visible() {
-                materials.get_mut(&color_material).unwrap().color *= [0.95, 0.95, 0.95];
-            }
+    for (color_material, visibility) in &mut query_visible_entities {
+        if visibility.is_visible() {
+            materials.get_mut(&color_material).unwrap().color *= [0.95, 0.95, 0.95];
         }
+    }
+
+    *timer += 1;
+    if *timer == 50 {
+        commands.insert_resource(NextState(GameState::MainMenu));
+        *timer = 0;
     }
 }
 
@@ -89,19 +97,27 @@ pub fn from_gamesetup_to_ingame(mut commands: Commands) {
 }
 
 // Warning: Should generate some double despawn (with debris::update for example)
-pub fn game_cleanup(
-    input: Res<Input<KeyCode>>,
+pub fn exit_game(
     mut commands: Commands,
-    query_spaceship: Query<With<crate::spaceship::Spaceship>>,
     query_all: Query<Entity, Without<Camera>>,
     mut query_camera: Query<&mut UiCameraConfig>,
 ) {
-    if query_spaceship.get_single().is_err() && input.any_just_pressed([KeyCode::Space, KeyCode::C])
+    for id in &query_all {
+        commands.entity(id).despawn();
+    }
+    query_camera.single_mut().show_ui = true;
+}
+
+pub fn game_over(
+    query: Query<With<spaceship::Spaceship>>,
+    mut keyboard_activity: EventReader<KeyboardInput>,
+    mut commands: Commands,
+) {
+    if query.get_single().is_err()
+        && keyboard_activity
+            .iter()
+            .any(|key| key.state == ButtonState::Pressed)
     {
-        for id in &query_all {
-            commands.entity(id).despawn();
-        }
-        commands.insert_resource(NextState(GameState::MainMenu));
-        query_camera.single_mut().show_ui = true;
+        commands.insert_resource(NextState(GameState::GameOver))
     }
 }

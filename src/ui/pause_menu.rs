@@ -132,14 +132,14 @@ pub fn paused(
     //     (With<super::main_menu::MainMenu>, Without<PauseMenu>),
     // >,
     mut query_item: Query<&mut Text, With<PauseMenuItem>>,
-    query_all: Query<
-        Entity,
-        (
-            Without<Camera>,
-            // Without<super::main_menu::MainMenu>,
-            // Without<super::main_menu::MainMenuItem>,
-        ),
-    >,
+    // query_all: Query<
+    //     Entity,
+    //     (
+    //         Without<Camera>,
+    //         // Without<super::main_menu::MainMenu>,
+    //         // Without<super::main_menu::MainMenuItem>,
+    //     ),
+    // >,
     mut exit: EventWriter<AppExit>,
 ) {
     let mut camera = query_camera.single_mut();
@@ -186,11 +186,11 @@ pub fn paused(
             }
             1 => {
                 // commands.insert_resource(NextState(GameState::GameCleanup));
-                commands.insert_resource(NextState(GameState::MainMenu));
+                commands.insert_resource(NextState(GameState::GameOver));
                 // *visibility = Visibility::INVISIBLE;
-                for id in &query_all {
-                    commands.entity(id).despawn();
-                }
+                // for id in &query_all {
+                //     commands.entity(id).despawn();
+                // }
                 // *query_menu_main.single_mut() = Visibility::VISIBLE;
             }
             2 => {

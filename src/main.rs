@@ -55,8 +55,7 @@ fn main() {
                 .label("free")
                 .with_system(map::update)
                 .with_system(ui::pause_menu::in_game)
-                .with_system(dim_light)
-                .with_system(game_cleanup)
+                .with_system(game_over)
                 .into(),
         )
         .add_system_set(
@@ -118,6 +117,8 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .after("camera"),
         )
+        .add_system(dim_light.run_in_state(GameState::GameOver))
+        .add_exit_system(GameState::GameOver, exit_game)
         // Remove parent/children component of an entity whose relative is about to be despawned
         .add_system_set_to_stage(
             BEFORE_DESPAWN,
