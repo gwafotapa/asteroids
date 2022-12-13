@@ -46,15 +46,22 @@ pub enum GameState {
 }
 
 pub fn dim_light(
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_visible_entities: Query<(&mut Handle<ColorMaterial>, &ComputedVisibility)>,
+    mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
+    mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
     mut timer: Local<u32>,
     mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (color_material, visibility) in &mut query_visible_entities {
+    for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {
-            materials.get_mut(&color_material).unwrap().color *=
+            materials.get_mut(color_material).unwrap().color *=
                 [DIM_FACTOR, DIM_FACTOR, DIM_FACTOR];
+        }
+    }
+
+    for (visibility, mut text) in &mut query_visible_text {
+        if visibility.is_visible() {
+            text.sections[0].style.color *= [DIM_FACTOR, DIM_FACTOR, DIM_FACTOR];
         }
     }
 
