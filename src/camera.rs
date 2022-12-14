@@ -1,9 +1,9 @@
 use bevy::prelude::*;
-use iyes_loopless::prelude::NextState;
+// use iyes_loopless::prelude::NextState;
 
 use crate::{
     spaceship::{Spaceship, SPACESHIP_Z},
-    GameState, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const CAMERA_Z: f32 = 1000.0;
@@ -33,9 +33,13 @@ pub fn spawn(mut commands: Commands) {
         .insert(UiCameraConfig { show_ui: true });
 }
 
-pub fn setup(mut commands: Commands, mut query: Query<&mut Transform, With<Camera>>) {
-    query.single_mut().translation = INITIAL_POSITION;
-    commands.insert_resource(NextState(GameState::InGame));
+pub fn setup(mut query: Query<(&mut Camera, &mut CameraPositioning, &mut Transform)>) {
+    let (mut camera, mut positioning, mut transform) = query.single_mut();
+    camera.is_active = true;
+    *positioning = CameraPositioning::Synchronized;
+    transform.translation = INITIAL_POSITION;
+    // commands.insert_resource(NextState(GameState::InGame));
+    // commands.insert_resource(NextState(GameState::IncreaseLight));
 }
 
 pub fn update(

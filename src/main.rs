@@ -46,9 +46,12 @@ fn main() {
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
                 .with_system(compass::spawn)
-                .with_system(camera::setup)
+                .with_system(exit_game_setup)
                 .into(),
         )
+        .add_exit_system(GameState::GameSetup, kill_light)
+        .add_enter_system(GameState::IncreaseLight, camera::setup)
+        .add_system(increase_light.run_in_state(GameState::IncreaseLight))
         .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()
