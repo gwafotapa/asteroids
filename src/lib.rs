@@ -44,11 +44,11 @@ pub enum GameState {
     InGame,
     Paused,
     // GameOver,
-    DimLight,
-    IncreaseLight,
+    TurnDownLight,
+    TurnUpLight,
 }
 
-pub fn dim_light(
+pub fn turn_down_light(
     mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
     mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
     mut timer: Local<u32>,
@@ -90,7 +90,7 @@ pub fn dim_light(
     }
 }
 
-pub fn increase_light(
+pub fn turn_up_light(
     mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
     mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
     mut timer: Local<u32>,
@@ -140,7 +140,7 @@ pub fn kill_light(
 }
 
 pub fn exit_game_setup(mut commands: Commands) {
-    commands.insert_resource(NextState(GameState::IncreaseLight));
+    commands.insert_resource(NextState(GameState::TurnUpLight));
 }
 
 pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health)>) {
@@ -196,7 +196,7 @@ pub fn game_over(
             .iter()
             .any(|key| key.state == ButtonState::Pressed)
     {
-        commands.insert_resource(NextState(GameState::DimLight))
+        commands.insert_resource(NextState(GameState::TurnDownLight))
     }
 }
 

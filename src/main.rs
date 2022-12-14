@@ -50,8 +50,8 @@ fn main() {
                 .into(),
         )
         .add_exit_system(GameState::GameSetup, kill_light)
-        .add_enter_system(GameState::IncreaseLight, camera::setup)
-        .add_system(increase_light.run_in_state(GameState::IncreaseLight))
+        .add_enter_system(GameState::TurnUpLight, camera::setup)
+        .add_system(turn_up_light.run_in_state(GameState::TurnUpLight))
         .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()
@@ -127,7 +127,7 @@ fn main() {
                 // .run_if(ingame_or_paused)
                 .after("camera"),
         )
-        .add_system(dim_light.run_in_state(GameState::DimLight))
+        .add_system(turn_down_light.run_in_state(GameState::TurnDownLight))
         // .add_exit_system(GameState::GameOver, exit_game)
         // Remove parent/children component of an entity whose relative is about to be despawned
         .add_system_set_to_stage(

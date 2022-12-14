@@ -185,7 +185,7 @@ pub fn paused(
             }
             1 => {
                 // commands.insert_resource(NextState(GameState::GameCleanup));
-                commands.insert_resource(NextState(GameState::DimLight));
+                commands.insert_resource(NextState(GameState::TurnDownLight));
                 // *visibility = Visibility::INVISIBLE;
                 // for id in &query_all {
                 //     commands.entity(id).despawn();

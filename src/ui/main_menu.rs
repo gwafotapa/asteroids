@@ -121,7 +121,7 @@ pub fn update(
         match menu.0 {
             0 => {
                 // commands.entity(id).despawn_recursive();
-                commands.insert_resource(NextState(GameState::DimLight));
+                commands.insert_resource(NextState(GameState::TurnDownLight));
                 // camera.show_ui = false;
             }
             1 => {
