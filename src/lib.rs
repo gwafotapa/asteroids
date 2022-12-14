@@ -116,11 +116,6 @@ pub fn despawn_recursive_with<C: Component>(
     }
 }
 
-pub fn game_setup(mut commands: Commands, mut query: Query<&mut Transform, With<Camera>>) {
-    query.single_mut().translation = camera::INITIAL_POSITION;
-    commands.insert_resource(NextState(GameState::InGame));
-}
-
 // // Warning: Should generate some double despawn (with debris::update for example)
 // pub fn exit_game(
 //     mut commands: Commands,
