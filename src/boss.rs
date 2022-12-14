@@ -23,6 +23,9 @@ const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
 #[derive(Component)]
+pub struct Boss;
+
+#[derive(Component)]
 pub struct BossCore {
     pub edges: usize,
 }
@@ -122,8 +125,8 @@ const ATTACK_COLOR: Color = Color::RED;
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const CORE_HEALTH: i32 = 50;
-const EDGE_HEALTH: i32 = 10;
+const CORE_HEALTH: i32 = 5;
+const EDGE_HEALTH: i32 = 1;
 const FIRE_VELOCITY: f32 = 8.0;
 const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
@@ -216,7 +219,8 @@ pub fn spawn(
     let mesh_handle = meshes.add(mesh);
 
     let boss_core = commands
-        .spawn(BossCore { edges: EDGES })
+        .spawn(Boss)
+        .insert(BossCore { edges: EDGES })
         .insert(Health(CORE_HEALTH))
         .insert(Velocity(Vec3::ZERO))
         .insert(Collider {
@@ -255,7 +259,8 @@ pub fn spawn(
         let mesh_handle = meshes.add(mesh);
 
         let boss_edge = commands
-            .spawn(BossEdge)
+            .spawn(Boss)
+            .insert(BossEdge)
             .insert(Health(EDGE_HEALTH))
             .insert(Collider {
                 aabb: Aabb {

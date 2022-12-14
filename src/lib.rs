@@ -2,8 +2,13 @@
 use bevy::{
     input::{keyboard::KeyboardInput, ButtonState},
     prelude::*,
+    render::mesh::VertexAttributeValues,
+    sprite::Mesh2dHandle,
 };
 use iyes_loopless::prelude::*;
+use rand::Rng;
+
+use crate::{collision::math::triangle::TriangleXY, debris::Debris};
 
 pub mod asteroid;
 pub mod blast;
@@ -206,4 +211,71 @@ pub fn spaceship_exists(query: Query<With<spaceship::Spaceship>>) -> bool {
 
 pub fn ingame_or_paused(game_state: Res<CurrentState<GameState>>) -> bool {
     game_state.0 == GameState::InGame || game_state.0 == GameState::Paused
+}
+
+pub fn explode_with<C: Component>(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<
+        (
+            // Option<&Children>,
+            &Handle<ColorMaterial>,
+            &Mesh2dHandle,
+            Option<&Parent>,
+            &GlobalTransform,
+            &Health,
+            Option<&Velocity>,
+        ),
+        With<C>,
+    >,
+) {
+    for (color, mesh, maybe_parent, transform, health, maybe_velocity) in &query {
+        // for (color, mesh, transform, health, maybe_velocity) in &query {
+        if health.0 > 0 {
+            continue;
+        }
+
+        let color = materials.get(color).unwrap().color;
+        let mut rng = rand::thread_rng();
+        if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+            .get(&mesh.0)
+            .unwrap()
+            .attribute(Mesh::ATTRIBUTE_POSITION)
+        {
+            for triplet in vertices.clone().chunks_exact(3) {
+                let triangle: TriangleXY = <[_; 3]>::try_from(triplet).expect("3 items").into();
+
+                // Arbitrary number of debris per triangle : area/16
+                for _ in 0..(triangle.area() / 16.0).round() as usize {
+                    let p = triangle.random_point();
+                    let debris_relative =
+                        Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
+                    let debris = transform.transform_point(debris_relative);
+
+                    let velocity = maybe_parent
+                        .map_or(maybe_velocity, |parent| {
+                            query.get_component::<Velocity>(**parent).ok()
+                        })
+                        .map_or(Vec3::ZERO, |v| v.0);
+                    let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
+
+                    commands
+                        .spawn(Debris)
+                        .insert(Velocity(velocity + dv))
+                        .insert(ColorMesh2dBundle {
+                            mesh: meshes
+                                .add(Mesh::from(shape::Circle {
+                                    radius: rng.gen_range(1.0..10.0),
+                                    vertices: 4 * rng.gen_range(1..5),
+                                }))
+                                .into(),
+                            transform: Transform::from_translation(debris),
+                            material: materials.add(color.into()),
+                            ..default()
+                        });
+                }
+            }
+        }
+    }
 }
