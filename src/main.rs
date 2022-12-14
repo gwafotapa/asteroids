@@ -23,6 +23,7 @@ fn main() {
         .add_stage_after(CoreStage::Update, BEFORE_DESPAWN, SystemStage::parallel())
         .add_stage_after(BEFORE_DESPAWN, DESPAWN, SystemStage::parallel())
         .add_loopless_state(GameState::MainMenu)
+        // .add_startup_system(camera::spawn)
         .add_startup_system(camera::spawn)
         .add_enter_system(GameState::MainMenu, ui::main_menu::spawn)
         .add_system(bevy::window::close_on_esc)
@@ -45,7 +46,7 @@ fn main() {
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
                 .with_system(compass::spawn)
-                .with_system(from_gamesetup_to_ingame)
+                .with_system(game_setup)
                 .into(),
         )
         .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))

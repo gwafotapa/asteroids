@@ -102,7 +102,8 @@ pub fn despawn_recursive_with<C: Component>(
     }
 }
 
-pub fn from_gamesetup_to_ingame(mut commands: Commands) {
+pub fn game_setup(mut commands: Commands, mut query: Query<&mut Transform, With<Camera>>) {
+    query.single_mut().translation = camera::INITIAL_POSITION;
     commands.insert_resource(NextState(GameState::InGame));
 }
 
@@ -110,6 +111,7 @@ pub fn from_gamesetup_to_ingame(mut commands: Commands) {
 pub fn exit_game(
     mut commands: Commands,
     query_all: Query<Entity, Without<Camera>>,
+    // query_all: Query<Entity>,
     mut query_camera: Query<&mut UiCameraConfig>,
 ) {
     for id in &query_all {

@@ -112,13 +112,16 @@ pub fn in_game(
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
     mut query_camera: Query<&mut UiCameraConfig>,
+    query_spaceship: Query<With<crate::spaceship::Spaceship>>,
     // mut query_menu: Query<&mut Visibility, With<PauseMenu>>,
 ) {
-    let mut camera = query_camera.single_mut();
-    if input.just_pressed(KeyCode::P) {
-        commands.insert_resource(NextState(GameState::Paused));
-        // *query_menu.single_mut() = Visibility::VISIBLE;
-        camera.show_ui = true;
+    if query_spaceship.get_single().is_ok() {
+        let mut camera = query_camera.single_mut();
+        if input.just_pressed(KeyCode::P) {
+            commands.insert_resource(NextState(GameState::Paused));
+            // *query_menu.single_mut() = Visibility::VISIBLE;
+            camera.show_ui = true;
+        }
     }
 }
 

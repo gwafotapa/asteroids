@@ -6,8 +6,13 @@ use crate::{
 };
 
 const CAMERA_Z: f32 = 1000.0;
-const CAMERA_SPEED: f32 = 0.02;
-const CAMERA_REAR_GAP: f32 = 100.0;
+pub const INITIAL_POSITION: Vec3 = Vec3 {
+    x: WINDOW_WIDTH / 2.0,
+    y: WINDOW_HEIGHT / 2.0,
+    z: CAMERA_Z,
+};
+const SPEED: f32 = 0.02;
+const REAR_GAP: f32 = 100.0;
 
 #[derive(Component, Eq, PartialEq)]
 pub enum CameraPositioning {
@@ -20,7 +25,7 @@ pub fn spawn(mut commands: Commands) {
         .spawn(Camera2dBundle {
             // transform: Transform::from_xyz(MAP_CENTER_X, MAP_CENTER_Y, CAMERA_Z),
             // transform: Transform::from_xyz(0.0, 0.0, CAMERA_Z),
-            transform: Transform::from_xyz(WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, CAMERA_Z),
+            transform: Transform::from_translation(INITIAL_POSITION),
             ..default()
         })
         .insert(CameraPositioning::Synchronized)
@@ -54,15 +59,14 @@ pub fn update(
             let direction = s_transform.rotation * Vec3::X;
             if direction.x == 0.0
                 || (direction.y / direction.x).abs()
-                    > (WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP)
-                        / (WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
+                    > (WINDOW_HEIGHT / 2.0 - REAR_GAP) / (WINDOW_WIDTH / 2.0 - REAR_GAP)
             {
                 let y = if direction.y > 0.0 {
                     // Upper quadrant
-                    WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP
+                    WINDOW_HEIGHT / 2.0 - REAR_GAP
                 } else {
                     // Lower quadrant
-                    -(WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP)
+                    -(WINDOW_HEIGHT / 2.0 - REAR_GAP)
                 };
                 c_destination = s_transform.translation
                     + Vec3 {
@@ -73,10 +77,10 @@ pub fn update(
             } else {
                 let x = if direction.x > 0.0 {
                     // Right quadrant
-                    WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP
+                    WINDOW_WIDTH / 2.0 - REAR_GAP
                 } else {
                     // Left quadrant
-                    -(WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
+                    -(WINDOW_WIDTH / 2.0 - REAR_GAP)
                 };
 
                 c_destination = s_transform.translation
@@ -88,14 +92,14 @@ pub fn update(
             }
 
             let c_path = c_destination - c_transform.translation;
-            c_transform.translation += CAMERA_SPEED * c_path;
+            c_transform.translation += SPEED * c_path;
         } else {
             let direction = Vec3 {
                 x: s_transform.translation.x - c_transform.translation.x,
                 y: s_transform.translation.y - c_transform.translation.y,
                 z: 0.0,
             };
-            c_transform.translation += CAMERA_SPEED * direction;
+            c_transform.translation += SPEED * direction;
         }
         // } else {
         //     let c_destination;
@@ -103,15 +107,15 @@ pub fn update(
         //         c_destination = s_transform.translation;
         //     } else if s_velocity.0.x == 0.0
         //         || (s_velocity.0.y / s_velocity.0.x).abs()
-        //             > (WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP)
-        //                 / (WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
+        //             > (WINDOW_HEIGHT / 2.0 - REAR_GAP)
+        //                 / (WINDOW_WIDTH / 2.0 - REAR_GAP)
         //     {
         //         let y = if s_velocity.0.y > 0.0 {
         //             // Upper quadrant
-        //             WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP
+        //             WINDOW_HEIGHT / 2.0 - REAR_GAP
         //         } else {
         //             // Lower quadrant
-        //             -(WINDOW_HEIGHT / 2.0 - CAMERA_REAR_GAP)
+        //             -(WINDOW_HEIGHT / 2.0 - REAR_GAP)
         //         };
         //         c_destination = s_transform.translation
         //             + Vec3 {
@@ -122,10 +126,10 @@ pub fn update(
         //     } else {
         //         let x = if s_velocity.0.x > 0.0 {
         //             // Right quadrant
-        //             WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP
+        //             WINDOW_WIDTH / 2.0 - REAR_GAP
         //         } else {
         //             // Left quadrant
-        //             -(WINDOW_WIDTH / 2.0 - CAMERA_REAR_GAP)
+        //             -(WINDOW_WIDTH / 2.0 - REAR_GAP)
         //         };
 
         //         c_destination = s_transform.translation
@@ -137,7 +141,7 @@ pub fn update(
         //     }
 
         //     let c_path = c_destination - c_transform.translation;
-        //     c_transform.translation += CAMERA_SPEED * c_path;
+        //     c_transform.translation += SPEED * c_path;
         // }
     }
 }
