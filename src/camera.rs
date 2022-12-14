@@ -55,42 +55,31 @@ pub fn update(
             // from the window. We aim to place the ship on this rectangle.
             // The diagonals of this rectangle split its area into 4 quadrants.
             // The computation depends on which quadrant the camera needs to move into.
-            let c_destination;
             let direction = s_transform.rotation * Vec3::X;
+            let (x, y);
             if direction.x == 0.0
                 || (direction.y / direction.x).abs()
                     > (WINDOW_HEIGHT / 2.0 - REAR_GAP) / (WINDOW_WIDTH / 2.0 - REAR_GAP)
             {
-                let y = if direction.y > 0.0 {
+                y = if direction.y > 0.0 {
                     // Upper quadrant
                     WINDOW_HEIGHT / 2.0 - REAR_GAP
                 } else {
                     // Lower quadrant
                     -(WINDOW_HEIGHT / 2.0 - REAR_GAP)
                 };
-                c_destination = s_transform.translation
-                    + Vec3 {
-                        x: y * direction.x / direction.y,
-                        y,
-                        z: CAMERA_Z - SPACESHIP_Z,
-                    };
+                x = y * direction.x / direction.y;
             } else {
-                let x = if direction.x > 0.0 {
+                x = if direction.x > 0.0 {
                     // Right quadrant
                     WINDOW_WIDTH / 2.0 - REAR_GAP
                 } else {
                     // Left quadrant
                     -(WINDOW_WIDTH / 2.0 - REAR_GAP)
                 };
-
-                c_destination = s_transform.translation
-                    + Vec3 {
-                        x,
-                        y: direction.y / direction.x * x,
-                        z: CAMERA_Z - SPACESHIP_Z,
-                    };
+                y = direction.y / direction.x * x;
             }
-
+            let c_destination = s_transform.translation + Vec3::new(x, y, CAMERA_Z - SPACESHIP_Z);
             let c_path = c_destination - c_transform.translation;
             c_transform.translation += SPEED * c_path;
         } else {
