@@ -123,8 +123,8 @@ fn main() {
                 .run_if(ingame_or_paused)
                 .after("camera"),
         )
-        .add_system(dim_light.run_in_state(GameState::GameOver))
-        .add_exit_system(GameState::GameOver, exit_game)
+        .add_system(dim_light.run_in_state(GameState::DimLight))
+        // .add_exit_system(GameState::GameOver, exit_game)
         // Remove parent/children component of an entity whose relative is about to be despawned
         .add_system_set_to_stage(
             BEFORE_DESPAWN,

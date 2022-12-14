@@ -87,16 +87,16 @@ pub fn update(
     input: Res<Input<KeyCode>>,
     game_state: Res<CurrentState<GameState>>,
     mut commands: Commands,
-    mut query_camera: Query<&mut UiCameraConfig>,
-    mut query_menu: Query<(&Children, Entity, &mut MainMenu)>,
+    // mut query_camera: Query<&mut UiCameraConfig>,
+    mut query_main_menu: Query<(&Children, &mut MainMenu)>,
     mut query_item: Query<&mut Text, With<MainMenuItem>>,
     mut exit: EventWriter<AppExit>,
 ) {
     if game_state.0 != GameState::MainMenu {
         panic!("Trying to update the main menu in the wrong game state");
     }
-    let mut camera = query_camera.single_mut();
-    let (children, id, mut menu) = query_menu.single_mut();
+    // let mut camera = query_camera.single_mut();
+    let (children, mut menu) = query_main_menu.single_mut();
     if input.any_just_pressed([KeyCode::Up, KeyCode::O]) {
         if menu.0 > 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
@@ -120,9 +120,9 @@ pub fn update(
     } else if input.any_just_pressed([KeyCode::Return, KeyCode::R]) {
         match menu.0 {
             0 => {
-                commands.entity(id).despawn_recursive();
-                commands.insert_resource(NextState(GameState::GameSetup));
-                camera.show_ui = false;
+                // commands.entity(id).despawn_recursive();
+                commands.insert_resource(NextState(GameState::DimLight));
+                // camera.show_ui = false;
             }
             1 => {
                 exit.send(AppExit);

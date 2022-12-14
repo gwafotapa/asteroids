@@ -34,21 +34,29 @@ pub fn spawn(mut commands: Commands) {
 
 pub fn update(
     keys: Res<Input<KeyCode>>,
+    // mut query_camera: Query<
+    //     (&mut CameraPositioning, &mut Transform, &mut UiCameraConfig),
+    //     With<Camera>,
+    // >,
     mut query_camera: Query<(&mut CameraPositioning, &mut Transform), With<Camera>>,
     query_spaceship: Query<(&Transform, &Velocity), (With<Spaceship>, Without<Camera>)>,
+    // game_state: Res<CurrentState<GameState>>,
 ) {
+    // let (mut c_positioning, mut c_transform, mut c_config) = query_camera.single_mut();
+    // c_config.show_ui = game_state.0 == GameState::MainMenu || game_state.0 == GameState::Paused;
     if let Ok((s_transform, s_velocity)) = query_spaceship.get_single() {
-        let (mut camera_positioning, mut c_transform) = query_camera.get_single_mut().unwrap();
+        let (mut c_positioning, mut c_transform) = query_camera.single_mut();
+
         c_transform.translation += s_velocity.0;
 
         if keys.any_just_pressed([KeyCode::Space, KeyCode::C]) {
-            *camera_positioning = match *camera_positioning {
+            *c_positioning = match *c_positioning {
                 CameraPositioning::Synchronized => CameraPositioning::Ahead,
                 CameraPositioning::Ahead => CameraPositioning::Synchronized,
             };
         }
 
-        if *camera_positioning == CameraPositioning::Ahead {
+        if *c_positioning == CameraPositioning::Ahead {
             // In that position, the camera moves to position itself so that the ship
             // is at distance 100.0 from the window border facing the center of the window.
             // Consider the inside rectangle obtained by removing a 100-width strip

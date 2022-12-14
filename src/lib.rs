@@ -42,7 +42,8 @@ pub enum GameState {
     GameSetup,
     InGame,
     Paused,
-    GameOver,
+    // GameOver,
+    DimLight,
 }
 
 pub fn dim_light(
@@ -51,6 +52,9 @@ pub fn dim_light(
     mut timer: Local<u32>,
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    query_main_menu: Query<Entity, With<ui::main_menu::MainMenu>>,
+    mut query_camera: Query<&mut UiCameraConfig>,
+    query_without_camera: Query<Entity, Without<Camera>>,
 ) {
     for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {
@@ -67,7 +71,17 @@ pub fn dim_light(
 
     *timer += 1;
     if *timer == DIM_TIMER {
-        commands.insert_resource(NextState(GameState::MainMenu));
+        if let Ok(main_menu) = query_main_menu.get_single() {
+            commands.entity(main_menu).despawn_recursive();
+            commands.insert_resource(NextState(GameState::GameSetup));
+            query_camera.single_mut().show_ui = false;
+        } else {
+            for id in &query_without_camera {
+                commands.entity(id).despawn();
+            }
+            commands.insert_resource(NextState(GameState::MainMenu));
+            query_camera.single_mut().show_ui = true;
+        }
         *timer = 0;
     }
 }
@@ -107,18 +121,18 @@ pub fn game_setup(mut commands: Commands, mut query: Query<&mut Transform, With<
     commands.insert_resource(NextState(GameState::InGame));
 }
 
-// Warning: Should generate some double despawn (with debris::update for example)
-pub fn exit_game(
-    mut commands: Commands,
-    query_all: Query<Entity, Without<Camera>>,
-    // query_all: Query<Entity>,
-    mut query_camera: Query<&mut UiCameraConfig>,
-) {
-    for id in &query_all {
-        commands.entity(id).despawn();
-    }
-    query_camera.single_mut().show_ui = true;
-}
+// // Warning: Should generate some double despawn (with debris::update for example)
+// pub fn exit_game(
+//     mut commands: Commands,
+//     query_all: Query<Entity, Without<Camera>>,
+//     // query_all: Query<Entity>,
+//     // mut query_camera: Query<&mut UiCameraConfig>,
+// ) {
+//     for id in &query_all {
+//         commands.entity(id).despawn();
+//     }
+//     // query_camera.single_mut().show_ui = true;
+// }
 
 pub fn game_over(
     query: Query<With<spaceship::Spaceship>>,
@@ -130,7 +144,7 @@ pub fn game_over(
             .iter()
             .any(|key| key.state == ButtonState::Pressed)
     {
-        commands.insert_resource(NextState(GameState::GameOver))
+        commands.insert_resource(NextState(GameState::DimLight))
     }
 }
 

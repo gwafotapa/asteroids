@@ -115,13 +115,10 @@ pub fn in_game(
     query_spaceship: Query<With<crate::spaceship::Spaceship>>,
     // mut query_menu: Query<&mut Visibility, With<PauseMenu>>,
 ) {
-    if query_spaceship.get_single().is_ok() {
-        let mut camera = query_camera.single_mut();
-        if input.just_pressed(KeyCode::P) {
-            commands.insert_resource(NextState(GameState::Paused));
-            // *query_menu.single_mut() = Visibility::VISIBLE;
-            camera.show_ui = true;
-        }
+    if query_spaceship.get_single().is_ok() && input.just_pressed(KeyCode::P) {
+        commands.insert_resource(NextState(GameState::Paused));
+        // *query_menu.single_mut() = Visibility::VISIBLE;
+        query_camera.single_mut().show_ui = true;
     }
 }
 
@@ -145,12 +142,11 @@ pub fn paused(
     // >,
     mut exit: EventWriter<AppExit>,
 ) {
-    let mut camera = query_camera.single_mut();
     let (children, mut menu) = query_menu_pause.single_mut();
     if input.just_pressed(KeyCode::P) {
         commands.insert_resource(NextState(GameState::InGame));
         // *visibility = Visibility::INVISIBLE;
-        camera.show_ui = false;
+        query_camera.single_mut().show_ui = false;
         if menu.0 != 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
                 .style
@@ -185,11 +181,11 @@ pub fn paused(
             0 => {
                 commands.insert_resource(NextState(GameState::InGame));
                 // *visibility = Visibility::INVISIBLE;
-                camera.show_ui = false;
+                query_camera.single_mut().show_ui = false;
             }
             1 => {
                 // commands.insert_resource(NextState(GameState::GameCleanup));
-                commands.insert_resource(NextState(GameState::GameOver));
+                commands.insert_resource(NextState(GameState::DimLight));
                 // *visibility = Visibility::INVISIBLE;
                 // for id in &query_all {
                 //     commands.entity(id).despawn();
