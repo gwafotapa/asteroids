@@ -3,18 +3,11 @@ use rand::Rng;
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    // asteroid::Asteroid,
     blast::Blast,
-    collision::{impact::Impact, math::triangle::Triangle, Aabb, Collider, Topology},
-    // compass::Compass,
-    debris::Debris,
+    collision::{math::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Enemy, Fire},
     spaceship::{self, Spaceship},
-    Health,
-    Velocity,
-    PLANE_Z,
-    // WINDOW_HEIGHT,
-    // WINDOW_WIDTH,
+    Health, Velocity, PLANE_Z,
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
@@ -22,8 +15,8 @@ pub const DISTANCE_TO_BOSS: f32 = 500.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
-#[derive(Component)]
-pub struct Boss;
+// #[derive(Component)]
+// pub struct Boss;
 
 #[derive(Component)]
 pub struct BossCore {
@@ -219,8 +212,8 @@ pub fn spawn(
     let mesh_handle = meshes.add(mesh);
 
     let boss_core = commands
-        .spawn(Boss)
-        .insert(BossCore { edges: EDGES })
+        // .spawn(Boss)
+        .spawn(BossCore { edges: EDGES })
         .insert(Health(CORE_HEALTH))
         .insert(Velocity(Vec3::ZERO))
         .insert(Collider {
@@ -259,8 +252,8 @@ pub fn spawn(
         let mesh_handle = meshes.add(mesh);
 
         let boss_edge = commands
-            .spawn(Boss)
-            .insert(BossEdge)
+            // .spawn(Boss)
+            .spawn(BossEdge)
             .insert(Health(EDGE_HEALTH))
             .insert(Collider {
                 aabb: Aabb {
@@ -482,71 +475,71 @@ pub fn cut_off_edge(
     }
 }
 
-pub fn wreck(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss_part: Query<
-        (
-            Option<&BossCore>,
-            &Handle<ColorMaterial>,
-            &GlobalTransform,
-            &Health,
-        ),
-        Or<(With<BossCore>, With<BossEdge>)>,
-    >,
-    mut query_boss_core: Query<&Velocity, With<BossCore>>,
-) {
-    if let Ok(core_velocity) = query_boss_core.get_single_mut() {
-        for (maybe_core, color, transform, health) in query_boss_part.iter() {
-            if health.0 > 0 {
-                continue;
-            }
+// pub fn wreck(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     query_boss_part: Query<
+//         (
+//             Option<&BossCore>,
+//             &Handle<ColorMaterial>,
+//             &GlobalTransform,
+//             &Health,
+//         ),
+//         Or<(With<BossCore>, With<BossEdge>)>,
+//     >,
+//     mut query_boss_core: Query<&Velocity, With<BossCore>>,
+// ) {
+//     if let Ok(core_velocity) = query_boss_core.get_single_mut() {
+//         for (maybe_core, color, transform, health) in query_boss_part.iter() {
+//             if health.0 > 0 {
+//                 continue;
+//             }
 
-            let color = materials.get(color).unwrap().color;
-            let mut rng = rand::thread_rng();
-            let triangles = if maybe_core.is_some() {
-                CORE_TRIANGLES.iter()
-            } else {
-                EDGE_TRIANGLES.iter()
-            };
+//             let color = materials.get(color).unwrap().color;
+//             let mut rng = rand::thread_rng();
+//             let triangles = if maybe_core.is_some() {
+//                 CORE_TRIANGLES.iter()
+//             } else {
+//                 EDGE_TRIANGLES.iter()
+//             };
 
-            for triangle in triangles {
-                // Arbitrary number of debris per triangle : area/16
-                for _ in 0..(triangle.area() / 16.0).round() as usize {
-                    let p = triangle.xy().random_point();
-                    let debris_relative =
-                        Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
-                    let debris = transform.transform_point(debris_relative);
-                    let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
+//             for triangle in triangles {
+//                 // Arbitrary number of debris per triangle : area/16
+//                 for _ in 0..(triangle.area() / 16.0).round() as usize {
+//                     let p = triangle.xy().random_point();
+//                     let debris_relative =
+//                         Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
+//                     let debris = transform.transform_point(debris_relative);
+//                     let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
-                    commands
-                        .spawn(Debris)
-                        .insert(Velocity(core_velocity.0 + dv))
-                        .insert(ColorMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: rng.gen_range(2.0..15.0),
-                                    vertices: 8,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(debris),
-                            material: materials.add(color.into()),
-                            ..default()
-                        });
-                }
-            }
-        }
-    }
-}
+//                     commands
+//                         .spawn(Debris)
+//                         .insert(Velocity(core_velocity.0 + dv))
+//                         .insert(ColorMesh2dBundle {
+//                             mesh: meshes
+//                                 .add(Mesh::from(shape::Circle {
+//                                     radius: rng.gen_range(2.0..15.0),
+//                                     vertices: 8,
+//                                 }))
+//                                 .into(),
+//                             transform: Transform::from_translation(debris),
+//                             material: materials.add(color.into()),
+//                             ..default()
+//                         });
+//                 }
+//             }
+//         }
+//     }
+// }
 
-pub fn despawn(
-    mut commands: Commands,
-    query: Query<(Entity, &Health), Or<(With<BossCore>, With<BossEdge>)>>,
-) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn despawn(
+//     mut commands: Commands,
+//     query: Query<(Entity, &Health), Or<(With<BossCore>, With<BossEdge>)>>,
+// ) {
+//     for (entity, health) in query.iter() {
+//         if health.0 <= 0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }

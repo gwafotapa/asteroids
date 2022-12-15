@@ -24,10 +24,10 @@ pub fn update(
     }
 }
 
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Impact>>) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Impact>>) {
+//     for (entity, health) in query.iter() {
+//         if health.0 <= 0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }

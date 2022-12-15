@@ -4,8 +4,9 @@ use iyes_loopless::prelude::*;
 
 fn main() {
     // static SPAWN: &str = "spawn";
-    static DESPAWN: &str = "despawn";
-    static WRECK: &str = "wreck";
+    // static DESPAWN: &str = "despawn";
+    // static WRECK: &str = "wreck";
+    static CLEANUP: &str = "cleanup";
 
     App::new()
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
@@ -20,8 +21,8 @@ fn main() {
             ..default()
         }))
         // .add_stage_before(CoreStage::Update, SPAWN, SystemStage::parallel())
-        .add_stage_after(CoreStage::Update, WRECK, SystemStage::parallel())
-        .add_stage_after(WRECK, DESPAWN, SystemStage::parallel())
+        .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
+        // .add_stage_after(WRECK, DESPAWN, SystemStage::parallel())
         .add_loopless_state(GameState::MainMenu)
         // .add_startup_system(camera::spawn)
         .add_startup_system(camera::spawn)
@@ -134,7 +135,7 @@ fn main() {
         // .add_exit_system(GameState::GameOver, exit_game)
         // Remove parent/children component of an entity whose relative is about to be despawned
         .add_system_set_to_stage(
-            WRECK,
+            CLEANUP,
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
                 // .with_system(spaceship::before_despawn)
@@ -145,12 +146,6 @@ fn main() {
                 .with_system(wreck_with::<boss::BossCore>)
                 .with_system(wreck_with::<boss::BossEdge>)
                 // .with_system(asteroid::before_despawn)
-                .into(),
-        )
-        .add_system_set_to_stage(
-            DESPAWN,
-            ConditionSet::new()
-                .run_in_state(GameState::InGame)
                 // .with_system(spaceship::wreck)
                 // .with_system(asteroid::wreck)
                 // .with_system(boss::wreck)

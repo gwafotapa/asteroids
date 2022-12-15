@@ -1,11 +1,9 @@
 use bevy::prelude::*;
 use rand::Rng;
-use std::f32::consts::PI;
 
 use crate::{
-    collision::{impact::Impact, Aabb, Collider, Topology},
-    debris::Debris,
-    Health, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    collision::{Aabb, Collider, Topology},
+    Health, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 // const SPEED_MAX: usize = 5;
@@ -109,82 +107,82 @@ pub fn spawn(
 //     }
 // }
 
-pub fn before_despawn(
-    mut commands: Commands,
-    query_asteroid: Query<(Option<&Children>, &GlobalTransform, &Health), With<Asteroid>>,
-    mut query_impact: Query<&mut Transform, With<Impact>>,
-) {
-    for (a_children, a_transform, a_health) in query_asteroid.iter() {
-        if a_health.0 > 0 {
-            continue;
-        }
+// pub fn before_despawn(
+//     mut commands: Commands,
+//     query_asteroid: Query<(Option<&Children>, &GlobalTransform, &Health), With<Asteroid>>,
+//     mut query_impact: Query<&mut Transform, With<Impact>>,
+// ) {
+//     for (a_children, a_transform, a_health) in query_asteroid.iter() {
+//         if a_health.0 > 0 {
+//             continue;
+//         }
 
-        if let Some(children) = a_children {
-            for child in children {
-                commands.entity(*child).remove::<Parent>();
-                query_impact
-                    .get_component_mut::<Transform>(*child)
-                    .unwrap()
-                    .translation += a_transform.translation();
-            }
-        }
-    }
-}
+//         if let Some(children) = a_children {
+//             for child in children {
+//                 commands.entity(*child).remove::<Parent>();
+//                 query_impact
+//                     .get_component_mut::<Transform>(*child)
+//                     .unwrap()
+//                     .translation += a_transform.translation();
+//             }
+//         }
+//     }
+// }
 
-pub fn wreck(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query_asteroid: Query<(
-        &Asteroid,
-        &Handle<ColorMaterial>,
-        &GlobalTransform,
-        &Health,
-        // &Velocity,
-    )>,
-) {
-    for (asteroid, color, transform, health) in query_asteroid.iter() {
-        if health.0 > 0 {
-            continue;
-        }
+// pub fn wreck(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     query_asteroid: Query<(
+//         &Asteroid,
+//         &Handle<ColorMaterial>,
+//         &GlobalTransform,
+//         &Health,
+//         // &Velocity,
+//     )>,
+// ) {
+//     for (asteroid, color, transform, health) in query_asteroid.iter() {
+//         if health.0 > 0 {
+//             continue;
+//         }
 
-        let mut rng = rand::thread_rng();
-        let color = materials.get(color).unwrap().color;
-        let area = PI * asteroid.radius * asteroid.radius;
+//         let mut rng = rand::thread_rng();
+//         let color = materials.get(color).unwrap().color;
+//         let area = PI * asteroid.radius * asteroid.radius;
 
-        for _ in 0..(area / 16.0).round() as usize {
-            let rho = rng.gen_range(0.0..asteroid.radius);
-            let theta = rng.gen_range(0.0..2.0 * PI);
-            let (sin, cos) = theta.sin_cos();
-            let (x, y) = (rho * cos, rho * sin);
-            let z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-            let debris_translation = transform.translation() + Vec3::new(x, y, z);
+//         for _ in 0..(area / 16.0).round() as usize {
+//             let rho = rng.gen_range(0.0..asteroid.radius);
+//             let theta = rng.gen_range(0.0..2.0 * PI);
+//             let (sin, cos) = theta.sin_cos();
+//             let (x, y) = (rho * cos, rho * sin);
+//             let z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+//             let debris_translation = transform.translation() + Vec3::new(x, y, z);
 
-            let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
+//             let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
-            commands
-                .spawn(Debris)
-                // .insert(Velocity(velocity.0 + dv))
-                .insert(Velocity(dv))
-                .insert(ColorMesh2dBundle {
-                    mesh: meshes
-                        .add(Mesh::from(shape::Circle {
-                            radius: rng.gen_range(1.0..asteroid.radius / 10.0),
-                            vertices: 8,
-                        }))
-                        .into(),
-                    transform: Transform::from_translation(debris_translation),
-                    material: materials.add(color.into()),
-                    ..default()
-                });
-        }
-    }
-}
+//             commands
+//                 .spawn(Debris)
+//                 // .insert(Velocity(velocity.0 + dv))
+//                 .insert(Velocity(dv))
+//                 .insert(ColorMesh2dBundle {
+//                     mesh: meshes
+//                         .add(Mesh::from(shape::Circle {
+//                             radius: rng.gen_range(1.0..asteroid.radius / 10.0),
+//                             vertices: 8,
+//                         }))
+//                         .into(),
+//                     transform: Transform::from_translation(debris_translation),
+//                     material: materials.add(color.into()),
+//                     ..default()
+//                 });
+//         }
+//     }
+// }
 
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Asteroid>>) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Asteroid>>) {
+//     for (entity, health) in query.iter() {
+//         if health.0 <= 0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }

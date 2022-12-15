@@ -9,10 +9,7 @@ use iyes_loopless::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
 
-use crate::{
-    collision::math::{triangle::TriangleXY, Collider, Topology},
-    debris::Debris,
-};
+use crate::collision::math::{triangle::TriangleXY, Collider, Topology};
 
 pub mod asteroid;
 pub mod blast;
@@ -20,7 +17,7 @@ pub mod boss;
 pub mod camera;
 pub mod collision;
 pub mod compass;
-pub mod debris;
+// pub mod debris;
 pub mod fire;
 pub mod map;
 pub mod spaceship;

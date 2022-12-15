@@ -1,10 +1,8 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
-use rand::Rng;
 
 use crate::{
     blast::Blast,
-    collision::{impact::Impact, math::triangle::Triangle, Aabb, Collider, Topology},
-    debris::Debris,
+    collision::{math::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
     Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -306,82 +304,82 @@ pub fn attack(
     }
 }
 
-pub fn before_despawn(
-    mut commands: Commands,
-    query_spaceship: Query<(Option<&Children>, &Health, &Transform), With<Spaceship>>,
-    mut query_blast_impact: Query<
-        &mut Transform,
-        (Or<(With<Blast>, With<Impact>)>, Without<Spaceship>),
-    >,
-) {
-    if let Ok((s_children, s_health, s_transform)) = query_spaceship.get_single() {
-        if s_health.0 > 0 {
-            return;
-        }
+// pub fn before_despawn(
+//     mut commands: Commands,
+//     query_spaceship: Query<(Option<&Children>, &Health, &Transform), With<Spaceship>>,
+//     mut query_blast_impact: Query<
+//         &mut Transform,
+//         (Or<(With<Blast>, With<Impact>)>, Without<Spaceship>),
+//     >,
+// ) {
+//     if let Ok((s_children, s_health, s_transform)) = query_spaceship.get_single() {
+//         if s_health.0 > 0 {
+//             return;
+//         }
 
-        if let Some(children) = s_children {
-            for child in children {
-                if let Ok(mut child_transform) =
-                    query_blast_impact.get_component_mut::<Transform>(*child)
-                {
-                    commands.entity(*child).remove::<Parent>();
-                    child_transform.translation =
-                        s_transform.transform_point(child_transform.translation);
-                }
-            }
-        }
-    }
-}
+//         if let Some(children) = s_children {
+//             for child in children {
+//                 if let Ok(mut child_transform) =
+//                     query_blast_impact.get_component_mut::<Transform>(*child)
+//                 {
+//                     commands.entity(*child).remove::<Parent>();
+//                     child_transform.translation =
+//                         s_transform.transform_point(child_transform.translation);
+//                 }
+//             }
+//         }
+//     }
+// }
 
-pub fn wreck(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<(&Handle<ColorMaterial>, &Transform, &Health, &Velocity), With<Spaceship>>,
-) {
-    if let Ok((s_color, s_transform, s_health, s_velocity)) = query.get_single() {
-        if s_health.0 > 0 {
-            return;
-        }
+// pub fn wreck(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+//     query: Query<(&Handle<ColorMaterial>, &Transform, &Health, &Velocity), With<Spaceship>>,
+// ) {
+//     if let Ok((s_color, s_transform, s_health, s_velocity)) = query.get_single() {
+//         if s_health.0 > 0 {
+//             return;
+//         }
 
-        let color = materials.get(s_color).unwrap().color;
-        let mut rng = rand::thread_rng();
+//         let color = materials.get(s_color).unwrap().color;
+//         let mut rng = rand::thread_rng();
 
-        for triangle in TRIANGLES {
-            // Arbitrary number of debris per triangle : area/16
-            for _ in 0..(triangle.area() / 16.0).round() as usize {
-                let p = triangle.xy().random_point();
-                let debris_relative =
-                    Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
-                let debris = s_transform.transform_point(debris_relative);
-                let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
+//         for triangle in TRIANGLES {
+//             // Arbitrary number of debris per triangle : area/16
+//             for _ in 0..(triangle.area() / 16.0).round() as usize {
+//                 let p = triangle.xy().random_point();
+//                 let debris_relative =
+//                     Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
+//                 let debris = s_transform.transform_point(debris_relative);
+//                 let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
-                commands
-                    .spawn(Debris)
-                    .insert(Velocity(s_velocity.0 + dv))
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: rng.gen_range(1.0..10.0),
-                                vertices: 4 * rng.gen_range(1..5),
-                            }))
-                            .into(),
-                        transform: Transform::from_translation(debris),
-                        material: materials.add(color.into()),
-                        ..default()
-                    });
-            }
-        }
-    }
-}
+//                 commands
+//                     .spawn(Debris)
+//                     .insert(Velocity(s_velocity.0 + dv))
+//                     .insert(ColorMesh2dBundle {
+//                         mesh: meshes
+//                             .add(Mesh::from(shape::Circle {
+//                                 radius: rng.gen_range(1.0..10.0),
+//                                 vertices: 4 * rng.gen_range(1..5),
+//                             }))
+//                             .into(),
+//                         transform: Transform::from_translation(debris),
+//                         material: materials.add(color.into()),
+//                         ..default()
+//                     });
+//             }
+//         }
+//     }
+// }
 
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
-    for (entity, health) in query.iter() {
-        if health.0 <= 0 {
-            commands.entity(entity).despawn();
-        }
-    }
-}
+// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Spaceship>>) {
+//     for (entity, health) in query.iter() {
+//         if health.0 <= 0 {
+//             commands.entity(entity).despawn();
+//         }
+//     }
+// }
 
 pub fn movement(
     // commands: Commands,
