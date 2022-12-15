@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 
-use super::{Spaceship, S10, S13, S14, S7, S9};
+use super::{Health, Spaceship, S10, S13, S14, S7, S9};
 
 const COLOR: Color = Color::YELLOW;
 
@@ -181,5 +181,20 @@ pub fn front_update(
         // if keys.any_just_released([KeyCode::K, KeyCode::Up]) {
         //     visibility.is_visible = false;
         // }
+    }
+}
+
+pub fn despawn(
+    mut commands: Commands,
+    query_flame: Query<Entity, Or<(With<FlameRear>, With<FlameFront>)>>,
+    query_spaceship: Query<(Entity, &Health), With<Spaceship>>,
+) {
+    if let Ok((spaceship, health)) = query_spaceship.get_single() {
+        if health.0 <= 0 {
+            for flame in query_flame.iter() {
+                commands.entity(spaceship).remove_children(&[flame]);
+                commands.entity(flame).despawn();
+            }
+        }
     }
 }
