@@ -402,31 +402,69 @@ pub fn attack(
     }
 }
 
-pub fn before_despawn(
+// pub fn before_despawn(
+//     mut commands: Commands,
+//     mut query_boss_part: Query<
+//         (
+//             // Option<&BossEdge>,
+// 	    &BossEdge,
+//             Option<&Children>,
+//             Entity,
+//             // &GlobalTransform,
+//             &mut Transform,
+//             &Health,
+//         ),
+//         // Or<(With<BossCore>, With<BossEdge>)>,
+//     >,
+//     // mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
+//     mut query_boss_core: Query<(&mut BossCore, Entity, &Transform, &Velocity)>,
+// ) {
+//     if let Ok((mut core, core_id, core_transform, core_velocity)) = query_boss_core.get_single_mut()
+//     {
+//         for (maybe_edge, maybe_children, id, mut transform, health) in query_boss_part.iter_mut() {
+//             if health.0 > 0 {
+//                 continue;
+//             }
+
+//             if maybe_edge.is_some() {
+//                 core.edges -= 1;
+//                 commands.entity(core_id).remove_children(&[id]);
+//                 commands.entity(id).insert(*core_velocity);
+//                 transform.translation = core_transform.transform_point(transform.translation);
+//             }
+
+//             // if let Some(children) = maybe_children {
+//             //     for child in children {
+//             //         if let Ok(mut child_transform) =
+//             //             query_blast_impact.get_component_mut::<Transform>(*child)
+//             //         {
+//             //             commands.entity(id).remove_children(&[*child]);
+//             //             commands.entity(*child).remove::<Parent>();
+//             //             child_transform.translation =
+//             //                 transform.transform_point(child_transform.translation);
+//             //         }
+//             //     }
+//             // }
+//         }
+//     }
+// }
+
+pub fn cut_off_edge(
     mut commands: Commands,
-    query_boss_part: Query<
-        (
-            Option<&BossEdge>,
-            Option<&Children>,
-            Entity,
-            &GlobalTransform,
-            &Health,
-        ),
-        Or<(With<BossCore>, With<BossEdge>)>,
-    >,
-    mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
-    mut query_boss_core: Query<(&mut BossCore, Entity)>,
+    mut query_boss_edge: Query<(Entity, &Health, &mut Transform), With<BossEdge>>,
+    mut query_boss_core: Query<(&mut BossCore, Entity, &Transform, &Velocity), Without<BossEdge>>,
 ) {
-    if let Ok((mut core, core_id)) = query_boss_core.get_single_mut() {
-        for (maybe_edge, maybe_children, id, transform, health) in query_boss_part.iter() {
-            if health.0 > 0 {
+    if let Ok((mut core, core_id, core_transform, core_velocity)) = query_boss_core.get_single_mut()
+    {
+        for (edge_id, edge_health, mut edge_transform) in query_boss_edge.iter_mut() {
+            if edge_health.0 > 0 {
                 continue;
             }
 
-            if maybe_edge.is_some() {
-                core.edges -= 1;
-                commands.entity(core_id).remove_children(&[id]);
-            }
+            core.edges -= 1;
+            commands.entity(core_id).remove_children(&[edge_id]);
+            commands.entity(edge_id).insert(*core_velocity);
+            edge_transform.translation = core_transform.transform_point(edge_transform.translation);
 
             // if let Some(children) = maybe_children {
             //     for child in children {

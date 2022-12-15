@@ -37,7 +37,7 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 const DIM_FACTOR: f32 = 0.92;
 const DIM_TIMER: u32 = 50;
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Velocity(Vec3);
 
 // #[derive(Component)]
