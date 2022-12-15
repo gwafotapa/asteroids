@@ -131,7 +131,7 @@ pub fn before_despawn(
     }
 }
 
-pub fn explode(
+pub fn wreck(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

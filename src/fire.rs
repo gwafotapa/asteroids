@@ -41,7 +41,7 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Fire
 }
 
 #[cfg(fire)]
-pub fn explode(
+pub fn wreck(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

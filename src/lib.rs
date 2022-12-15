@@ -217,7 +217,7 @@ pub fn ingame_or_paused(game_state: Res<CurrentState<GameState>>) -> bool {
     game_state.0 == GameState::InGame || game_state.0 == GameState::Paused
 }
 
-pub fn explode_with<C: Component>(
+pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
