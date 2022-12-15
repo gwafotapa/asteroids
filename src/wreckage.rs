@@ -4,13 +4,14 @@ use std::f32::consts::PI;
 
 use crate::{Collider, Health, Topology, TriangleXY, Velocity};
 
+const WRECKAGE_HEALTH: i32 = 100;
+const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 16.0;
+
 #[derive(Component)]
 pub struct Wreckage;
 
 #[derive(Component)]
 pub struct WreckageDebris;
-
-const WRECKAGE_HEALTH: i32 = 100;
 
 pub fn update_debris(mut query: Query<(&mut Transform, &Velocity), With<WreckageDebris>>) {
     for (mut transform, velocity) in &mut query {
@@ -93,7 +94,7 @@ pub fn wreck_with<C: Component>(
                             <[_; 3]>::try_from(triplet).expect("3 items").into();
 
                         // Arbitrary number of debris per triangle : area/16
-                        for _ in 0..(triangle.area() / 16.0).round() as usize {
+                        for _ in 0..(triangle.area() * DEBRIS_PER_SQUARE_UNIT).round() as usize {
                             let p = triangle.random_point();
                             let debris =
                                 Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
@@ -126,7 +127,7 @@ pub fn wreck_with<C: Component>(
             }
             Topology::Disk { radius } => {
                 let area = PI * radius * radius;
-                for _ in 0..(area / 16.0).round() as usize {
+                for _ in 0..(area * DEBRIS_PER_SQUARE_UNIT).round() as usize {
                     let rho = rng.gen_range(0.0..*radius);
                     let theta = rng.gen_range(0.0..2.0 * PI);
                     let (sin, cos) = theta.sin_cos();
