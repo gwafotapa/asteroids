@@ -3,7 +3,7 @@ use bevy::{
     input::{keyboard::KeyboardInput, ButtonState},
     prelude::*,
     render::mesh::VertexAttributeValues,
-    // sprite::Mesh2dHandle,
+    sprite::Mesh2dHandle,
 };
 use iyes_loopless::prelude::*;
 use rand::Rng;
@@ -225,26 +225,42 @@ pub fn explode_with<C: Component>(
         (
             &Handle<ColorMaterial>,
             &Collider,
-            Option<&Parent>,
-            &GlobalTransform,
+            Entity,
+            // Option<&Parent>,
+            // &GlobalTransform,
             &Health,
-            Option<&Velocity>,
+            // Option<&Velocity>,
         ),
         With<C>,
     >,
 ) {
-    for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
+    // for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
+    for (color, collider, id, health) in &query {
         if health.0 > 0 {
             continue;
         }
 
         let mut rng = rand::thread_rng();
         let color = materials.get(color).unwrap().color;
-        let velocity = maybe_parent
-            .map_or(maybe_velocity, |parent| {
-                query.get_component::<Velocity>(**parent).ok()
-            })
-            .map_or(Vec3::ZERO, |v| v.0);
+        // let velocity = maybe_parent
+        //     .map_or(maybe_velocity, |parent| {
+        //         query.get_component::<Velocity>(**parent).ok()
+        //     })
+        //     .map_or(Vec3::ZERO, |v| v.0);
+
+        commands.entity(id).insert(Wreckage);
+        commands.entity(id).remove::<C>();
+        commands.entity(id).remove::<Mesh2dHandle>();
+
+        // let wreck = commands
+        //     .spawn(Wreckage)
+        //     .insert(Health(WRECK_HEALTH))
+        //     .insert(Velocity(velocity))
+        //     .insert(SpatialBundle {
+        //         transform: transform.compute_transform(),
+        //         ..default()
+        //     })
+        //     .id();
 
         match &collider.topology {
             Topology::Triangles { mesh_handle } => {
@@ -260,16 +276,17 @@ pub fn explode_with<C: Component>(
                         // Arbitrary number of debris per triangle : area/16
                         for _ in 0..(triangle.area() / 16.0).round() as usize {
                             let p = triangle.random_point();
-                            let debris_relative =
+                            let debris =
                                 Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
-                            let debris = transform.transform_point(debris_relative);
+                            // let debris = transform.transform_point(debris_relative);
 
                             let dv =
                                 Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
-                            commands
-                                .spawn(Debris)
-                                .insert(Velocity(velocity + dv))
+                            let debris = commands
+                                // .spawn(Debris)
+                                .spawn(WreckageDebris)
+                                .insert(Velocity(dv))
                                 .insert(ColorMesh2dBundle {
                                     mesh: meshes
                                         .add(Mesh::from(shape::Circle {
@@ -280,7 +297,10 @@ pub fn explode_with<C: Component>(
                                     transform: Transform::from_translation(debris),
                                     material: materials.add(color.into()),
                                     ..default()
-                                });
+                                })
+                                .id();
+
+                            commands.entity(id).add_child(debris);
                         }
                     }
                 }
@@ -293,13 +313,14 @@ pub fn explode_with<C: Component>(
                     let (sin, cos) = theta.sin_cos();
                     let (x, y) = (rho * cos, rho * sin);
                     let z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
-                    let debris_translation = transform.translation() + Vec3::new(x, y, z);
+                    let debris = Vec3::new(x, y, z);
 
                     let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
-                    commands
-                        .spawn(Debris)
-                        .insert(Velocity(velocity + dv))
+                    let debris = commands
+                        // .spawn(Debris)
+                        .spawn(WreckageDebris)
+                        .insert(Velocity(dv))
                         .insert(ColorMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
@@ -307,13 +328,50 @@ pub fn explode_with<C: Component>(
                                     vertices: 4 * rng.gen_range(1..5),
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(debris_translation),
+                            transform: Transform::from_translation(debris),
                             material: materials.add(color.into()),
                             ..default()
-                        });
+                        })
+                        .id();
+
+                    commands.entity(id).add_child(debris);
                 }
             }
             Topology::Point => panic!("Found point topology for explosion."),
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Wreckage;
+
+#[derive(Component)]
+pub struct WreckageDebris;
+
+const WRECKAGE_HEALTH: i32 = 100;
+
+pub fn wreckage_debris_update(mut query: Query<(&mut Transform, &Velocity), With<WreckageDebris>>) {
+    for (mut transform, velocity) in &mut query {
+        transform.scale -= 1.0 / WRECKAGE_HEALTH as f32;
+        transform.translation += velocity.0;
+    }
+}
+
+pub fn wreckage_update(
+    mut query: Query<(&mut Health, &mut Transform, Option<&Velocity>), With<Wreckage>>,
+) {
+    for (mut health, mut transform, maybe_velocity) in &mut query {
+        health.0 -= 1;
+        if let Some(velocity) = maybe_velocity {
+            transform.translation += velocity.0;
+        }
+    }
+}
+
+pub fn wreckage_despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Wreckage>>) {
+    for (id, health) in &query {
+        if health.0 <= -WRECKAGE_HEALTH {
+            commands.entity(id).despawn_recursive();
         }
     }
 }

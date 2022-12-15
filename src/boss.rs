@@ -428,17 +428,18 @@ pub fn before_despawn(
                 commands.entity(core_id).remove_children(&[id]);
             }
 
-            if let Some(children) = maybe_children {
-                for child in children {
-                    if let Ok(mut child_transform) =
-                        query_blast_impact.get_component_mut::<Transform>(*child)
-                    {
-                        commands.entity(*child).remove::<Parent>();
-                        child_transform.translation =
-                            transform.transform_point(child_transform.translation);
-                    }
-                }
-            }
+            // if let Some(children) = maybe_children {
+            //     for child in children {
+            //         if let Ok(mut child_transform) =
+            //             query_blast_impact.get_component_mut::<Transform>(*child)
+            //         {
+            //             commands.entity(id).remove_children(&[*child]);
+            //             commands.entity(*child).remove::<Parent>();
+            //             child_transform.translation =
+            //                 transform.transform_point(child_transform.translation);
+            //         }
+            //     }
+            // }
         }
     }
 }
