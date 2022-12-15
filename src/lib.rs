@@ -3,12 +3,16 @@ use bevy::{
     input::{keyboard::KeyboardInput, ButtonState},
     prelude::*,
     render::mesh::VertexAttributeValues,
-    sprite::Mesh2dHandle,
+    // sprite::Mesh2dHandle,
 };
 use iyes_loopless::prelude::*;
 use rand::Rng;
+use std::f32::consts::PI;
 
-use crate::{collision::math::triangle::TriangleXY, debris::Debris};
+use crate::{
+    collision::math::{triangle::TriangleXY, Collider, Topology},
+    debris::Debris,
+};
 
 pub mod asteroid;
 pub mod blast;
@@ -219,9 +223,8 @@ pub fn explode_with<C: Component>(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query: Query<
         (
-            // Option<&Children>,
             &Handle<ColorMaterial>,
-            &Mesh2dHandle,
+            &Collider,
             Option<&Parent>,
             &GlobalTransform,
             &Health,
@@ -230,34 +233,68 @@ pub fn explode_with<C: Component>(
         With<C>,
     >,
 ) {
-    for (color, mesh, maybe_parent, transform, health, maybe_velocity) in &query {
-        // for (color, mesh, transform, health, maybe_velocity) in &query {
+    for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
         if health.0 > 0 {
             continue;
         }
 
-        let color = materials.get(color).unwrap().color;
         let mut rng = rand::thread_rng();
-        if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-            .get(&mesh.0)
-            .unwrap()
-            .attribute(Mesh::ATTRIBUTE_POSITION)
-        {
-            for triplet in vertices.clone().chunks_exact(3) {
-                let triangle: TriangleXY = <[_; 3]>::try_from(triplet).expect("3 items").into();
+        let color = materials.get(color).unwrap().color;
+        let velocity = maybe_parent
+            .map_or(maybe_velocity, |parent| {
+                query.get_component::<Velocity>(**parent).ok()
+            })
+            .map_or(Vec3::ZERO, |v| v.0);
 
-                // Arbitrary number of debris per triangle : area/16
-                for _ in 0..(triangle.area() / 16.0).round() as usize {
-                    let p = triangle.random_point();
-                    let debris_relative =
-                        Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
-                    let debris = transform.transform_point(debris_relative);
+        match &collider.topology {
+            Topology::Triangles { mesh_handle } => {
+                if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
+                    .get(&mesh_handle.0)
+                    .unwrap()
+                    .attribute(Mesh::ATTRIBUTE_POSITION)
+                {
+                    for triplet in vertices.clone().chunks_exact(3) {
+                        let triangle: TriangleXY =
+                            <[_; 3]>::try_from(triplet).expect("3 items").into();
 
-                    let velocity = maybe_parent
-                        .map_or(maybe_velocity, |parent| {
-                            query.get_component::<Velocity>(**parent).ok()
-                        })
-                        .map_or(Vec3::ZERO, |v| v.0);
+                        // Arbitrary number of debris per triangle : area/16
+                        for _ in 0..(triangle.area() / 16.0).round() as usize {
+                            let p = triangle.random_point();
+                            let debris_relative =
+                                Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
+                            let debris = transform.transform_point(debris_relative);
+
+                            let dv =
+                                Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
+
+                            commands
+                                .spawn(Debris)
+                                .insert(Velocity(velocity + dv))
+                                .insert(ColorMesh2dBundle {
+                                    mesh: meshes
+                                        .add(Mesh::from(shape::Circle {
+                                            radius: rng.gen_range(1.0..10.0),
+                                            vertices: 4 * rng.gen_range(1..5),
+                                        }))
+                                        .into(),
+                                    transform: Transform::from_translation(debris),
+                                    material: materials.add(color.into()),
+                                    ..default()
+                                });
+                        }
+                    }
+                }
+            }
+            Topology::Disk { radius } => {
+                let area = std::f32::consts::PI * radius * radius;
+                for _ in 0..(area / 16.0).round() as usize {
+                    let rho = rng.gen_range(0.0..*radius);
+                    let theta = rng.gen_range(0.0..2.0 * PI);
+                    let (sin, cos) = theta.sin_cos();
+                    let (x, y) = (rho * cos, rho * sin);
+                    let z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+                    let debris_translation = transform.translation() + Vec3::new(x, y, z);
+
                     let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
                     commands
@@ -266,16 +303,17 @@ pub fn explode_with<C: Component>(
                         .insert(ColorMesh2dBundle {
                             mesh: meshes
                                 .add(Mesh::from(shape::Circle {
-                                    radius: rng.gen_range(1.0..10.0),
+                                    radius: rng.gen_range(1.0..radius / 10.0),
                                     vertices: 4 * rng.gen_range(1..5),
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(debris),
+                            transform: Transform::from_translation(debris_translation),
                             material: materials.add(color.into()),
                             ..default()
                         });
                 }
             }
+            Topology::Point => panic!("Found point topology for explosion."),
         }
     }
 }
