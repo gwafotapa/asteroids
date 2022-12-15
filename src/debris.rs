@@ -21,3 +21,11 @@ pub fn scale_down(
         }
     }
 }
+
+// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Transform), With<Debris>>) {
+//     for (debris, transform) in query.iter() {
+//         if transform.scale.x < 0.005 {
+//             commands.entity(debris).despawn();
+//         }
+//     }
+// }

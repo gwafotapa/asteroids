@@ -286,7 +286,7 @@ pub fn explode_with<C: Component>(
                 }
             }
             Topology::Disk { radius } => {
-                let area = std::f32::consts::PI * radius * radius;
+                let area = PI * radius * radius;
                 for _ in 0..(area / 16.0).round() as usize {
                     let rho = rng.gen_range(0.0..*radius);
                     let theta = rng.gen_range(0.0..2.0 * PI);

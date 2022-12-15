@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use rand::Rng;
+use std::f32::consts::PI;
 
 use crate::{
     collision::{impact::Impact, Aabb, Collider, Topology},
@@ -147,21 +148,19 @@ pub fn explode(
             continue;
         }
 
-        let color = materials.get(color).unwrap().color;
         let mut rng = rand::thread_rng();
+        let color = materials.get(color).unwrap().color;
+        let area = PI * asteroid.radius * asteroid.radius;
 
-        for _ in 1..asteroid.radius as usize {
-            let x = rng.gen_range(-asteroid.radius..asteroid.radius);
-            let y_max = (asteroid.radius.powi(2) - x.powi(2)).sqrt();
-            let y = rng.gen_range(-y_max..y_max);
+        for _ in 0..(area / 16.0).round() as usize {
+            let rho = rng.gen_range(0.0..asteroid.radius);
+            let theta = rng.gen_range(0.0..2.0 * PI);
+            let (sin, cos) = theta.sin_cos();
+            let (x, y) = (rho * cos, rho * sin);
             let z = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
             let debris_translation = transform.translation() + Vec3::new(x, y, z);
 
-            let dv = Vec3 {
-                x: rng.gen_range(-0.5..0.5),
-                y: rng.gen_range(-0.5..0.5),
-                z: 0.0,
-            };
+            let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
             commands
                 .spawn(Debris)
@@ -170,7 +169,7 @@ pub fn explode(
                 .insert(ColorMesh2dBundle {
                     mesh: meshes
                         .add(Mesh::from(shape::Circle {
-                            radius: rng.gen_range(asteroid.radius / 100.0..asteroid.radius / 20.0),
+                            radius: rng.gen_range(1.0..asteroid.radius / 10.0),
                             vertices: 8,
                         }))
                         .into(),
