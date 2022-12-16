@@ -13,7 +13,7 @@ pub const INITIAL_POSITION: Vec3 = Vec3 {
     z: CAMERA_Z,
 };
 const SPEED: f32 = 0.02;
-const REAR_GAP: f32 = 100.0;
+const REAR_GAP: f32 = 200.0;
 
 #[derive(Component, Eq, PartialEq)]
 pub enum CameraPositioning {

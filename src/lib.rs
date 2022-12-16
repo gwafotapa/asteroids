@@ -33,7 +33,7 @@ pub struct Velocity(Vec3);
 // #[derive(Component)]
 // struct SpawnedTime(Instant);
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Health(i32);
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -64,13 +64,13 @@ pub fn exit_game_setup(mut commands: Commands) {
 //     // query_camera.single_mut().show_ui = true;
 // }
 
-pub fn spaceship_exists(query: Query<With<spaceship::Spaceship>>) -> bool {
-    !query.is_empty()
-}
+// pub fn spaceship_exists(query: Query<With<spaceship::Spaceship>>) -> bool {
+//     !query.is_empty()
+// }
 
-pub fn ingame_or_paused(game_state: Res<CurrentState<GameState>>) -> bool {
-    game_state.0 == GameState::InGame || game_state.0 == GameState::Paused
-}
+// pub fn ingame_or_paused(game_state: Res<CurrentState<GameState>>) -> bool {
+//     game_state.0 == GameState::InGame || game_state.0 == GameState::Paused
+// }
 
 // pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health)>) {
 //     for (id, health) in query.iter() {
