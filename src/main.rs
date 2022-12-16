@@ -53,6 +53,7 @@ fn main() {
         .add_exit_system(GameState::GameSetup, light::kill)
         .add_enter_system(GameState::TurnUpLight, camera::setup)
         .add_system(light::turn_up.run_in_state(GameState::TurnUpLight))
+        .add_system(light::turn_down.run_in_state(GameState::TurnDownLight))
         .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()
@@ -64,6 +65,7 @@ fn main() {
                 .with_system(wreckage::update)
                 .with_system(wreckage::update_debris)
                 .with_system(blast::update)
+                .with_system(collision::impact::update)
                 .into(),
         )
         .add_system_set(
@@ -84,11 +86,6 @@ fn main() {
                 .with_system(spaceship::flame::rear_update)
                 .into(),
         )
-        .add_system(
-            collision::impact::update // .after(boss::movement).after(spaceship::movement)
-                .run_in_state(GameState::InGame)
-                .after("movement"),
-        ) // Stage of this and despawn ?
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
@@ -131,7 +128,6 @@ fn main() {
                 // .run_if(ingame_or_paused)
                 .after("camera"),
         )
-        .add_system(light::turn_down.run_in_state(GameState::TurnDownLight))
         // .add_exit_system(GameState::GameOver, exit_game)
         // Remove parent/children component of an entity whose relative is about to be despawned
         .add_system_set_to_stage(
