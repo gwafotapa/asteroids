@@ -109,13 +109,13 @@ pub fn update(
     query_bindings: Query<&KeyboardBindings>,
     mut exit: EventWriter<AppExit>,
 ) {
-    if game_state.0 != GameState::MainMenu {
-        panic!("Trying to update the main menu in the wrong game state");
-    }
     // let mut camera = query_camera.single_mut();
     let (children, menu_id, mut menu, mut style) = query_main_menu.single_mut();
     let bindings = query_bindings.single();
-    if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) {
+
+    if input.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
+    } else if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) {
         if menu.0 > 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
                 .style
