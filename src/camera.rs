@@ -2,6 +2,7 @@ use bevy::prelude::*;
 // use iyes_loopless::prelude::NextState;
 
 use crate::{
+    keyboard::KeyboardBindings,
     spaceship::{Spaceship, SPACESHIP_Z},
     Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -50,6 +51,7 @@ pub fn update(
     // >,
     mut query_camera: Query<(&mut CameraPositioning, &mut Transform), With<Camera>>,
     query_spaceship: Query<(&Transform, &Velocity), (With<Spaceship>, Without<Camera>)>,
+    query_bindings: Query<&KeyboardBindings>,
     // game_state: Res<CurrentState<GameState>>,
 ) {
     // let (mut c_positioning, mut c_transform, mut c_config) = query_camera.single_mut();
@@ -59,7 +61,7 @@ pub fn update(
 
         c_transform.translation += s_velocity.0;
 
-        if keys.any_just_pressed([KeyCode::Space, KeyCode::C]) {
+        if keys.just_pressed(query_bindings.single().camera()) {
             *c_positioning = match *c_positioning {
                 CameraPositioning::Synchronized => CameraPositioning::Ahead,
                 CameraPositioning::Ahead => CameraPositioning::Synchronized,

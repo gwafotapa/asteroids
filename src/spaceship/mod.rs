@@ -4,6 +4,7 @@ use crate::{
     blast::Blast,
     collision::{math::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
+    keyboard::KeyboardBindings,
     Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
@@ -248,16 +249,17 @@ pub fn spawn(
 
 pub fn attack(
     keys: Res<Input<KeyCode>>,
-    query: Query<(Entity, &Transform), With<Spaceship>>,
+    query_spaceship: Query<(Entity, &Transform), With<Spaceship>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    query_bindings: Query<&KeyboardBindings>,
 ) {
-    if !keys.just_pressed(KeyCode::R) {
+    if !keys.just_pressed(query_bindings.single().fire()) {
         return;
     }
 
-    if let Ok((spaceship, transform)) = query.get_single() {
+    if let Ok((spaceship, transform)) = query_spaceship.get_single() {
         let blast = commands
             .spawn(Blast)
             .insert(Health(1))
@@ -387,6 +389,7 @@ pub fn movement(
     // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
     mut query_spaceship: Query<(Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
+    query_bindings: Query<&KeyboardBindings>,
 ) {
     // if keys.just_pressed(KeyCode::Space) {
     //     // Space was pressed
@@ -395,19 +398,20 @@ pub fn movement(
     // if keys.just_released(KeyCode::LControl) {
     //     // Left Ctrl was released
     // }
+    let bindings = query_bindings.single();
 
     if let Ok((_s_id, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
-        if keys.any_pressed([KeyCode::K, KeyCode::Left]) {
+        if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
             s_transform.rotation *= rotation;
             // c_transform.rotation *= rotation;
-        } else if keys.any_pressed([KeyCode::M, KeyCode::Right]) {
+        } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
             let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
             s_transform.rotation *= rotation;
             // c_transform.rotation *= rotation;
         }
 
-        if keys.any_pressed([KeyCode::O, KeyCode::Up]) {
+        if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
             // accelerate(&*s_transform, &mut s_velocity);
 
             let direction = s_transform.rotation * Vec3::X;
@@ -415,7 +419,7 @@ pub fn movement(
             // if s_velocity.0.length() > SPEED_MAX {
             //     s_velocity.0 = SPEED_MAX * s_velocity.0.normalize();
             // }
-        } else if keys.any_pressed([KeyCode::L, KeyCode::Down]) {
+        } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
             // decelerate(&*s_transform, &mut s_velocity);
             let direction = s_transform.rotation * Vec3::NEG_X;
             s_velocity.0 += 0.5 * ACCELERATION * direction;

@@ -1,7 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
-use crate::GameState;
+use crate::{keyboard::KeyboardBindings, GameState};
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
@@ -106,6 +106,7 @@ pub fn update(
     // mut query_camera: Query<&mut UiCameraConfig>,
     mut query_main_menu: Query<(&Children, Entity, &mut MainMenu, &mut Style)>,
     mut query_item: Query<&mut Text, With<MainMenuItem>>,
+    query_bindings: Query<&KeyboardBindings>,
     mut exit: EventWriter<AppExit>,
 ) {
     if game_state.0 != GameState::MainMenu {
@@ -113,7 +114,8 @@ pub fn update(
     }
     // let mut camera = query_camera.single_mut();
     let (children, menu_id, mut menu, mut style) = query_main_menu.single_mut();
-    if input.any_just_pressed([KeyCode::Up, KeyCode::O]) {
+    let bindings = query_bindings.single();
+    if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) {
         if menu.0 > 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
                 .style
@@ -123,7 +125,7 @@ pub fn update(
                 .style
                 .color = COLOR_HIGHLIGHTED;
         }
-    } else if input.any_just_pressed([KeyCode::Down, KeyCode::L]) {
+    } else if input.any_just_pressed([KeyCode::Down, bindings.decelerate()]) {
         if menu.0 < MAIN_MENU_ITEMS - 1 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
                 .style
@@ -133,7 +135,7 @@ pub fn update(
                 .style
                 .color = COLOR_HIGHLIGHTED;
         }
-    } else if input.any_just_pressed([KeyCode::Return, KeyCode::R]) {
+    } else if input.any_just_pressed([KeyCode::Return, bindings.fire()]) {
         match menu.0 {
             0 => {
                 // commands.entity(id).despawn_recursive();

@@ -5,7 +5,10 @@ use bevy::{
 };
 use iyes_loopless::prelude::*;
 
-use crate::GameState;
+use crate::{
+    keyboard::{KeyCodeString, KeyboardBindings, BINDINGS},
+    GameState,
+};
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
@@ -215,10 +218,6 @@ pub fn spawn(
     }
 }
 
-pub fn spawn_bindings(mut commands: Commands) {
-    commands.spawn(KeyboardBindings::default());
-}
-
 pub fn update(
     mut commands: Commands,
     input: Res<Input<KeyCode>>,
@@ -294,223 +293,9 @@ pub fn update(
     }
 }
 
-const BINDINGS: usize = 6;
-
 #[derive(Default)]
 pub enum SettingsState {
     #[default]
     SelectItem,
     BindKey,
 }
-
-#[derive(Component)]
-pub struct KeyboardBindings([KeyCode; BINDINGS]);
-
-impl Default for KeyboardBindings {
-    fn default() -> KeyboardBindings {
-        KeyboardBindings([
-            KeyCode::O,
-            KeyCode::L,
-            KeyCode::K,
-            KeyCode::M,
-            KeyCode::R,
-            KeyCode::Space,
-        ])
-    }
-}
-
-impl KeyboardBindings {
-    // fn get(&self) -> &[KeyCode] {
-    //     &self.0
-    // }
-
-    fn accelerate(&self) -> KeyCode {
-        self.0[0]
-    }
-
-    fn decelerate(&self) -> KeyCode {
-        self.0[1]
-    }
-
-    fn rotate_left(&self) -> KeyCode {
-        self.0[2]
-    }
-
-    fn rotate_right(&self) -> KeyCode {
-        self.0[3]
-    }
-
-    fn fire(&self) -> KeyCode {
-        self.0[4]
-    }
-
-    fn camera(&self) -> KeyCode {
-        self.0[5]
-    }
-}
-
-const KeyCodeString: [&str; 163] = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "0",
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-    "G",
-    "H",
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-    "Escape",
-    "F1",
-    "F2",
-    "F3",
-    "F4",
-    "F5",
-    "F6",
-    "F7",
-    "F8",
-    "F9",
-    "F10",
-    "F11",
-    "F12",
-    "F13",
-    "F14",
-    "F15",
-    "F16",
-    "F17",
-    "F18",
-    "F19",
-    "F20",
-    "F21",
-    "F22",
-    "F23",
-    "F24",
-    "Snapshot",
-    "Scroll",
-    "Pause",
-    "Insert",
-    "Home",
-    "Delete",
-    "End",
-    "PageDown",
-    "PageUp",
-    "Left",
-    "Up",
-    "Right",
-    "Down",
-    "Back",
-    "Return",
-    "Space",
-    "Compose",
-    "Caret",
-    "Numlock",
-    "Numpad0",
-    "Numpad1",
-    "Numpad2",
-    "Numpad3",
-    "Numpad4",
-    "Numpad5",
-    "Numpad6",
-    "Numpad7",
-    "Numpad8",
-    "Numpad9",
-    "AbntC1",
-    "AbntC2",
-    "NumpadAdd",
-    "Apostrophe",
-    "Apps",
-    "Asterisk",
-    "Plus",
-    "At",
-    "Ax",
-    "Backslash",
-    "Calculator",
-    "Capital",
-    "Colon",
-    "Comma",
-    "Convert",
-    "NumpadDecimal",
-    "NumpadDivide",
-    "Equals",
-    "Grave",
-    "Kana",
-    "Kanji",
-    "LAlt",
-    "LBracket",
-    "LControl",
-    "LShift",
-    "LWin",
-    "Mail",
-    "MediaSelect",
-    "MediaStop",
-    "Minus",
-    "NumpadMultiply",
-    "Mute",
-    "MyComputer",
-    "NavigateForward",
-    "NavigateBackward",
-    "NextTrack",
-    "NoConvert",
-    "NumpadComma",
-    "NumpadEnter",
-    "NumpadEquals",
-    "Oem102",
-    "Period",
-    "PlayPause",
-    "Power",
-    "PrevTrack",
-    "RAlt",
-    "RBracket",
-    "RControl",
-    "RShift",
-    "RWin",
-    "Semicolon",
-    "Slash",
-    "Sleep",
-    "Stop",
-    "NumpadSubtract",
-    "Sysrq",
-    "Tab",
-    "Underline",
-    "Unlabeled",
-    "VolumeDown",
-    "VolumeUp",
-    "Wake",
-    "WebBack",
-    "WebFavorites",
-    "WebForward",
-    "WebHome",
-    "WebRefresh",
-    "WebSearch",
-    "WebStop",
-    "Yen",
-    "Copy",
-    "Paste",
-    "Cut",
-];

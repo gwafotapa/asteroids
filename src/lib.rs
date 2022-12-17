@@ -12,6 +12,7 @@ pub mod collision;
 pub mod compass;
 pub mod fire;
 pub mod game_over;
+pub mod keyboard;
 pub mod light;
 pub mod map;
 pub mod spaceship;

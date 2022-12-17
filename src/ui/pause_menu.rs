@@ -1,7 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
-use crate::GameState;
+use crate::{keyboard::KeyboardBindings, GameState};
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
@@ -113,6 +113,7 @@ pub fn in_game(
     mut commands: Commands,
     mut query_camera: Query<&mut UiCameraConfig>,
     query_spaceship: Query<With<crate::spaceship::Spaceship>>,
+    query_bindings: Query<&KeyboardBindings>,
     // mut query_menu: Query<&mut Visibility, With<PauseMenu>>,
 ) {
     if query_spaceship.get_single().is_ok() && input.just_pressed(KeyCode::P) {
@@ -132,6 +133,7 @@ pub fn paused(
     //     (With<super::main_menu::MainMenu>, Without<PauseMenu>),
     // >,
     mut query_item: Query<&mut Text, With<PauseMenuItem>>,
+    query_bindings: Query<&KeyboardBindings>,
     // query_all: Query<
     //     Entity,
     //     (
@@ -143,6 +145,7 @@ pub fn paused(
     mut exit: EventWriter<AppExit>,
 ) {
     let (children, mut menu) = query_menu_pause.single_mut();
+    let bindings = query_bindings.single();
     if input.just_pressed(KeyCode::P) {
         commands.insert_resource(NextState(GameState::InGame));
         // *visibility = Visibility::INVISIBLE;
@@ -156,7 +159,7 @@ pub fn paused(
                 .style
                 .color = COLOR_HIGHLIGHTED;
         }
-    } else if input.any_just_pressed([KeyCode::Up, KeyCode::O]) {
+    } else if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) {
         if menu.0 > 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
                 .style
@@ -166,7 +169,7 @@ pub fn paused(
                 .style
                 .color = COLOR_HIGHLIGHTED;
         }
-    } else if input.any_just_pressed([KeyCode::Down, KeyCode::L]) {
+    } else if input.any_just_pressed([KeyCode::Down, bindings.decelerate()]) {
         if menu.0 < PAUSE_MENU_ITEMS - 1 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
                 .style
@@ -176,7 +179,7 @@ pub fn paused(
                 .style
                 .color = COLOR_HIGHLIGHTED;
         }
-    } else if input.any_just_pressed([KeyCode::Return, KeyCode::R]) {
+    } else if input.any_just_pressed([KeyCode::Return, bindings.fire()]) {
         match menu.0 {
             0 => {
                 commands.insert_resource(NextState(GameState::InGame));

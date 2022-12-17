@@ -1,6 +1,7 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 
 use super::{Health, Spaceship, S10, S13, S14, S7, S9};
+use crate::keyboard::KeyboardBindings;
 
 const COLOR: Color = Color::YELLOW;
 
@@ -92,6 +93,7 @@ pub fn rear_update(
     keys: Res<Input<KeyCode>>,
     mut meshes: ResMut<Assets<Mesh>>,
     query: Query<&Mesh2dHandle, With<FlameRear>>,
+    query_bindings: Query<&KeyboardBindings>,
 ) {
     if let Ok(mesh) = query.get_single() {
         // meshes
@@ -121,7 +123,7 @@ pub fn rear_update(
             .unwrap()
             .attribute_mut(Mesh::ATTRIBUTE_POSITION)
         {
-            if keys.any_pressed([KeyCode::O, KeyCode::Up]) {
+            if keys.any_pressed([query_bindings.single().accelerate(), KeyCode::Up]) {
                 if vertices[0][0] > -20.0 {
                     vertices[0][0] -= 4.0;
                 } else {
@@ -142,6 +144,7 @@ pub fn front_update(
     keys: Res<Input<KeyCode>>,
     // mut meshes: ResMut<Assets<Mesh>>,
     mut query: Query<&mut Transform, With<FlameFront>>,
+    query_bindings: Query<&KeyboardBindings>,
 ) {
     for mut transform in query.iter_mut() {
         // meshes
@@ -166,7 +169,7 @@ pub fn front_update(
         //     visibility.is_visible = true;
         // }
 
-        if keys.any_pressed([KeyCode::L, KeyCode::Down]) {
+        if keys.any_pressed([query_bindings.single().decelerate(), KeyCode::Down]) {
             if transform.scale.x < 10.0 {
                 transform.scale.x += 4.0;
                 transform.scale.y += 4.0;
