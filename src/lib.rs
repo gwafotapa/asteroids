@@ -45,6 +45,7 @@ pub enum GameState {
     GameOver,
     TurnDownLight,
     TurnUpLight,
+    Settings,
 }
 
 pub fn exit_game_setup(mut commands: Commands) {

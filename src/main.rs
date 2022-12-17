@@ -26,9 +26,12 @@ fn main() {
         .add_loopless_state(GameState::MainMenu)
         // .add_startup_system(camera::spawn)
         .add_startup_system(camera::spawn)
+        .add_startup_system(ui::settings::spawn_bindings)
         .add_enter_system(GameState::MainMenu, ui::main_menu::spawn)
-        .add_system(bevy::window::close_on_esc)
+        // .add_system(bevy::window::close_on_esc)
         .add_system(ui::main_menu::update.run_in_state(GameState::MainMenu))
+        .add_enter_system(GameState::Settings, ui::settings::spawn)
+        .add_system(ui::settings::update.run_in_state(GameState::Settings))
         .add_enter_system_set(
             GameState::GameSetup,
             ConditionSet::new()
