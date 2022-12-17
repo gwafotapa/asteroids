@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-pub const BINDINGS: usize = 6;
+pub const BINDINGS: usize = 7;
 
 #[derive(Component)]
 pub struct KeyboardBindings(pub [KeyCode; BINDINGS]);
@@ -14,6 +14,7 @@ impl Default for KeyboardBindings {
             KeyCode::M,
             KeyCode::R,
             KeyCode::Space,
+            KeyCode::P,
         ])
     }
 }
@@ -49,6 +50,10 @@ impl KeyboardBindings {
 
     pub fn camera(&self) -> KeyCode {
         self.0[5]
+    }
+
+    pub fn pause(&self) -> KeyCode {
+        self.0[6]
     }
 }
 

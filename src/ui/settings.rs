@@ -159,6 +159,22 @@ pub fn spawn(
         })
         .id();
 
+    let pause = commands
+        .spawn(SettingsMenuTextItem)
+        .insert(TextBundle {
+            text: Text::from_section(
+                "Pause",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: SIZE,
+                    color: COLOR_DEFAULT,
+                },
+            ),
+            style: item_style.clone(),
+            ..Default::default()
+        })
+        .id();
+
     commands.entity(settings_menu_left).push_children(&[
         accelerate,
         decelerate,
@@ -166,6 +182,7 @@ pub fn spawn(
         rotate_right,
         fire,
         camera,
+        pause,
     ]);
 
     let settings_menu_right = commands

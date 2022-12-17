@@ -116,7 +116,8 @@ pub fn in_game(
     query_bindings: Query<&KeyboardBindings>,
     // mut query_menu: Query<&mut Visibility, With<PauseMenu>>,
 ) {
-    if query_spaceship.get_single().is_ok() && input.any_just_pressed([KeyCode::Escape, KeyCode::P])
+    if query_spaceship.get_single().is_ok()
+        && input.any_just_pressed([KeyCode::Escape, query_bindings.single().pause()])
     {
         commands.insert_resource(NextState(GameState::Paused));
         // *query_menu.single_mut() = Visibility::VISIBLE;
@@ -147,7 +148,7 @@ pub fn paused(
 ) {
     let (children, mut menu) = query_menu_pause.single_mut();
     let bindings = query_bindings.single();
-    if input.any_just_pressed([KeyCode::Escape, KeyCode::P]) {
+    if input.any_just_pressed([KeyCode::Escape, bindings.pause()]) {
         commands.insert_resource(NextState(GameState::InGame));
         // *visibility = Visibility::INVISIBLE;
         query_camera.single_mut().show_ui = false;
