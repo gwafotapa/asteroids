@@ -147,7 +147,7 @@ pub fn spawn(
         .spawn(SettingsMenuTextItem)
         .insert(TextBundle {
             text: Text::from_section(
-                "Switch camera mode",
+                "Switch camera position",
                 TextStyle {
                     font: font.clone(),
                     font_size: SIZE,

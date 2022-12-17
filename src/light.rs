@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
 use super::GameState;
+use crate::keyboard::KeyboardBindings;
 
 const DIM_FACTOR: f32 = 0.92;
 const DIM_TIMER: u32 = 50;
@@ -14,7 +15,7 @@ pub fn turn_down(
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_main_menu: Query<Entity, With<super::ui::main_menu::MainMenu>>,
     mut query_camera: Query<(&mut Camera, &mut UiCameraConfig)>,
-    query_without_camera: Query<Entity, Without<Camera>>,
+    query_without_camera: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
 ) {
     for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {
