@@ -35,8 +35,16 @@ pub fn spawn(
     query: Query<&KeyboardBindings>,
 ) {
     let font = asset_server.load(FONT);
+    // let item_style = Style::default();
     let item_style = Style {
-        margin: UiRect::all(Val::Px(10.0)),
+        margin: UiRect {
+            //     left: Val::Px(10.0),
+            top: Val::Px(5.0),
+            //     right: Val::Auto,
+            bottom: Val::Px(5.0),
+            ..default()
+        },
+        // align_self: AlignSelf::FlexStart,
         ..Default::default()
     };
 
@@ -48,15 +56,27 @@ pub fn spawn(
             style: Style {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::FlexStart,
-                justify_content: JustifyContent::FlexEnd,
+                justify_content: JustifyContent::Center,
                 // margin: UiRect::all(Val::Auto),
+                size: Size {
+                    width: Val::Percent(20.0),
+                    height: Val::Percent(100.0),
+                },
                 margin: UiRect {
-                    left: Val::Auto,
-                    top: Val::Auto,
-                    bottom: Val::Auto,
-                    right: Val::Percent(5.0),
+                    left: Val::Percent(30.0),
+                    // left: Val::Auto,
+                    //     top: Val::Auto,
+                    //     bottom: Val::Auto,
+                    //     right: Val::Percent(5.0),
                     ..default()
                 },
+                // padding: UiRect {
+                //     left: Val::Auto,
+                //     top: Val::Auto,
+                //     bottom: Val::Auto,
+                //     right: Val::Percent(5.0),
+                //     ..default()
+                // },
                 ..Default::default()
             },
             ..Default::default()
@@ -195,11 +215,15 @@ pub fn spawn(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 // margin: UiRect::all(Val::Auto),
+                size: Size {
+                    width: Val::Percent(20.0),
+                    height: Val::Percent(100.0),
+                },
                 margin: UiRect {
-                    right: Val::Auto,
-                    top: Val::Auto,
-                    bottom: Val::Auto,
-                    left: Val::Percent(5.0),
+                    right: Val::Percent(30.0),
+                    // top: Val::Auto,
+                    // bottom: Val::Auto,
+                    // left: Val::Percent(10.0),
                     // right: Val::Auto,
                     ..default()
                 },
