@@ -233,24 +233,43 @@ pub fn spawn(
         })
         .id();
 
+    let sections: [&str; 7] = [
+        "Up or ",
+        "Down or ",
+        "Left or ",
+        "Right or ",
+        "",
+        "",
+        "Esc or ",
+    ];
     let bindings = query.single().0;
 
-    for key_code in bindings {
+    for (section, key_code) in sections.into_iter().zip(bindings) {
         let item = commands
             .spawn(SettingsMenuItem)
             .insert(TextBundle {
-                text: Text::from_section(
-                    KeyCodeString[key_code as usize],
-                    TextStyle {
-                        font: font.clone(),
-                        font_size: SIZE,
-                        color: if key_code == bindings[0] {
-                            COLOR_HIGHLIGHTED
-                        } else {
-                            COLOR_DEFAULT
+                text: Text::from_sections([
+                    TextSection::new(
+                        section,
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: SIZE,
+                            color: COLOR_DEFAULT,
                         },
-                    },
-                ),
+                    ),
+                    TextSection::new(
+                        KeyCodeString[key_code as usize],
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: SIZE,
+                            color: if key_code == bindings[0] {
+                                COLOR_HIGHLIGHTED
+                            } else {
+                                COLOR_DEFAULT
+                            },
+                        },
+                    ),
+                ]),
                 style: item_style.clone(),
                 ..Default::default()
             })
@@ -286,25 +305,25 @@ pub fn update(
     match *settings_state {
         SettingsState::SelectItem => {
             if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) && menu.0 > 0 {
-                query_item.get_mut(children[menu.0]).unwrap().sections[0]
+                query_item.get_mut(children[menu.0]).unwrap().sections[1]
                     .style
                     .color = COLOR_DEFAULT;
                 menu.0 -= 1;
-                query_item.get_mut(children[menu.0]).unwrap().sections[0]
+                query_item.get_mut(children[menu.0]).unwrap().sections[1]
                     .style
                     .color = COLOR_HIGHLIGHTED;
             } else if input.any_just_pressed([KeyCode::Down, bindings.decelerate()])
                 && menu.0 < SETTINGS_MENU_ITEMS - 1
             {
-                query_item.get_mut(children[menu.0]).unwrap().sections[0]
+                query_item.get_mut(children[menu.0]).unwrap().sections[1]
                     .style
                     .color = COLOR_DEFAULT;
                 menu.0 += 1;
-                query_item.get_mut(children[menu.0]).unwrap().sections[0]
+                query_item.get_mut(children[menu.0]).unwrap().sections[1]
                     .style
                     .color = COLOR_HIGHLIGHTED;
             } else if input.any_just_pressed([KeyCode::Return, bindings.fire()]) {
-                query_item.get_mut(children[menu.0]).unwrap().sections[0].value = "_".to_string();
+                query_item.get_mut(children[menu.0]).unwrap().sections[1].value = "_".to_string();
                 *settings_state = SettingsState::BindKey;
             }
         }
@@ -319,14 +338,15 @@ pub fn update(
                 while i < BINDINGS {
                     if i != menu.0 && bindings.0[i] == *key_code {
                         bindings.0[i] = bindings.0[menu.0];
-                        query_item.get_mut(children[i]).unwrap().sections[0].value =
-                            "_".to_string();
+                        query_item.get_mut(children[i]).unwrap().sections[1].value =
+                            KeyCodeString[bindings.0[menu.0] as usize].to_string();
+                        // "_".to_string();
                         break;
                     }
                     i += 1;
                 }
                 bindings.0[menu.0] = *key_code;
-                query_item.get_mut(children[menu.0]).unwrap().sections[0].value =
+                query_item.get_mut(children[menu.0]).unwrap().sections[1].value =
                     KeyCodeString[*key_code as usize].to_string();
                 *settings_state = SettingsState::SelectItem;
             }
