@@ -1,17 +1,27 @@
-use bevy::{prelude::*, render::mesh::PrimitiveTopology};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology, text::Text2dBounds};
 // use rand::Rng;
 
 use crate::{boss::BossCore, spaceship::Spaceship, WINDOW_HEIGHT, WINDOW_WIDTH};
 
-const COMPASS_POSITION: Vec3 = Vec3 {
-    x: WINDOW_WIDTH / 2.0 - 150.0,
-    y: WINDOW_HEIGHT / 2.0 - 10.0,
+// Box at the top right of the screen containing the text of the compass
+const BOX_WIDTH: f32 = 140.0;
+const BOX_HEIGHT: f32 = FONT_SIZE;
+const BOX_CENTER_LEFT: Vec3 = Vec3 {
+    // x: WINDOW_WIDTH / 2.0 - BOX_WIDTH / 2.0,
+    x: WINDOW_WIDTH / 2.0 - BOX_WIDTH,
+    // x: WINDOW_WIDTH / 2.0,
+    y: WINDOW_HEIGHT / 2.0 - BOX_HEIGHT / 2.0,
     z: 0.0,
-    // z: -CAMERA_Z,
 };
+// const COMPASS_POSITION: Vec3 = Vec3 {
+//     x: WINDOW_WIDTH / 2.0 - 100.0,
+//     y: WINDOW_HEIGHT / 2.0 - 100.0,
+//     z: 0.0,
+//     // z: -CAMERA_Z,
+// };
 // Needle position relative to the compass position
 const NEEDLE_POSITION: Vec3 = Vec3 {
-    x: 120.0,
+    x: BOX_WIDTH - 20.0,
     y: 0.0,
     z: 0.0,
 };
@@ -47,13 +57,12 @@ pub fn spawn(
     let boss = query_boss.single();
     let spaceship = query_spaceship.single();
 
-    let font = asset_server.load(FONT);
     let text_style = TextStyle {
-        font,
+        font: asset_server.load(FONT),
         font_size: FONT_SIZE,
         color: COLOR,
     };
-    let text_alignment = TextAlignment::CENTER_LEFT;
+    let text_alignment = TextAlignment::CENTER_LEFT; // aligns text at CENTER_RIGHT. Bug ?
 
     let c1 = Vec3::new(75.0, 0.0, 0.0);
     let c2 = Vec3::new(-50.0, 50.0, 0.0);
@@ -65,12 +74,14 @@ pub fn spawn(
 
     let compass = commands
         .spawn(Compass)
-        // { target: Vec3::new(x, y, BOSS_Z),
-        // boss_spawned: false,
-        // })
         .insert(Text2dBundle {
             text: Text::from_section("", text_style).with_alignment(text_alignment),
-            transform: Transform::from_translation(camera.translation + COMPASS_POSITION),
+            text_2d_bounds: Text2dBounds {
+                size: Vec2::new(BOX_WIDTH, BOX_HEIGHT),
+            },
+            transform: Transform::from_translation(
+                camera.translation + BOX_CENTER_LEFT, // + Vec3::new(BOX_WIDTH / 2.0, -BOX_HEIGHT / 2.0, 0.0),
+            ),
             ..default()
         })
         .id();
@@ -104,7 +115,8 @@ pub fn update(
 ) {
     let camera = query_camera.single();
     let (mut compass, mut text) = query_compass.single_mut();
-    compass.translation = camera.translation + COMPASS_POSITION;
+    compass.translation = camera.translation + BOX_CENTER_LEFT;
+    // + Vec3::new(BOX_WIDTH / 2.0, -BOX_HEIGHT / 2.0, 0.0);
     if let Ok(spaceship) = query_spaceship.get_single() {
         if let Ok(boss) = query_boss.get_single() {
             let trajectory = (boss.translation - spaceship.translation).truncate();

@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
-pub const DISTANCE_TO_BOSS: f32 = 500.0;
+pub const DISTANCE_TO_BOSS: f32 = 2000.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 
