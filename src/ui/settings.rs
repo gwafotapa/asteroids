@@ -334,21 +334,23 @@ pub fn update(
                 state: ButtonState::Pressed,
             }) = keyboard_events.iter().next()
             {
-                let mut i = 0;
-                while i < BINDINGS {
-                    if i != menu.0 && bindings.0[i] == *key_code {
-                        bindings.0[i] = bindings.0[menu.0];
-                        query_item.get_mut(children[i]).unwrap().sections[1].value =
-                            KeyCodeString[bindings.0[menu.0] as usize].to_string();
-                        // "_".to_string();
-                        break;
+                if !PERMANENT_BINDINGS.iter().any(|k| k == key_code) {
+                    let mut i = 0;
+                    while i < BINDINGS {
+                        if i != menu.0 && bindings.0[i] == *key_code {
+                            bindings.0[i] = bindings.0[menu.0];
+                            query_item.get_mut(children[i]).unwrap().sections[1].value =
+                                KeyCodeString[bindings.0[menu.0] as usize].to_string();
+                            // "_".to_string();
+                            break;
+                        }
+                        i += 1;
                     }
-                    i += 1;
+                    bindings.0[menu.0] = *key_code;
+                    query_item.get_mut(children[menu.0]).unwrap().sections[1].value =
+                        KeyCodeString[*key_code as usize].to_string();
+                    *settings_state = SettingsState::SelectItem;
                 }
-                bindings.0[menu.0] = *key_code;
-                query_item.get_mut(children[menu.0]).unwrap().sections[1].value =
-                    KeyCodeString[*key_code as usize].to_string();
-                *settings_state = SettingsState::SelectItem;
             }
         }
     }
@@ -360,3 +362,11 @@ pub enum SettingsState {
     SelectItem,
     BindKey,
 }
+
+const PERMANENT_BINDINGS: [KeyCode; 5] = [
+    KeyCode::Up,     // Accelerate
+    KeyCode::Down,   // Decelerate
+    KeyCode::Left,   // Rotate left
+    KeyCode::Right,  // Rotate right
+    KeyCode::Escape, // Pause
+];
