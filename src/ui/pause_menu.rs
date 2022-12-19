@@ -75,7 +75,7 @@ pub fn spawn(
     }
 }
 
-pub fn in_game(
+pub fn pause(
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
     mut query_camera: Query<&mut UiCameraConfig>,
@@ -90,7 +90,7 @@ pub fn in_game(
     }
 }
 
-pub fn paused(
+pub fn update(
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
     mut query_camera: Query<&mut UiCameraConfig>,

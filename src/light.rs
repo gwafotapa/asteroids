@@ -14,7 +14,7 @@ pub fn turn_down(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_main_menu: Query<Entity, With<super::ui::main_menu::MainMenu>>,
-    query_settings_menu: Query<Entity, With<super::ui::settings::SettingsMenu>>,
+    query_settings_menu: Query<Entity, With<super::ui::settings_menu::SettingsMenu>>,
     mut query_camera: Query<(&mut Camera, &mut UiCameraConfig)>,
     query_reset: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
 ) {

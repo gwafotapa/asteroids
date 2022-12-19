@@ -31,10 +31,10 @@ fn main() {
         // .add_system(bevy::window::close_on_esc)
         .add_enter_system(GameState::MainMenu, ui::main_menu::spawn)
         .add_system(ui::main_menu::update.run_in_state(GameState::MainMenu))
-        .add_enter_system(GameState::Settings, ui::settings::spawn)
-        .add_system(ui::settings::update.run_in_state(GameState::Settings))
+        .add_enter_system(GameState::Settings, ui::settings_menu::spawn)
+        .add_system(ui::settings_menu::update.run_in_state(GameState::Settings))
         .add_enter_system(GameState::Paused, ui::pause_menu::spawn)
-        .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
+        .add_system(ui::pause_menu::update.run_in_state(GameState::Paused))
         .add_enter_system_set(
             GameState::GameSetup,
             ConditionSet::new()
@@ -64,7 +64,7 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .label("free")
                 .with_system(map::update)
-                .with_system(ui::pause_menu::in_game)
+                .with_system(ui::pause_menu::pause)
                 .with_system(game_over::update_text)
                 .with_system(wreckage::update)
                 .with_system(wreckage::update_debris)
