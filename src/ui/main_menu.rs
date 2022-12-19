@@ -3,12 +3,13 @@ use iyes_loopless::prelude::*;
 
 use crate::{keyboard::KeyboardBindings, GameState};
 
+const BACKGROUND_COLOR: Color = Color::BLACK;
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
 const COLOR_HIGHLIGHTED: Color = Color::ORANGE_RED;
 const COLOR_DEFAULT: Color = Color::GRAY;
 const MAIN_MENU_ITEMS: usize = 3;
-const BACKGROUND_COLOR: Color = Color::BLACK;
+const SECTIONS: [&str; MAIN_MENU_ITEMS] = ["Start new game", "Settings", "Exit"];
 
 #[derive(Clone, Component, Copy, Debug)]
 pub struct MainMenu(pub usize);
@@ -26,100 +27,60 @@ pub fn spawn(
         return;
     }
 
-    let font = asset_server.load(FONT);
-    let item_style = Style {
-        margin: UiRect::all(Val::Px(10.0)),
-        ..Default::default()
-    };
-
     let main_menu = commands
         .spawn(MainMenu(0))
         .insert(NodeBundle {
-            // background_color: BackgroundColor(Color::rgb(0.5, 0.5, 0.5)),
             background_color: BACKGROUND_COLOR.into(),
             style: Style {
-                // size: Size::new(Val::Auto, Val::Auto),
-                // size: Size::new(Val::Auto, Val::Auto),
-                // position_type: PositionType::Absolute,
-                margin: UiRect::all(Val::Auto),
-                // padding: UiRect::all(Val::Px(300.0)),
-                // margin: UiRect::all(Val::Px(100.0)),
-                // align_self: AlignSelf::Center,
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                // align_items: AlignItems::FlexStart,
+                margin: UiRect::all(Val::Auto),
                 ..Default::default()
             },
             ..Default::default()
         })
         .id();
 
-    let start_new_game = commands
-        .spawn(MainMenuItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Start new game",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_HIGHLIGHTED,
+    let mut i = 0;
+    while i < MAIN_MENU_ITEMS {
+        let item = commands
+            .spawn(MainMenuItem)
+            .insert(TextBundle {
+                text: Text::from_section(
+                    SECTIONS[i],
+                    TextStyle {
+                        font: asset_server.load(FONT),
+                        font_size: SIZE,
+                        color: if i == 0 {
+                            COLOR_HIGHLIGHTED
+                        } else {
+                            COLOR_DEFAULT
+                        },
+                    },
+                ),
+                style: Style {
+                    margin: UiRect::all(Val::Px(10.0)),
+                    ..Default::default()
                 },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
+                ..Default::default()
+            })
+            .id();
 
-    let settings = commands
-        .spawn(MainMenuItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Settings",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let exit = commands
-        .spawn(MainMenuItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Exit",
-                TextStyle {
-                    font,
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style,
-            ..Default::default()
-        })
-        .id();
-
-    commands
-        .entity(main_menu)
-        .push_children(&[start_new_game, settings, exit]);
+        commands.entity(main_menu).add_child(item);
+        i += 1;
+    }
 }
 
 pub fn update(
     input: Res<Input<KeyCode>>,
-    game_state: Res<CurrentState<GameState>>,
     mut commands: Commands,
-    // mut query_camera: Query<&mut UiCameraConfig>,
-    mut query_main_menu: Query<(&Children, Entity, &mut MainMenu, &mut Style)>,
+    mut query_main_menu: Query<(&Children, &mut MainMenu, &mut Style)>,
     mut query_item: Query<&mut Text, With<MainMenuItem>>,
     query_bindings: Query<&KeyboardBindings>,
     mut exit: EventWriter<AppExit>,
 ) {
-    // let mut camera = query_camera.single_mut();
-    let (children, menu_id, mut menu, mut style) = query_main_menu.single_mut();
+    let (children, mut menu, mut style) = query_main_menu.single_mut();
     let bindings = query_bindings.single();
 
     if input.just_pressed(KeyCode::Escape) {
@@ -147,13 +108,10 @@ pub fn update(
     } else if input.any_just_pressed([KeyCode::Return, bindings.fire()]) {
         match menu.0 {
             0 => {
-                // commands.entity(id).despawn_recursive();
                 commands.insert_resource(NextState(GameState::TurnDownLight));
-                // camera.show_ui = false;
             }
             1 => {
                 style.display = Display::None;
-                // commands.entity(menu_id).despawn_recursive();
                 commands.insert_resource(NextState(GameState::Settings));
             }
             2 => {

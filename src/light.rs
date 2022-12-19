@@ -14,6 +14,7 @@ pub fn turn_down(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_main_menu: Query<Entity, With<super::ui::main_menu::MainMenu>>,
+    query_settings_menu: Query<Entity, With<super::ui::settings::SettingsMenu>>,
     mut query_camera: Query<(&mut Camera, &mut UiCameraConfig)>,
     query_without_camera: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
 ) {
@@ -35,6 +36,9 @@ pub fn turn_down(
     if *timer == DIM_TIMER {
         if let Ok(main_menu) = query_main_menu.get_single() {
             commands.entity(main_menu).despawn_recursive();
+            if let Ok(settings_menu) = query_settings_menu.get_single() {
+                commands.entity(settings_menu).despawn_recursive();
+            }
             commands.insert_resource(NextState(GameState::GameSetup));
             camera.is_active = false;
             config.show_ui = false;
