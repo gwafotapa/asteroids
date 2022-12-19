@@ -9,7 +9,7 @@ pub struct GameOver;
 pub fn spawn_text(
     query_spaceship: Query<&super::Health, With<super::spaceship::Spaceship>>,
     mut query_camera: Query<&mut UiCameraConfig>,
-    mut query_pause_menu: Query<&mut Style, With<super::ui::pause_menu::PauseMenu>>,
+    // mut query_pause_menu: Query<&mut Style, With<super::ui::pause_menu::PauseMenu>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
@@ -32,7 +32,7 @@ pub fn spawn_text(
                 ..Default::default()
             });
 
-            query_pause_menu.single_mut().display = Display::None;
+            // query_pause_menu.single_mut().display = Display::None;
             query_camera.single_mut().show_ui = true;
         }
     }

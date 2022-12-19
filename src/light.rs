@@ -16,7 +16,7 @@ pub fn turn_down(
     query_main_menu: Query<Entity, With<super::ui::main_menu::MainMenu>>,
     query_settings_menu: Query<Entity, With<super::ui::settings::SettingsMenu>>,
     mut query_camera: Query<(&mut Camera, &mut UiCameraConfig)>,
-    query_without_camera: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
+    query_reset: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
 ) {
     for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {
@@ -43,7 +43,7 @@ pub fn turn_down(
             camera.is_active = false;
             config.show_ui = false;
         } else {
-            for id in &query_without_camera {
+            for id in &query_reset {
                 commands.entity(id).despawn();
             }
             commands.insert_resource(NextState(GameState::MainMenu));

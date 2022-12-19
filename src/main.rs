@@ -38,7 +38,6 @@ fn main() {
             ConditionSet::new()
                 // .run_in_state(GameState::GameSetup)
                 .label("GameSetup -1")
-                .with_system(ui::pause_menu::spawn)
                 .with_system(spaceship::spawn)
                 .with_system(boss::spawn)
                 .with_system(map::spawn)
@@ -58,6 +57,7 @@ fn main() {
         .add_enter_system(GameState::TurnUpLight, camera::setup)
         .add_system(light::turn_up.run_in_state(GameState::TurnUpLight))
         .add_system(light::turn_down.run_in_state(GameState::TurnDownLight))
+        .add_enter_system(GameState::Paused, ui::pause_menu::spawn)
         .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()

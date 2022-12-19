@@ -9,7 +9,7 @@ const SIZE: f32 = 24.0;
 const COLOR_HIGHLIGHTED: Color = Color::ORANGE_RED;
 const COLOR_DEFAULT: Color = Color::GRAY;
 const MAIN_MENU_ITEMS: usize = 3;
-const SECTIONS: [&str; MAIN_MENU_ITEMS] = ["Start new game", "Settings", "Exit"];
+const SECTIONS: [&str; MAIN_MENU_ITEMS] = ["Start new game", "Settings", "Quit"];
 
 #[derive(Clone, Component, Copy, Debug)]
 pub struct MainMenu(pub usize);

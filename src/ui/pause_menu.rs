@@ -16,18 +16,18 @@ pub struct PauseMenu(pub usize);
 #[derive(Clone, Component, Copy, Debug)]
 pub struct PauseMenuItem;
 
-pub fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut query: Query<&mut Style, With<PauseMenu>>,
+) {
+    if let Ok(mut pause_menu) = query.get_single_mut() {
+        pause_menu.display = Display::Flex;
+        return;
+    }
+
     let font = asset_server.load(FONT);
-    // let item_textstyle = TextStyle {
-    //     font,
-    //     font_size: 24.0,
-    //     color: Color::rgb(0.5, 0.5, 0.5),
-    // };
     let item_style = Style {
-        // align_self: AlignSelf::FlexStart,
-        // justify_content: JustifyContent::FlexStart,
-        // align_items: AlignItems::Center,
-        // padding: UiRect::all(Val::Px(300.0)),
         margin: UiRect::all(Val::Px(10.0)),
         ..Default::default()
     };
@@ -35,77 +35,44 @@ pub fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
     let pause_menu = commands
         .spawn(PauseMenu(0))
         .insert(NodeBundle {
-            // background_color: BackgroundColor(Color::rgb(0.5, 0.5, 0.5)),
             background_color: BACKGROUND_COLOR.into(),
             style: Style {
-                // size: Size::new(Val::Auto, Val::Percent(100.0)),
-                // size: Size::new(Val::Auto, Val::Auto),
-                margin: UiRect::all(Val::Auto),
-                // padding: UiRect::all(Val::Px(300.0)),
-                // margin: UiRect::all(Val::Px(100.0)),
-                // align_self: AlignSelf::Center,
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                // align_items: AlignItems::FlexStart,
+                margin: UiRect::all(Val::Auto),
                 ..Default::default()
             },
-            // visibility: Visibility::INVISIBLE,
             ..Default::default()
         })
         .id();
 
-    let resume = commands
-        .spawn(PauseMenuItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Resume",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_HIGHLIGHTED,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
+    const SECTIONS: [&str; PAUSE_MENU_ITEMS] = ["Resume", "Exit game", "Quit"];
 
-    let exit_game = commands
-        .spawn(PauseMenuItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Exit Game",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let quit = commands
-        .spawn(PauseMenuItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Quit",
-                TextStyle {
-                    font,
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style,
-            ..Default::default()
-        })
-        .id();
-
-    commands
-        .entity(pause_menu)
-        .push_children(&[resume, exit_game, quit]);
+    let mut i = 0;
+    while i < PAUSE_MENU_ITEMS {
+        let item = commands
+            .spawn(PauseMenuItem)
+            .insert(TextBundle {
+                text: Text::from_section(
+                    SECTIONS[i],
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: SIZE,
+                        color: if i == 0 {
+                            COLOR_HIGHLIGHTED
+                        } else {
+                            COLOR_DEFAULT
+                        },
+                    },
+                ),
+                style: item_style.clone(),
+                ..Default::default()
+            })
+            .id();
+        commands.entity(pause_menu).add_child(item);
+        i += 1;
+    }
 }
 
 pub fn in_game(
@@ -114,13 +81,11 @@ pub fn in_game(
     mut query_camera: Query<&mut UiCameraConfig>,
     query_spaceship: Query<With<crate::spaceship::Spaceship>>,
     query_bindings: Query<&KeyboardBindings>,
-    // mut query_menu: Query<&mut Visibility, With<PauseMenu>>,
 ) {
     if query_spaceship.get_single().is_ok()
         && input.any_just_pressed([KeyCode::Escape, query_bindings.single().pause()])
     {
         commands.insert_resource(NextState(GameState::Paused));
-        // *query_menu.single_mut() = Visibility::VISIBLE;
         query_camera.single_mut().show_ui = true;
     }
 }
@@ -129,38 +94,25 @@ pub fn paused(
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
     mut query_camera: Query<&mut UiCameraConfig>,
-    mut query_menu_pause: Query<(&Children, &mut PauseMenu)>,
-    // mut query_menu_main: Query<
-    //     &mut Visibility,
-    //     (With<super::main_menu::MainMenu>, Without<PauseMenu>),
-    // >,
+    mut query_menu_pause: Query<(&Children, &mut PauseMenu, &mut Style)>,
     mut query_item: Query<&mut Text, With<PauseMenuItem>>,
     query_bindings: Query<&KeyboardBindings>,
-    // query_all: Query<
-    //     Entity,
-    //     (
-    //         Without<Camera>,
-    //         // Without<super::main_menu::MainMenu>,
-    //         // Without<super::main_menu::MainMenuItem>,
-    //     ),
-    // >,
     mut exit: EventWriter<AppExit>,
 ) {
-    let (children, mut menu) = query_menu_pause.single_mut();
+    let (children, mut menu, mut style) = query_menu_pause.single_mut();
     let bindings = query_bindings.single();
     if input.any_just_pressed([KeyCode::Escape, bindings.pause()]) {
         commands.insert_resource(NextState(GameState::InGame));
-        // *visibility = Visibility::INVISIBLE;
         query_camera.single_mut().show_ui = false;
-        if menu.0 != 0 {
-            query_item.get_mut(children[menu.0]).unwrap().sections[0]
-                .style
-                .color = COLOR_DEFAULT;
-            menu.0 = 0;
-            query_item.get_mut(children[menu.0]).unwrap().sections[0]
-                .style
-                .color = COLOR_HIGHLIGHTED;
-        }
+        // if menu.0 != 0 {
+        //     query_item.get_mut(children[menu.0]).unwrap().sections[0]
+        //         .style
+        //         .color = COLOR_DEFAULT;
+        //     menu.0 = 0;
+        //     query_item.get_mut(children[menu.0]).unwrap().sections[0]
+        //         .style
+        //         .color = COLOR_HIGHLIGHTED;
+        // }
     } else if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) {
         if menu.0 > 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]
@@ -185,17 +137,11 @@ pub fn paused(
         match menu.0 {
             0 => {
                 commands.insert_resource(NextState(GameState::InGame));
-                // *visibility = Visibility::INVISIBLE;
+                style.display = Display::None;
                 query_camera.single_mut().show_ui = false;
             }
             1 => {
-                // commands.insert_resource(NextState(GameState::GameCleanup));
                 commands.insert_resource(NextState(GameState::TurnDownLight));
-                // *visibility = Visibility::INVISIBLE;
-                // for id in &query_all {
-                //     commands.entity(id).despawn();
-                // }
-                // *query_menu_main.single_mut() = Visibility::VISIBLE;
             }
             2 => {
                 exit.send(AppExit);

@@ -1,5 +1,4 @@
 use bevy::{
-    app::AppExit,
     input::{keyboard::KeyboardInput, ButtonState},
     prelude::*,
 };
