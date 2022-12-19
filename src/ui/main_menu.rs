@@ -16,7 +16,16 @@ pub struct MainMenu(pub usize);
 #[derive(Clone, Component, Copy, Debug)]
 pub struct MainMenuItem;
 
-pub fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut query: Query<&mut Style, With<MainMenu>>,
+) {
+    if let Ok(mut main_menu) = query.get_single_mut() {
+        main_menu.display = Display::Flex;
+        return;
+    }
+
     let font = asset_server.load(FONT);
     let item_style = Style {
         margin: UiRect::all(Val::Px(10.0)),
@@ -143,8 +152,8 @@ pub fn update(
                 // camera.show_ui = false;
             }
             1 => {
-                // style.display = Display::None;
-                commands.entity(menu_id).despawn_recursive();
+                style.display = Display::None;
+                // commands.entity(menu_id).despawn_recursive();
                 commands.insert_resource(NextState(GameState::Settings));
             }
             2 => {

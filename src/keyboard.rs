@@ -57,7 +57,7 @@ impl KeyboardBindings {
     }
 }
 
-pub const KeyCodeString: [&str; 163] = [
+pub const KEYCODESTRING: [&str; 163] = [
     "1",
     "2",
     "3",

@@ -6,7 +6,7 @@ use bevy::{
 use iyes_loopless::prelude::*;
 
 use crate::{
-    keyboard::{KeyCodeString, KeyboardBindings, BINDINGS},
+    keyboard::{KeyboardBindings, BINDINGS, KEYCODESTRING},
     GameState,
 };
 
@@ -258,7 +258,7 @@ pub fn spawn(
                         },
                     ),
                     TextSection::new(
-                        KeyCodeString[key_code as usize],
+                        KEYCODESTRING[key_code as usize],
                         TextStyle {
                             font: font.clone(),
                             font_size: SIZE,
@@ -340,7 +340,7 @@ pub fn update(
                         if i != menu.0 && bindings.0[i] == *key_code {
                             bindings.0[i] = bindings.0[menu.0];
                             query_item.get_mut(children[i]).unwrap().sections[1].value =
-                                KeyCodeString[bindings.0[menu.0] as usize].to_string();
+                                KEYCODESTRING[bindings.0[menu.0] as usize].to_string();
                             // "_".to_string();
                             break;
                         }
@@ -348,7 +348,7 @@ pub fn update(
                     }
                     bindings.0[menu.0] = *key_code;
                     query_item.get_mut(children[menu.0]).unwrap().sections[1].value =
-                        KeyCodeString[*key_code as usize].to_string();
+                        KEYCODESTRING[*key_code as usize].to_string();
                     *settings_state = SettingsState::SelectItem;
                 }
             }
