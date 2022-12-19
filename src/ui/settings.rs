@@ -21,211 +21,111 @@ const BACKGROUND_COLOR: Color = Color::BLACK;
 pub struct SettingsMenu(pub usize);
 
 #[derive(Clone, Component, Copy, Debug)]
+pub struct SettingsMenuItems;
+
+#[derive(Clone, Component, Copy, Debug)]
 pub struct SettingsMenuItem;
-
-#[derive(Clone, Component, Copy, Debug)]
-pub struct SettingsMenuText;
-
-#[derive(Clone, Component, Copy, Debug)]
-pub struct SettingsMenuTextItem;
 
 pub fn spawn(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    query: Query<&KeyboardBindings>,
+    query_bindings: Query<&KeyboardBindings>,
+    mut query_settings: Query<&mut Style, With<SettingsMenu>>,
 ) {
+    if let Ok(mut settings) = query_settings.get_single_mut() {
+        settings.display = Display::Flex;
+        return;
+    }
+
     let font = asset_server.load(FONT);
-    // let item_style = Style::default();
     let item_style = Style {
         margin: UiRect {
-            //     left: Val::Px(10.0),
             top: Val::Px(5.0),
-            //     right: Val::Auto,
             bottom: Val::Px(5.0),
-            ..default()
+            ..Default::default()
         },
-        // align_self: AlignSelf::FlexStart,
         ..Default::default()
     };
 
-    let settings_menu_left = commands
-        .spawn(SettingsMenuText)
+    let settings_menu = commands
+        .spawn(SettingsMenu(0))
         .insert(NodeBundle {
-            // background_color: BackgroundColor(Color::rgb(0.5, 0.5, 0.5)),
+            background_color: BACKGROUND_COLOR.into(),
+            style: Style {
+                size: Size {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                },
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .id();
+
+    let settings_menu_left = commands
+        .spawn(NodeBundle {
             background_color: BACKGROUND_COLOR.into(),
             style: Style {
                 flex_direction: FlexDirection::Column,
-                align_items: AlignItems::FlexStart,
                 justify_content: JustifyContent::Center,
-                // margin: UiRect::all(Val::Auto),
+                align_items: AlignItems::FlexStart,
                 size: Size {
                     width: Val::Percent(20.0),
                     height: Val::Percent(100.0),
                 },
                 margin: UiRect {
                     left: Val::Percent(30.0),
-                    // left: Val::Auto,
-                    //     top: Val::Auto,
-                    //     bottom: Val::Auto,
-                    //     right: Val::Percent(5.0),
-                    ..default()
+                    ..Default::default()
                 },
-                // padding: UiRect {
-                //     left: Val::Auto,
-                //     top: Val::Auto,
-                //     bottom: Val::Auto,
-                //     right: Val::Percent(5.0),
-                //     ..default()
-                // },
                 ..Default::default()
             },
             ..Default::default()
         })
         .id();
 
-    let accelerate = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Accelerate",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
+    const LEFT_SECTIONS: [&str; 7] = [
+        "Accelerate",
+        "Decelerate",
+        "Rotate left",
+        "Rotate right",
+        "Fire",
+        "Switch camera position",
+        "Pause",
+    ];
 
-    let decelerate = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Decelerate",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let rotate_left = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Rotate left",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let rotate_right = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Rotate right",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let fire = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Fire",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let camera = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Switch camera position",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    let pause = commands
-        .spawn(SettingsMenuTextItem)
-        .insert(TextBundle {
-            text: Text::from_section(
-                "Pause",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: SIZE,
-                    color: COLOR_DEFAULT,
-                },
-            ),
-            style: item_style.clone(),
-            ..Default::default()
-        })
-        .id();
-
-    commands.entity(settings_menu_left).push_children(&[
-        accelerate,
-        decelerate,
-        rotate_left,
-        rotate_right,
-        fire,
-        camera,
-        pause,
-    ]);
+    for left_section in LEFT_SECTIONS {
+        let item = commands
+            .spawn(TextBundle {
+                text: Text::from_section(
+                    left_section,
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: SIZE,
+                        color: COLOR_DEFAULT,
+                    },
+                ),
+                style: item_style.clone(),
+                ..Default::default()
+            })
+            .id();
+        commands.entity(settings_menu_left).add_child(item);
+    }
 
     let settings_menu_right = commands
-        .spawn(SettingsMenu(0))
+        .spawn(SettingsMenuItems)
         .insert(NodeBundle {
-            // background_color: BackgroundColor(Color::rgb(0.5, 0.5, 0.5)),
             background_color: BACKGROUND_COLOR.into(),
             style: Style {
                 flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                // margin: UiRect::all(Val::Auto),
+                align_items: AlignItems::Center,
                 size: Size {
                     width: Val::Percent(20.0),
                     height: Val::Percent(100.0),
                 },
                 margin: UiRect {
                     right: Val::Percent(30.0),
-                    // top: Val::Auto,
-                    // bottom: Val::Auto,
-                    // left: Val::Percent(10.0),
-                    // right: Val::Auto,
-                    ..default()
+                    ..Default::default()
                 },
                 ..Default::default()
             },
@@ -233,7 +133,7 @@ pub fn spawn(
         })
         .id();
 
-    let sections: [&str; 7] = [
+    const RIGHT_SECTIONS: [&str; 7] = [
         "Up or ",
         "Down or ",
         "Left or ",
@@ -242,15 +142,15 @@ pub fn spawn(
         "",
         "Esc or ",
     ];
-    let bindings = query.single().0;
+    let bindings = query_bindings.single().0;
 
-    for (section, key_code) in sections.into_iter().zip(bindings) {
+    for (right_section, key_code) in RIGHT_SECTIONS.into_iter().zip(bindings) {
         let item = commands
             .spawn(SettingsMenuItem)
             .insert(TextBundle {
                 text: Text::from_sections([
                     TextSection::new(
-                        section,
+                        right_section,
                         TextStyle {
                             font: font.clone(),
                             font_size: SIZE,
@@ -276,32 +176,31 @@ pub fn spawn(
             .id();
         commands.entity(settings_menu_right).add_child(item);
     }
+
+    commands
+        .entity(settings_menu)
+        .push_children(&[settings_menu_left, settings_menu_right]);
 }
 
 pub fn update(
     mut commands: Commands,
     input: Res<Input<KeyCode>>,
-    game_state: Res<CurrentState<GameState>>,
-    query_text_menu: Query<Entity, With<SettingsMenuText>>,
-    mut query_menu: Query<(&Children, Entity, &mut SettingsMenu, &mut Style)>,
+    mut query_menu: Query<(&mut SettingsMenu, &mut Style)>,
+    query_menu_items: Query<&Children, With<SettingsMenuItems>>,
     mut query_item: Query<&mut Text, With<SettingsMenuItem>>,
     mut query_bindings: Query<&mut KeyboardBindings>,
     mut settings_state: Local<SettingsState>,
     mut keyboard_events: EventReader<KeyboardInput>,
 ) {
-    if game_state.0 != GameState::Settings {
-        panic!("Wrong game state. Should be Settings.");
-    }
-
     let mut bindings = query_bindings.single_mut();
-    let (children, id, mut menu, mut style) = query_menu.single_mut();
+    let (mut menu, mut style) = query_menu.single_mut();
+    let children = query_menu_items.single();
+
     if input.just_pressed(KeyCode::Escape) {
-        commands.entity(id).despawn_recursive();
-        commands
-            .entity(query_text_menu.single())
-            .despawn_recursive();
+        style.display = Display::None;
         commands.insert_resource(NextState(GameState::MainMenu));
     }
+
     match *settings_state {
         SettingsState::SelectItem => {
             if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) && menu.0 > 0 {
@@ -356,7 +255,7 @@ pub fn update(
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub enum SettingsState {
     #[default]
     SelectItem,
