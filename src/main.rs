@@ -33,6 +33,8 @@ fn main() {
         .add_system(ui::main_menu::update.run_in_state(GameState::MainMenu))
         .add_enter_system(GameState::Settings, ui::settings::spawn)
         .add_system(ui::settings::update.run_in_state(GameState::Settings))
+        .add_enter_system(GameState::Paused, ui::pause_menu::spawn)
+        .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_enter_system_set(
             GameState::GameSetup,
             ConditionSet::new()
@@ -57,8 +59,6 @@ fn main() {
         .add_enter_system(GameState::TurnUpLight, camera::setup)
         .add_system(light::turn_up.run_in_state(GameState::TurnUpLight))
         .add_system(light::turn_down.run_in_state(GameState::TurnDownLight))
-        .add_enter_system(GameState::Paused, ui::pause_menu::spawn)
-        .add_system(ui::pause_menu::paused.run_in_state(GameState::Paused))
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)

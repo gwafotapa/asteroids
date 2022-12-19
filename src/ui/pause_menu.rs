@@ -7,7 +7,7 @@ const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
 const COLOR_HIGHLIGHTED: Color = Color::ORANGE_RED;
 const COLOR_DEFAULT: Color = Color::GRAY;
-const PAUSE_MENU_ITEMS: usize = 3;
+const PAUSE_MENU_ITEMS: usize = 4;
 const BACKGROUND_COLOR: Color = Color::NONE;
 
 #[derive(Clone, Component, Copy, Debug)]
@@ -47,7 +47,7 @@ pub fn spawn(
         })
         .id();
 
-    const SECTIONS: [&str; PAUSE_MENU_ITEMS] = ["Resume", "Exit game", "Quit"];
+    const SECTIONS: [&str; PAUSE_MENU_ITEMS] = ["Resume", "Settings", "Exit game", "Quit"];
 
     let mut i = 0;
     while i < PAUSE_MENU_ITEMS {
@@ -141,9 +141,13 @@ pub fn paused(
                 query_camera.single_mut().show_ui = false;
             }
             1 => {
-                commands.insert_resource(NextState(GameState::TurnDownLight));
+                commands.insert_resource(NextState(GameState::Settings));
+                style.display = Display::None;
             }
             2 => {
+                commands.insert_resource(NextState(GameState::TurnDownLight));
+            }
+            3 => {
                 exit.send(AppExit);
             }
             _ => unreachable!(),

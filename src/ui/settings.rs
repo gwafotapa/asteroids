@@ -190,6 +190,7 @@ pub fn update(
     mut query_bindings: Query<&mut KeyboardBindings>,
     mut settings_state: Local<SettingsState>,
     mut keyboard_events: EventReader<KeyboardInput>,
+    query_main_menu: Query<With<crate::ui::main_menu::MainMenu>>,
 ) {
     let mut bindings = query_bindings.single_mut();
     let (mut menu, mut style) = query_menu.single_mut();
@@ -197,7 +198,11 @@ pub fn update(
 
     if input.just_pressed(KeyCode::Escape) {
         style.display = Display::None;
-        commands.insert_resource(NextState(GameState::MainMenu));
+        commands.insert_resource(NextState(if query_main_menu.get_single().is_ok() {
+            GameState::MainMenu
+        } else {
+            GameState::Paused
+        }));
     }
 
     match *settings_state {
