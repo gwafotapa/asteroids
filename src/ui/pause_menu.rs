@@ -1,7 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
-use crate::{keyboard::KeyboardBindings, GameState};
+use crate::{game_state::GameState, keyboard::KeyboardBindings};
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;
@@ -19,9 +19,11 @@ pub struct PauseMenuItem;
 pub fn spawn(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut query: Query<&mut Style, With<PauseMenu>>,
+    mut query_menu: Query<&mut Style, With<PauseMenu>>,
+    mut query_camera: Query<&mut UiCameraConfig>,
 ) {
-    if let Ok(mut pause_menu) = query.get_single_mut() {
+    query_camera.single_mut().show_ui = true;
+    if let Ok(mut pause_menu) = query_menu.get_single_mut() {
         pause_menu.display = Display::Flex;
         return;
     }
@@ -49,17 +51,16 @@ pub fn spawn(
 
     const SECTIONS: [&str; PAUSE_MENU_ITEMS] = ["Resume", "Settings", "Exit game", "Quit"];
 
-    let mut i = 0;
-    while i < PAUSE_MENU_ITEMS {
+    for section in SECTIONS {
         let item = commands
             .spawn(PauseMenuItem)
             .insert(TextBundle {
                 text: Text::from_section(
-                    SECTIONS[i],
+                    section,
                     TextStyle {
                         font: font.clone(),
                         font_size: SIZE,
-                        color: if i == 0 {
+                        color: if section == SECTIONS[0] {
                             COLOR_HIGHLIGHTED
                         } else {
                             COLOR_DEFAULT
@@ -71,22 +72,6 @@ pub fn spawn(
             })
             .id();
         commands.entity(pause_menu).add_child(item);
-        i += 1;
-    }
-}
-
-pub fn pause(
-    input: Res<Input<KeyCode>>,
-    mut commands: Commands,
-    mut query_camera: Query<&mut UiCameraConfig>,
-    query_spaceship: Query<With<crate::spaceship::Spaceship>>,
-    query_bindings: Query<&KeyboardBindings>,
-) {
-    if query_spaceship.get_single().is_ok()
-        && input.any_just_pressed([KeyCode::Escape, query_bindings.single().pause()])
-    {
-        commands.insert_resource(NextState(GameState::Paused));
-        query_camera.single_mut().show_ui = true;
     }
 }
 

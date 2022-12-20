@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
-use super::GameState;
+use crate::game_state::GameState;
 
 #[derive(Clone, Component, Copy)]
 pub struct GameOver;

@@ -5,8 +5,8 @@ use bevy::{
 use iyes_loopless::prelude::*;
 
 use crate::{
+    game_state::GameState,
     keyboard::{KeyboardBindings, BINDINGS, KEYCODESTRING},
-    GameState,
 };
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";

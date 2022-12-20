@@ -1,7 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
-use crate::{keyboard::KeyboardBindings, GameState};
+use crate::{game_state::GameState, keyboard::KeyboardBindings};
 
 const BACKGROUND_COLOR: Color = Color::BLACK;
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
@@ -42,17 +42,16 @@ pub fn spawn(
         })
         .id();
 
-    let mut i = 0;
-    while i < MAIN_MENU_ITEMS {
+    for section in SECTIONS {
         let item = commands
             .spawn(MainMenuItem)
             .insert(TextBundle {
                 text: Text::from_section(
-                    SECTIONS[i],
+                    section,
                     TextStyle {
                         font: asset_server.load(FONT),
                         font_size: SIZE,
-                        color: if i == 0 {
+                        color: if section == SECTIONS[0] {
                             COLOR_HIGHLIGHTED
                         } else {
                             COLOR_DEFAULT
@@ -68,7 +67,6 @@ pub fn spawn(
             .id();
 
         commands.entity(main_menu).add_child(item);
-        i += 1;
     }
 }
 

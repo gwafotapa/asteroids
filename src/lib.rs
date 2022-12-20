@@ -1,8 +1,9 @@
 #![allow(clippy::type_complexity)]
 use bevy::prelude::*;
-use iyes_loopless::prelude::*;
 
 use crate::collision::math::{triangle::TriangleXY, Collider, Topology};
+
+pub use crate::game_state::GameState;
 
 pub mod asteroid;
 pub mod blast;
@@ -12,6 +13,7 @@ pub mod collision;
 pub mod compass;
 pub mod fire;
 pub mod game_over;
+pub mod game_state;
 pub mod keyboard;
 pub mod light;
 pub mod map;
@@ -36,22 +38,6 @@ pub struct Velocity(Vec3);
 
 #[derive(Component, Clone, Copy)]
 pub struct Health(i32);
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum GameState {
-    MainMenu,
-    GameSetup,
-    InGame,
-    Paused,
-    GameOver,
-    TurnDownLight,
-    TurnUpLight,
-    Settings,
-}
-
-pub fn exit_game_setup(mut commands: Commands) {
-    commands.insert_resource(NextState(GameState::TurnUpLight));
-}
 
 // // Warning: Should generate some double despawn (with debris::update for example)
 // pub fn exit_game(
