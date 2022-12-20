@@ -10,7 +10,7 @@ use crate::{
 
 pub mod flame;
 
-const HEALTH: i32 = 10;
+pub const HEALTH: i32 = 10;
 pub const SPACESHIP_Z: f32 = 500.0;
 
 // Center of gravity of the spaceship

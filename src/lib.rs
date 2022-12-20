@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::collision::math::{triangle::TriangleXY, Collider, Topology};
 
-pub use crate::game_state::GameState;
+pub use crate::{game_state::GameState, spaceship::Spaceship};
 
 pub mod asteroid;
 pub mod blast;
@@ -14,6 +14,7 @@ pub mod compass;
 pub mod fire;
 pub mod game_over;
 pub mod game_state;
+pub mod health_bar;
 pub mod keyboard;
 pub mod light;
 pub mod map;

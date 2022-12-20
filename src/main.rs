@@ -52,6 +52,7 @@ fn main() {
                 .with_system(spaceship::flame::front_spawn)
                 .with_system(spaceship::flame::rear_spawn)
                 .with_system(compass::spawn)
+                .with_system(health_bar::spawn)
                 .with_system(game_state::gamesetup_to_turnuplight)
                 .into(),
         )
@@ -124,13 +125,16 @@ fn main() {
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
-        .add_system(
-            compass::update
+        .add_system_set(
+            ConditionSet::new()
                 .run_in_state(GameState::InGame)
                 // .run_if(spaceship_exists)
                 // .run_not_in_state(GameState::GameSetup)
                 // .run_if(ingame_or_paused)
-                .after("camera"),
+                .after("camera")
+                .with_system(compass::update)
+                .with_system(health_bar::update)
+                .into(),
         )
         // .add_exit_system(GameState::GameOver, exit_game)
         // Remove parent/children component of an entity whose relative is about to be despawned

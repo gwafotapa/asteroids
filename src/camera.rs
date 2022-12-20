@@ -31,7 +31,8 @@ pub fn spawn(mut commands: Commands) {
             ..default()
         })
         .insert(CameraPositioning::Synchronized)
-        .insert(UiCameraConfig { show_ui: true });
+        .insert(UiCameraConfig { show_ui: true })
+        .insert(VisibilityBundle::default());
 }
 
 pub fn setup(mut query: Query<(&mut Camera, &mut CameraPositioning, &mut Transform)>) {
