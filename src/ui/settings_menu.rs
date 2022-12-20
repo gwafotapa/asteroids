@@ -14,7 +14,7 @@ const SIZE: f32 = 24.0;
 const COLOR_HIGHLIGHTED: Color = Color::ORANGE_RED;
 const COLOR_DEFAULT: Color = Color::GRAY;
 const SETTINGS_MENU_ITEMS: usize = BINDINGS;
-const BACKGROUND_COLOR: Color = Color::BLACK;
+const BACKGROUND_COLOR: Color = Color::NONE;
 
 #[derive(Clone, Component, Copy, Debug)]
 pub struct SettingsMenu(pub usize);
