@@ -73,6 +73,11 @@ fn main() {
                 .with_system(collision::impact::update)
                 .into(),
         )
+        // .add_system(
+        //     collision::awaken
+        //         .run_in_state(GameState::InGame)
+        //         .before("collision"),
+        // )
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)

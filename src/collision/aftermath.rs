@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{Mass, Velocity};
 
+// https://en.wikipedia.org/wiki/Elastic_collision
 pub fn compute(
     mut velocity1: Mut<Velocity>,
     mut velocity2: Mut<Velocity>,
@@ -9,6 +10,8 @@ pub fn compute(
     transform2: &Transform,
     mass1: Mass,
     mass2: Mass,
+    // sleep1: &mut u32,
+    // sleep2: &mut u32,
 ) {
     let [v1, v2] = [velocity1.0.truncate(), velocity2.0.truncate()];
     let [x1, x2] = [
@@ -21,4 +24,6 @@ pub fn compute(
     println!("v1: {}\nw1: {}\nv2: {}\nw2: {}\n", v1, w1, v2, w2);
     velocity1.0 = w1.extend(velocity1.0.z);
     velocity2.0 = w2.extend(velocity2.0.z);
+    // *sleep1 = 10;
+    // *sleep2 = 10;
 }

@@ -5,6 +5,7 @@ pub mod triangle;
 
 #[derive(Clone, Component)]
 pub struct Collider {
+    pub sleep: u32,
     pub aabb: Aabb,
     pub topology: Topology,
 }
