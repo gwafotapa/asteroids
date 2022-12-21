@@ -67,7 +67,7 @@ pub fn spaceship_and_asteroid(
                 Some(&meshes),
             ) {
                 // s_health.0 = 0;
-                if a_collider.sleep == 0 || s_collider.sleep == 0 {
+                if !a_collider.last || !s_collider.last {
                     aftermath::compute(
                         a_velocity,
                         s_velocity,
@@ -78,16 +78,18 @@ pub fn spaceship_and_asteroid(
                         // &mut s_collider.sleep,
                         // &mut a_collider.sleep,
                     );
-                    a_collider.sleep = 1;
-                    s_collider.sleep = 1;
+                    // a_collider.sleep = 1;
+                    // s_collider.sleep = 1;
+                    a_collider.now = true;
+                    s_collider.now = true;
                 }
                 // a_collider.sleep += 2;
                 // s_collider.sleep += 2;
                 return;
             }
-            a_collider.sleep = 0;
+            // a_collider.sleep = 0;
         }
-        s_collider.sleep = 0;
+        // s_collider.sleep = 0;
         // } else {
         //     panic!("Cannot find the spaceship's mesh to compute collision");
         // }
@@ -101,6 +103,13 @@ pub fn spaceship_and_asteroid(
 //         }
 //     }
 // }
+
+pub fn update(mut query: Query<&mut Collider>) {
+    for mut collider in &mut query {
+        collider.last = collider.now;
+        collider.now = false;
+    }
+}
 
 pub fn fire_and_asteroid(
     mut commands: Commands,

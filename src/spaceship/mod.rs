@@ -225,7 +225,9 @@ pub fn spawn(
         }))
         // .insert(AABB)
         .insert(Collider {
-            sleep: 0,
+            last: false,
+            now: false,
+            // sleep: 0,
             aabb: AABB,
             topology: Topology::Triangles {
                 mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
@@ -289,7 +291,9 @@ pub fn attack(
             .insert(Health(FIRE_HEALTH))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
             .insert(Collider {
-                sleep: 0,
+                last: false,
+                now: false,
+                // sleep: 0,
                 aabb: Aabb { hw: 0.0, hh: 0.0 },
                 topology: Topology::Point,
             })

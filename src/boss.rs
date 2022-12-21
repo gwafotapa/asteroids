@@ -217,7 +217,9 @@ pub fn spawn(
         .insert(Health(CORE_HEALTH))
         .insert(Velocity(Vec3::ZERO))
         .insert(Collider {
-            sleep: 0,
+            last: false,
+            now: false,
+            // sleep: 0,
             aabb: Aabb {
                 hw: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
                 hh: 108.3,
@@ -257,7 +259,10 @@ pub fn spawn(
             .spawn(BossEdge)
             .insert(Health(EDGE_HEALTH))
             .insert(Collider {
-                sleep: 0,
+                last: false,
+                now: false,
+
+                // sleep: 0,
                 aabb: Aabb {
                     hw: OUTER_RADIUS - INNER_RADIUS,
                     hh: OUTER_RADIUS - INNER_RADIUS,
@@ -377,7 +382,10 @@ pub fn attack(
                         ))
                         // .insert(Topology::Point)
                         .insert(Collider {
-                            sleep: 0,
+                            last: false,
+                            now: false,
+
+                            // sleep: 0,
                             aabb: Aabb { hw: 0.0, hh: 0.0 },
                             topology: Topology::Point,
                         })

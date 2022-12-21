@@ -112,6 +112,11 @@ fn main() {
                 // .with_system(collision::fire_and_fire),
                 .into(),
         )
+        .add_system(
+            collision::update
+                .run_in_state(GameState::InGame)
+                .after("collision"),
+        )
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)

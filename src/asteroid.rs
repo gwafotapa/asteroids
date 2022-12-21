@@ -37,7 +37,9 @@ pub fn spawn(
         // .insert(Velocity(velocity))
         // .insert(Topology::Disk)
         .insert(Collider {
-            sleep: 0,
+            last: false,
+            now: false,
+            // sleep: 0,
             aabb: Aabb {
                 hw: radius,
                 hh: radius,
