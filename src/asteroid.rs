@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::{
     collision::{Aabb, Collider, Topology},
-    Health, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Health, Mass, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 // const SPEED_MAX: usize = 5;
@@ -32,6 +32,8 @@ pub fn spawn(
     let asteroid = commands
         .spawn(Asteroid { radius })
         .insert(Health(health))
+        .insert(Mass(1.0))
+        .insert(Velocity(Vec3::ZERO))
         // .insert(Velocity(velocity))
         // .insert(Topology::Disk)
         .insert(Collider {
@@ -99,13 +101,11 @@ pub fn spawn(
 //             });
 //     }
 
-//     for (asteroid, entity, mut transform, velocity) in query_asteroid.iter_mut() {
-//         transform.translation += velocity.0;
-//         if transform.translation.x < -WINDOW_WIDTH / 2.0 - asteroid.radius {
-//             commands.entity(entity).despawn();
-//         }
-//     }
-// }
+pub fn update(mut query: Query<(&mut Transform, &Velocity), With<Asteroid>>) {
+    for (mut transform, velocity) in query.iter_mut() {
+        transform.translation += velocity.0;
+    }
+}
 
 // pub fn before_despawn(
 //     mut commands: Commands,

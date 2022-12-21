@@ -5,19 +5,26 @@ use crate::{
     boss::{BossCore, BossEdge},
     fire::{Enemy, Fire},
     spaceship::Spaceship,
-    Health,
+    Health, Mass, Velocity,
 };
 
 use impact::Impact;
 pub use math::{Aabb, Collider, Topology};
 
+pub mod aftermath;
 pub mod impact;
 pub mod math;
 
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
-    mut query_spaceship: Query<(&Collider, &mut Health, &Transform), With<Spaceship>>,
-    query_asteroid: Query<(&Collider, &GlobalTransform), With<Asteroid>>,
+    mut query_spaceship: Query<
+        (&Collider, &mut Health, &Mass, &Transform, &mut Velocity),
+        With<Spaceship>,
+    >,
+    mut query_asteroid: Query<
+        (&Collider, &GlobalTransform, &Mass, &mut Velocity),
+        (With<Asteroid>, Without<Spaceship>),
+    >,
 ) {
     // if let Ok((
     //     Collider {
@@ -30,14 +37,16 @@ pub fn spaceship_and_asteroid(
     //     mut s_health,
     //     s_transform,
     // )) = query_spaceship.get_single_mut()
-    if let Ok((s_collider, mut s_health, s_transform)) = query_spaceship.get_single_mut() {
+    if let Ok((s_collider, mut s_health, s_mass, s_transform, mut s_velocity)) =
+        query_spaceship.get_single_mut()
+    {
         // if let Some(VertexAttributeValues::Float32x3(s_vertices)) = meshes
         //     // .get(&s_mesh.0)
         //     .get(s_handle_mesh)
         //     .unwrap()
         //     .attribute(Mesh::ATTRIBUTE_POSITION)
         // {
-        for (a_collider, a_transform) in query_asteroid.iter() {
+        for (a_collider, a_transform, a_mass, mut a_velocity) in query_asteroid.iter_mut() {
             // if math::collision_circle_triangles(
             //     &a_transform.compute_transform(),
             //     asteroid.radius,
@@ -53,7 +62,15 @@ pub fn spaceship_and_asteroid(
                 s_collider,
                 Some(&meshes),
             ) {
-                s_health.0 = 0;
+                // s_health.0 = 0;
+                aftermath::compute(
+                    s_velocity,
+                    a_velocity,
+                    s_transform,
+                    &a_transform.compute_transform(),
+                    *s_mass,
+                    *a_mass,
+                );
                 return;
             }
         }

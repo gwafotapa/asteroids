@@ -5,7 +5,7 @@ use crate::{
     collision::{math::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
     keyboard::KeyboardBindings,
-    Health, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Health, Mass, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;
@@ -217,6 +217,7 @@ pub fn spawn(
     commands
         .spawn(Spaceship)
         .insert(Health(HEALTH))
+        .insert(Mass(1.0))
         .insert(Velocity(Vec3 {
             x: 0.0,
             y: 0.0,

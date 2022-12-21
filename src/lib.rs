@@ -34,6 +34,9 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 #[derive(Component, Clone, Copy)]
 pub struct Velocity(Vec3);
 
+#[derive(Component, Clone, Copy)]
+pub struct Mass(f32);
+
 // #[derive(Component)]
 // struct SpawnedTime(Instant);
 

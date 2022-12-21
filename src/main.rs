@@ -81,6 +81,7 @@ fn main() {
                 .with_system(boss::movement)
                 .with_system(fire::update)
                 .with_system(spaceship::movement)
+                .with_system(asteroid::update)
                 .into(),
         )
         .add_system_set(
