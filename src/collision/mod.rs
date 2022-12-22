@@ -378,6 +378,77 @@ pub fn spaceship_and_boss(
     }
 }
 
+pub fn boss_and_asteroid(
+    meshes: Res<Assets<Mesh>>,
+    mut query_asteroid: Query<
+        (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
+        With<Asteroid>,
+    >,
+    mut query_boss_edge: Query<
+        (&mut Collider, &GlobalTransform),
+        (With<BossEdge>, Without<Asteroid>),
+    >,
+    mut query_boss_core: Query<
+        (&mut Collider, &Mass, &Transform, &mut Velocity),
+        (With<BossCore>, Without<BossEdge>, Without<Asteroid>),
+    >,
+) {
+    if let Ok((mut bc_collider, bc_mass, bc_transform, mut bc_velocity)) =
+        query_boss_core.get_single_mut()
+    {
+        for (mut a_collider, mut _a_health, a_mass, a_transform, mut a_velocity) in
+            query_asteroid.iter_mut()
+        {
+            for (mut be_collider, be_transform) in query_boss_edge.iter_mut() {
+                if math::collision(
+                    *a_transform,
+                    be_transform.compute_transform(),
+                    &a_collider,
+                    &be_collider,
+                    Some(&meshes),
+                ) {
+                    a_collider.now = true;
+                    be_collider.now = true;
+                    if !a_collider.last || !be_collider.last {
+                        aftermath::compute(
+                            &mut a_velocity,
+                            &mut bc_velocity,
+                            a_transform,
+                            &be_transform.compute_transform(),
+                            *a_mass,
+                            *bc_mass,
+                        );
+                    }
+                    // a_health.0 = 0;
+                    return;
+                }
+            }
+            if math::collision(
+                *a_transform,
+                *bc_transform,
+                &a_collider,
+                &bc_collider,
+                Some(&meshes),
+            ) {
+                a_collider.now = true;
+                bc_collider.now = true;
+                if !a_collider.last || !bc_collider.last {
+                    aftermath::compute(
+                        &mut a_velocity,
+                        &mut bc_velocity,
+                        a_transform,
+                        bc_transform,
+                        *a_mass,
+                        *bc_mass,
+                    );
+                }
+                // a_health.0 = 0;
+                return;
+            }
+        }
+    }
+}
+
 pub fn asteroid_and_asteroid(
     mut query: Query<
         (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
