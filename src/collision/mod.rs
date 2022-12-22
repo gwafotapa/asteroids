@@ -309,41 +309,72 @@ pub fn fire_and_spaceship(
 
 pub fn spaceship_and_boss(
     meshes: Res<Assets<Mesh>>,
-    mut query_spaceship: Query<(&Collider, &mut Health, &Transform), With<Spaceship>>,
-    query_boss: Query<(&Collider, &GlobalTransform), Or<(With<BossCore>, With<BossEdge>)>>,
+    mut query_spaceship: Query<
+        (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
+        With<Spaceship>,
+    >,
+    mut query_boss_edge: Query<
+        (&mut Collider, &GlobalTransform),
+        (With<BossEdge>, Without<Spaceship>),
+    >,
+    mut query_boss_core: Query<
+        (&mut Collider, &Mass, &Transform, &mut Velocity),
+        (With<BossCore>, Without<BossEdge>, Without<Spaceship>),
+    >,
 ) {
-    if let Ok((s_collider, mut s_health, s_transform)) = query_spaceship.get_single_mut() {
-        // if let Some(VertexAttributeValues::Float32x3(s_vertices)) = meshes
-        //     .get(&s_mesh.0)
-        //     .unwrap()
-        //     .attribute(Mesh::ATTRIBUTE_POSITION)
-        // {
-        for (b_collider, b_transform) in query_boss.iter() {
-            //         if let Some(VertexAttributeValues::Float32x3(b_vertices)) = meshes
-            //             .get(&b_mesh.0)
-            //             .unwrap()
-            //             .attribute(Mesh::ATTRIBUTE_POSITION)
-            //         {
-            // if math::collision_triangles_triangles(
-            //     s_transform,
-            //     s_vertices,
-            //     s_collider.aabb,
-            //     &b_transform.compute_transform(),
-            //     b_vertices,
-            //     b_collider.aabb,
+    if let Ok((mut s_collider, mut _s_health, s_mass, s_transform, mut s_velocity)) =
+        query_spaceship.get_single_mut()
+    {
+        if let Ok((mut bc_collider, bc_mass, bc_transform, mut bc_velocity)) =
+            query_boss_core.get_single_mut()
+        {
+            for (mut be_collider, be_transform) in query_boss_edge.iter_mut() {
+                if math::collision(
+                    *s_transform,
+                    be_transform.compute_transform(),
+                    &s_collider,
+                    &be_collider,
+                    Some(&meshes),
+                ) {
+                    s_collider.now = true;
+                    be_collider.now = true;
+                    if !s_collider.last || !be_collider.last {
+                        aftermath::compute(
+                            &mut s_velocity,
+                            &mut bc_velocity,
+                            s_transform,
+                            &be_transform.compute_transform(),
+                            *s_mass,
+                            *bc_mass,
+                        );
+                    }
+                    // s_health.0 = 0;
+                    return;
+                }
+            }
             if math::collision(
                 *s_transform,
-                b_transform.compute_transform(),
-                s_collider,
-                b_collider,
+                *bc_transform,
+                &s_collider,
+                &bc_collider,
                 Some(&meshes),
             ) {
-                s_health.0 = 0;
+                s_collider.now = true;
+                bc_collider.now = true;
+                if !s_collider.last || !bc_collider.last {
+                    aftermath::compute(
+                        &mut s_velocity,
+                        &mut bc_velocity,
+                        s_transform,
+                        bc_transform,
+                        *s_mass,
+                        *bc_mass,
+                    );
+                }
+                // s_health.0 = 0;
                 return;
             }
         }
-        //     }
-        // }
     }
 }
 
