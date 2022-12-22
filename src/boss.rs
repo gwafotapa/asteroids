@@ -14,6 +14,7 @@ pub const BOSS_Z: f32 = PLANE_Z;
 pub const DISTANCE_TO_BOSS: f32 = 1000.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
+const MASS: f32 = 20.0;
 
 // #[derive(Component)]
 // pub struct Boss;
@@ -215,7 +216,7 @@ pub fn spawn(
         // .spawn(Boss)
         .spawn(BossCore { edges: EDGES })
         .insert(Health(CORE_HEALTH))
-        .insert(Mass(1.0))
+        .insert(Mass(MASS))
         .insert(Velocity(Vec3::ZERO))
         .insert(Collider {
             last: false,

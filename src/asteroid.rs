@@ -31,6 +31,7 @@ pub fn spawn(
 ) {
     let mut rng = rand::thread_rng();
     let health = rng.gen_range(1..HEALTH_MAX + 1);
+    let mass = 3.0 * health as f32;
     let radius = (health * 20) as f32;
     let rho = rng.gen_range(1.0..VELOCITY_LENGTH_MAX);
     let theta = rng.gen_range(0.0..2.0 * PI);
@@ -43,7 +44,7 @@ pub fn spawn(
     commands
         .spawn(Asteroid { radius })
         .insert(Health(health))
-        .insert(Mass(1.0))
+        .insert(Mass(mass))
         // .insert(Velocity(Vec3::ZERO))
         .insert(Velocity(velocity))
         // .insert(Topology::Disk)
