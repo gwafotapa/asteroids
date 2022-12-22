@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use rand::Rng;
+use std::f32::consts::PI;
 
 use crate::{
     collision::{Aabb, Collider, Topology},
@@ -12,7 +13,7 @@ use crate::{
     WINDOW_WIDTH,
 };
 
-const SPEED_MAX: usize = 5;
+const VELOCITY_LENGTH_MAX: f32 = 5.0;
 const HEALTH_MAX: i32 = 6;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
@@ -31,8 +32,9 @@ pub fn spawn(
     let mut rng = rand::thread_rng();
     let health = rng.gen_range(1..HEALTH_MAX + 1);
     let radius = (health * 20) as f32;
-    let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
-    let velocity = Vec3::from([-speed, 0., 0.]);
+    let rho = rng.gen_range(1.0..VELOCITY_LENGTH_MAX);
+    let theta = rng.gen_range(0.0..2.0 * PI);
+    let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);
     let xmin = sector[0] as f32 * WINDOW_WIDTH;
     let ymin = sector[1] as f32 * WINDOW_HEIGHT;
     let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);

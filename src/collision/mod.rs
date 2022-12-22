@@ -26,73 +26,32 @@ pub fn spaceship_and_asteroid(
         (With<Asteroid>, Without<Spaceship>),
     >,
 ) {
-    // if let Ok((
-    //     Collider {
-    //         aabb: s_aabb,
-    //         topology:
-    //             Topology::Triangles {
-    //                 mesh_handle: Mesh2dHandle(s_handle_mesh),
-    //             },
-    //     },
-    //     mut s_health,
-    //     s_transform,
-    // )) = query_spaceship.get_single_mut()
-    if let Ok((mut s_collider, mut s_health, s_mass, s_transform, mut s_velocity)) =
+    if let Ok((mut s_collider, mut _s_health, s_mass, s_transform, mut s_velocity)) =
         query_spaceship.get_single_mut()
     {
-        // if let Some(VertexAttributeValues::Float32x3(s_vertices)) = meshes
-        //     // .get(&s_mesh.0)
-        //     .get(s_handle_mesh)
-        //     .unwrap()
-        //     .attribute(Mesh::ATTRIBUTE_POSITION)
-        // {
         for (mut a_collider, a_transform, a_mass, mut a_velocity) in query_asteroid.iter_mut() {
-            // if math::collision_circle_triangles(
-            //     &a_transform.compute_transform(),
-            //     asteroid.radius,
-            //     a_collider.aabb,
-            //     s_transform,
-            //     s_vertices,
-            //     *s_aabb,
-            // ) {
-            if
-            // 	(s_collider.sleep == 0
-            // || a_collider.sleep == 0)
-            // &&
-            math::collision(
+            if math::collision(
                 a_transform.compute_transform(),
                 *s_transform,
                 &a_collider,
                 &s_collider,
                 Some(&meshes),
             ) {
-                // s_health.0 = 0;
                 if !a_collider.last || !s_collider.last {
                     aftermath::compute(
-                        a_velocity,
-                        s_velocity,
+                        &mut a_velocity,
+                        &mut s_velocity,
                         &a_transform.compute_transform(),
                         s_transform,
                         *a_mass,
                         *s_mass,
-                        // &mut s_collider.sleep,
-                        // &mut a_collider.sleep,
                     );
-                    // a_collider.sleep = 1;
-                    // s_collider.sleep = 1;
-                    a_collider.now = true;
-                    s_collider.now = true;
                 }
-                // a_collider.sleep += 2;
-                // s_collider.sleep += 2;
+                a_collider.now = true;
+                s_collider.now = true;
                 return;
             }
-            // a_collider.sleep = 0;
         }
-        // s_collider.sleep = 0;
-        // } else {
-        //     panic!("Cannot find the spaceship's mesh to compute collision");
-        // }
     }
 }
 
@@ -388,6 +347,40 @@ pub fn spaceship_and_boss(
     }
 }
 
+pub fn asteroid_and_asteroid(
+    mut query: Query<
+        (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
+        With<Asteroid>,
+    >,
+) {
+    let mut i = 0;
+    loop {
+        let mut iter = query.iter_mut().skip(i);
+        if let Some((mut collider1, mut _health1, mass1, transform1, mut velocity1)) = iter.next() {
+            for (mut collider2, mut _health2, mass2, transform2, mut velocity2) in iter {
+                if math::collision(*transform1, *transform2, &collider1, &collider2, None) {
+                    if !collider1.last || !collider2.last {
+                        aftermath::compute(
+                            &mut velocity1,
+                            &mut velocity2,
+                            transform1,
+                            transform2,
+                            *mass1,
+                            *mass2,
+                        );
+                    }
+                    collider1.now = true;
+                    collider2.now = true;
+                    break;
+                }
+            }
+            i += 1;
+        } else {
+            break;
+        }
+    }
+}
+
 #[cfg(fire)]
 pub fn fire_and_fire(
     mut query_ally: Query<(&mut Health, &Transform), (With<Fire>, Without<Enemy>)>,
@@ -402,27 +395,3 @@ pub fn fire_and_fire(
         }
     }
 }
-
-// pub fn asteroid_and_asteroid(
-//     mut query: Query<(&Asteroid, &GlobalTransform, &mut Health, &Surface)>,
-// ) {
-//     let mut i = 0;
-//     loop {
-//         let mut iter = query.iter_mut().skip(i);
-//         if let Some((asteroid1, transform1, mut health1, surface1)) = iter.next() {
-//             for (asteroid2, transform2, mut health2, surface2) in iter {
-//                 if collision(transform1, surface1, transform2, surface2) {
-//                     if asteroid1.radius < asteroid2.radius {
-//                         health1.0 = 0;
-//                         break;
-//                     } else {
-//                         health2.0 = 0;
-//                     }
-//                 }
-//             }
-//             i += 1;
-//         } else {
-//             break;
-//         }
-//     }
-// }
