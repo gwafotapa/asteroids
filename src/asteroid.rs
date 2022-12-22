@@ -12,7 +12,7 @@ use crate::{
     WINDOW_WIDTH,
 };
 
-// const SPEED_MAX: usize = 5;
+const SPEED_MAX: usize = 5;
 const HEALTH_MAX: i32 = 6;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
@@ -31,8 +31,8 @@ pub fn spawn(
     let mut rng = rand::thread_rng();
     let health = rng.gen_range(1..HEALTH_MAX + 1);
     let radius = (health * 20) as f32;
-    // let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
-    // let velocity = Vec3::from([-speed, 0., 0.]);
+    let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
+    let velocity = Vec3::from([-speed, 0., 0.]);
     let xmin = sector[0] as f32 * WINDOW_WIDTH;
     let ymin = sector[1] as f32 * WINDOW_HEIGHT;
     let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
@@ -42,8 +42,8 @@ pub fn spawn(
         .spawn(Asteroid { radius })
         .insert(Health(health))
         .insert(Mass(1.0))
-        .insert(Velocity(Vec3::ZERO))
-        // .insert(Velocity(velocity))
+        // .insert(Velocity(Vec3::ZERO))
+        .insert(Velocity(velocity))
         // .insert(Topology::Disk)
         .insert(Collider {
             last: false,
