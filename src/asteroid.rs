@@ -3,7 +3,13 @@ use rand::Rng;
 
 use crate::{
     collision::{Aabb, Collider, Topology},
-    Health, Mass, Velocity, PLANE_Z, WINDOW_HEIGHT, WINDOW_WIDTH,
+    // map::ASTEROIDS_MAX_PER_SECTOR,
+    Health,
+    Mass,
+    Velocity,
+    PLANE_Z,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
 // const SPEED_MAX: usize = 5;
@@ -20,16 +26,19 @@ pub fn spawn(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-) -> Entity {
+    sector: [isize; 2],
+) {
     let mut rng = rand::thread_rng();
     let health = rng.gen_range(1..HEALTH_MAX + 1);
     let radius = (health * 20) as f32;
     // let speed = rng.gen_range(1..SPEED_MAX + 1) as f32;
     // let velocity = Vec3::from([-speed, 0., 0.]);
-    let x = rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0);
-    let y = rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0);
+    let xmin = sector[0] as f32 * WINDOW_WIDTH;
+    let ymin = sector[1] as f32 * WINDOW_HEIGHT;
+    let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
+    let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
 
-    let asteroid = commands
+    commands
         .spawn(Asteroid { radius })
         .insert(Health(health))
         .insert(Mass(1.0))
@@ -56,10 +65,7 @@ pub fn spawn(
             transform: Transform::from_xyz(x, y, ASTEROID_Z),
             material: materials.add(ColorMaterial::from(COLOR)),
             ..default()
-        })
-        .id();
-
-    asteroid
+        });
 }
 
 // pub fn asteroids(

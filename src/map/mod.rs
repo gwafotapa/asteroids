@@ -148,11 +148,12 @@ pub fn update(
                 })
                 .id();
 
+            let [i, j] = [camera_i + di, camera_j + dj];
             new_sectors.push((
                 new_sector_id,
                 Sector {
-                    i: camera_i + di,
-                    j: camera_j + dj,
+                    i,
+                    j,
                     neighboors: Vec::new(),
                 },
             ));
@@ -164,9 +165,12 @@ pub fn update(
             }
 
             // Populate this new sector with asteroids
+            // let population = rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1);
+            // let asteroids = asteroid::spawn(&mut commands, &mut meshes, &mut materials, population);
+            // commands.entity(new_sector_id).push_children(&asteroids);
             for _ in 0..rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1) {
-                let asteroid = asteroid::spawn(&mut commands, &mut meshes, &mut materials);
-                commands.entity(new_sector_id).add_child(asteroid);
+                asteroid::spawn(&mut commands, &mut meshes, &mut materials, [i, j]);
+                // commands.entity(new_sector_id).add_child(asteroid);
             }
         }
     }
