@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
 use crate::game_state::GameState;
@@ -14,7 +14,7 @@ pub fn spawn_text(
     asset_server: Res<AssetServer>,
 ) {
     if let Ok(health) = query_spaceship.get_single() {
-        if health.0 == 0 {
+        if health.0 <= 0 {
             commands.spawn(GameOver).insert(TextBundle {
                 text: Text::from_section(
                     "Press space to go back to the main menu",
@@ -42,6 +42,7 @@ pub fn update_text(
     mut query: Query<&mut Text, With<GameOver>>,
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
+    mut exit: EventWriter<AppExit>,
 ) {
     if let Ok(mut text) = query.get_single_mut() {
         if text.sections[0].style.color.r() < 0.5 {
@@ -49,6 +50,8 @@ pub fn update_text(
         }
         if input.just_pressed(KeyCode::Space) {
             commands.insert_resource(NextState(GameState::TurnDownLight));
+        } else if input.just_pressed(KeyCode::Escape) {
+            exit.send(AppExit);
         }
     }
 }
