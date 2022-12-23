@@ -22,7 +22,7 @@ pub fn spaceship_and_asteroid(
         With<Spaceship>,
     >,
     mut query_asteroid: Query<
-        (&mut Collider, &GlobalTransform, &Mass, &mut Velocity),
+        (&mut Collider, &Transform, &Mass, &mut Velocity),
         (With<Asteroid>, Without<Spaceship>),
     >,
 ) {
@@ -31,37 +31,33 @@ pub fn spaceship_and_asteroid(
     {
         for (mut a_collider, a_transform, a_mass, mut a_velocity) in query_asteroid.iter_mut() {
             if math::collision(
-                a_transform.compute_transform(),
+                *a_transform,
                 *s_transform,
                 &a_collider,
                 &s_collider,
                 Some(&meshes),
             ) {
+                println!(
+                    "{}",
+                    s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
+                );
+                a_collider.now = true;
+                s_collider.now = true;
                 if !a_collider.last || !s_collider.last {
                     aftermath::compute(
                         &mut a_velocity,
                         &mut s_velocity,
-                        &a_transform.compute_transform(),
+                        a_transform,
                         s_transform,
                         *a_mass,
                         *s_mass,
                     );
                 }
-                a_collider.now = true;
-                s_collider.now = true;
                 return;
             }
         }
     }
 }
-
-// pub fn awaken(mut query: Query<&mut Collider>) {
-//     for mut collider in &mut query {
-//         if collider.sleep > 0 {
-//             collider.sleep -= 1;
-//         }
-//     }
-// }
 
 pub fn update(mut query: Query<&mut Collider>) {
     for mut collider in &mut query {
@@ -473,6 +469,51 @@ pub fn asteroid_and_asteroid(
                     }
                     collider1.now = true;
                     collider2.now = true;
+                    break;
+                }
+            }
+            i += 1;
+        } else {
+            break;
+        }
+    }
+}
+
+pub fn asteroids_and_spaceship(
+    meshes: Res<Assets<Mesh>>,
+    mut query: Query<
+        (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
+        Or<(With<Asteroid>, With<Spaceship>)>,
+    >,
+) {
+    let mut i = 0;
+    loop {
+        let mut iter = query.iter_mut().skip(i);
+        if let Some((mut collider1, mut _health1, mass1, transform1, mut velocity1)) = iter.next() {
+            for (mut collider2, mut _health2, mass2, transform2, mut velocity2) in iter {
+                if math::collision(
+                    *transform1,
+                    *transform2,
+                    &collider1,
+                    &collider2,
+                    Some(&meshes),
+                ) {
+                    collider1.now = true;
+                    collider2.now = true;
+                    // println!(
+                    //     "{}",
+                    //     mass1.0 * velocity1.0.length() + mass2.0 * velocity2.0.length()
+                    // );
+                    if !collider1.last || !collider2.last {
+                        aftermath::compute(
+                            &mut velocity1,
+                            &mut velocity2,
+                            transform1,
+                            transform2,
+                            *mass1,
+                            *mass2,
+                        );
+                    }
                     break;
                 }
             }

@@ -71,13 +71,9 @@ fn main() {
                 .with_system(wreckage::update_debris)
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
+                .with_system(count_entities)
                 .into(),
         )
-        // .add_system(
-        //     collision::awaken
-        //         .run_in_state(GameState::InGame)
-        //         .before("collision"),
-        // )
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
@@ -86,7 +82,7 @@ fn main() {
                 .with_system(boss::movement)
                 .with_system(fire::update)
                 .with_system(spaceship::movement)
-                .with_system(asteroid::update)
+                // .with_system(asteroid::update)
                 .into(),
         )
         .add_system_set(
@@ -103,11 +99,12 @@ fn main() {
                 .label("collision")
                 .after("movement")
                 .with_system(collision::spaceship_and_asteroid)
+                // .with_system(collision::asteroids_and_spaceship)
                 .with_system(collision::fire_and_asteroid)
                 .with_system(collision::fire_and_boss)
                 .with_system(collision::fire_and_spaceship)
                 .with_system(collision::spaceship_and_boss)
-                .with_system(collision::asteroid_and_asteroid)
+                // .with_system(collision::asteroid_and_asteroid)
                 .with_system(collision::boss_and_asteroid)
                 // .with_system(collision::fire_and_fire),
                 .into(),

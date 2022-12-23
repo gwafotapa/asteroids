@@ -93,3 +93,7 @@ pub fn despawn_recursive_with<C: Component>(
         }
     }
 }
+
+pub fn count_entities(query: Query<Entity>) {
+    println!("{}", query.iter().count());
+}

@@ -115,15 +115,17 @@ pub fn spawn(
 //     }
 
 pub fn update(
-    mut query_asteroid: Query<(&mut Health, &mut Transform, &Velocity), With<Asteroid>>,
+    mut _commands: Commands,
+    mut query_asteroid: Query<(Entity, &mut Health, &mut Transform, &Velocity), With<Asteroid>>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Asteroid>)>,
 ) {
     if let Ok(s_transform) = query_spaceship.get_single() {
         let Vec3 { x: xs, y: ys, z: _ } = s_transform.translation;
-        for (mut a_health, mut a_transform, a_velocity) in query_asteroid.iter_mut() {
+        for (_a_id, mut a_health, mut a_transform, a_velocity) in query_asteroid.iter_mut() {
             let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
             if (xa - xs).abs() > 2.0 * WINDOW_WIDTH || (ya - ys).abs() > 2.0 * WINDOW_HEIGHT {
                 a_health.0 = 0;
+                // commands.entity(a_id).despawn();
             } else {
                 a_transform.translation += a_velocity.0;
             }
