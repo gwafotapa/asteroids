@@ -15,7 +15,7 @@ use crate::{
 };
 
 const VELOCITY_LENGTH_MAX: f32 = 5.0;
-const HEALTH_MAX: i32 = 6;
+const HEALTH_MAX: i32 = 60;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
 
@@ -31,9 +31,9 @@ pub fn spawn(
     sector: [isize; 2],
 ) {
     let mut rng = rand::thread_rng();
-    let health = rng.gen_range(1..HEALTH_MAX + 1);
-    let mass = 3.0 * health as f32;
-    let radius = (health * 20) as f32;
+    let health = rng.gen_range(10..HEALTH_MAX + 1);
+    let mass = 0.3 * health as f32;
+    let radius = (health * 2) as f32;
     let rho = rng.gen_range(1.0..VELOCITY_LENGTH_MAX);
     let theta = rng.gen_range(0.0..2.0 * PI);
     let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);

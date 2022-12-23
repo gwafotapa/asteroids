@@ -119,8 +119,8 @@ const ATTACK_COLOR: Color = Color::RED;
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const CORE_HEALTH: i32 = 5;
-const EDGE_HEALTH: i32 = 1;
+const CORE_HEALTH: i32 = 50;
+const EDGE_HEALTH: i32 = 10;
 const FIRE_VELOCITY: f32 = 8.0;
 const FIRE_RADIUS: f32 = 5.0;
 const FIRE_VERTICES: usize = 32;
@@ -134,7 +134,7 @@ const FIRE_IMPACT_VERTICES: usize = 32;
 //     z: BOSS_Z,
 // };
 // const ROTATION_SPEED: f32 = 0.05;
-const ROTATION_SPEED: f32 = 0.01;
+const ROTATION_SPEED: f32 = 0.0; //0.01;
 
 #[derive(Component)]
 pub struct Attack(Vec3);

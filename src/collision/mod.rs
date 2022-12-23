@@ -324,6 +324,28 @@ pub fn spaceship_and_boss(
         if let Ok((mut bc_collider, bc_mass, bc_transform, mut bc_velocity)) =
             query_boss_core.get_single_mut()
         {
+            if math::collision(
+                *s_transform,
+                *bc_transform,
+                &s_collider,
+                &bc_collider,
+                Some(&meshes),
+            ) {
+                s_collider.now = true;
+                bc_collider.now = true;
+                if !s_collider.last || !bc_collider.last {
+                    aftermath::compute(
+                        &mut s_velocity,
+                        &mut bc_velocity,
+                        s_transform,
+                        bc_transform,
+                        *s_mass,
+                        *bc_mass,
+                    );
+                }
+                // s_health.0 = 0;
+                return;
+            }
             for (mut be_collider, be_transform) in query_boss_edge.iter_mut() {
                 if math::collision(
                     *s_transform,
@@ -347,28 +369,6 @@ pub fn spaceship_and_boss(
                     // s_health.0 = 0;
                     return;
                 }
-            }
-            if math::collision(
-                *s_transform,
-                *bc_transform,
-                &s_collider,
-                &bc_collider,
-                Some(&meshes),
-            ) {
-                s_collider.now = true;
-                bc_collider.now = true;
-                if !s_collider.last || !bc_collider.last {
-                    aftermath::compute(
-                        &mut s_velocity,
-                        &mut bc_velocity,
-                        s_transform,
-                        bc_transform,
-                        *s_mass,
-                        *bc_mass,
-                    );
-                }
-                // s_health.0 = 0;
-                return;
             }
         }
     }
