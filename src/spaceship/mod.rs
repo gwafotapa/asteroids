@@ -395,7 +395,7 @@ pub fn movement(
     // meshes: ResMut<Assets<Mesh>>,
     // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query_spaceship: Query<(Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
+    mut query_spaceship: Query<(&Collider, Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     // if keys.just_pressed(KeyCode::Space) {
@@ -407,42 +407,46 @@ pub fn movement(
     // }
     let bindings = query_bindings.single();
 
-    if let Ok((_s_id, mut s_transform, mut s_velocity)) = query_spaceship.get_single_mut() {
-        if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
-            let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
-            s_transform.rotation *= rotation;
-            // c_transform.rotation *= rotation;
-        } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
-            let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
-            s_transform.rotation *= rotation;
-            // c_transform.rotation *= rotation;
-        }
+    if let Ok((s_collider, _s_id, mut s_transform, mut s_velocity)) =
+        query_spaceship.get_single_mut()
+    {
+        if !s_collider.last {
+            if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
+                let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
+                s_transform.rotation *= rotation;
+                // c_transform.rotation *= rotation;
+            } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
+                let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
+                s_transform.rotation *= rotation;
+                // c_transform.rotation *= rotation;
+            }
 
-        if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
-            // accelerate(&*s_transform, &mut s_velocity);
+            if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
+                // accelerate(&*s_transform, &mut s_velocity);
 
-            let direction = s_transform.rotation * Vec3::X;
-            s_velocity.0 += ACCELERATION * direction;
-            // if s_velocity.0.length() > SPEED_MAX {
-            //     s_velocity.0 = SPEED_MAX * s_velocity.0.normalize();
+                let direction = s_transform.rotation * Vec3::X;
+                s_velocity.0 += ACCELERATION * direction;
+                // if s_velocity.0.length() > SPEED_MAX {
+                //     s_velocity.0 = SPEED_MAX * s_velocity.0.normalize();
+                // }
+            } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
+                // decelerate(&*s_transform, &mut s_velocity);
+                let direction = s_transform.rotation * Vec3::NEG_X;
+                s_velocity.0 += 0.5 * ACCELERATION * direction;
+                // if s_velocity.0.length() > 0.5 * SPEED_MAX {
+                //     s_velocity.0 = 0.5 * SPEED_MAX * s_velocity.0.normalize();
+                // }
+            }
+            // } else {
+            //     decelerate();
             // }
-        } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
-            // decelerate(&*s_transform, &mut s_velocity);
-            let direction = s_transform.rotation * Vec3::NEG_X;
-            s_velocity.0 += 0.5 * ACCELERATION * direction;
-            // if s_velocity.0.length() > 0.5 * SPEED_MAX {
-            //     s_velocity.0 = 0.5 * SPEED_MAX * s_velocity.0.normalize();
+            // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
+            //     // Either delete or backspace was just pressed
             // }
-        }
-        // } else {
-        //     decelerate();
-        // }
-        // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
-        //     // Either delete or backspace was just pressed
-        // }
 
-        s_velocity.0 *= 1.0 - DRAG;
-        debug!("Spaceship velocity: {}", s_velocity.0);
+            s_velocity.0 *= 1.0 - DRAG;
+            debug!("Spaceship velocity: {}", s_velocity.0);
+        }
 
         s_transform.translation += s_velocity.0;
     }

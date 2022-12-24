@@ -37,15 +37,17 @@ pub fn spaceship_and_asteroid(
                 &s_collider,
                 Some(&meshes),
             ) {
-                println!(
-                    "{}",
-                    s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
-                );
+                // println!(
+                //     "{}",
+                //     s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
+                // );
+                let tmp_a_velocity = *a_velocity;
+                let tmp_s_velocity = *s_velocity;
                 a_collider.now = true;
                 s_collider.now = true;
                 if !a_collider.last || !s_collider.last {
                     aftermath::compute(
-                        &mut a_velocity,
+                        &mut a_velocity, // &mut Velocity(Vec3::ZERO),
                         &mut s_velocity,
                         a_transform,
                         s_transform,
@@ -53,6 +55,18 @@ pub fn spaceship_and_asteroid(
                         *s_mass,
                     );
                 }
+                println!(
+                    "{}\nSpaceship [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\nAsteroid [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\n",
+                    s_collider.last,
+                    tmp_s_velocity.0.x,
+		    tmp_s_velocity.0.y,
+                    s_velocity.0.x,
+                    s_velocity.0.y,
+                    tmp_a_velocity.0.x,
+		    tmp_a_velocity.0.y,
+                    a_velocity.0.x,
+                    a_velocity.0.y
+                );
                 return;
             }
         }
@@ -309,10 +323,7 @@ pub fn spaceship_and_boss(
         (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
         With<Spaceship>,
     >,
-    mut query_boss_edge: Query<
-        (&mut Collider, &GlobalTransform),
-        (With<BossEdge>, Without<Spaceship>),
-    >,
+    mut query_boss_edge: Query<(&mut Collider, &Transform), (With<BossEdge>, Without<Spaceship>)>,
     mut query_boss_core: Query<
         (&mut Collider, &Mass, &Transform, &mut Velocity),
         (With<BossCore>, Without<BossEdge>, Without<Spaceship>),
@@ -347,9 +358,12 @@ pub fn spaceship_and_boss(
                 return;
             }
             for (mut be_collider, be_transform) in query_boss_edge.iter_mut() {
+                let be_global_transform = Transform::from_translation(
+                    bc_transform.transform_point(be_transform.translation),
+                );
                 if math::collision(
                     *s_transform,
-                    be_transform.compute_transform(),
+                    be_global_transform,
                     &s_collider,
                     &be_collider,
                     Some(&meshes),
@@ -361,7 +375,7 @@ pub fn spaceship_and_boss(
                             &mut s_velocity,
                             &mut bc_velocity,
                             s_transform,
-                            &be_transform.compute_transform(),
+                            &be_global_transform,
                             *s_mass,
                             *bc_mass,
                         );
@@ -403,6 +417,7 @@ pub fn boss_and_asteroid(
                     &be_collider,
                     Some(&meshes),
                 ) {
+                    println!("Collision boss / asteroid");
                     a_collider.now = true;
                     be_collider.now = true;
                     if !a_collider.last || !be_collider.last {

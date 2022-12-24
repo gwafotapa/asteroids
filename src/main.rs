@@ -71,7 +71,7 @@ fn main() {
                 .with_system(wreckage::update_debris)
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
-                .with_system(count_entities)
+                // .with_system(count_entities)
                 .into(),
         )
         .add_system_set(
@@ -82,7 +82,7 @@ fn main() {
                 .with_system(boss::movement)
                 .with_system(fire::update)
                 .with_system(spaceship::movement)
-                // .with_system(asteroid::update)
+                .with_system(asteroid::update)
                 .into(),
         )
         .add_system_set(
