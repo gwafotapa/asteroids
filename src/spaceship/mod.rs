@@ -390,6 +390,7 @@ pub fn movement(
     // meshes: ResMut<Assets<Mesh>>,
     // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
+    cache: Res<crate::collision::Cache>,
     mut query_spaceship: Query<
         (
             &mut AngularVelocity,
@@ -404,10 +405,11 @@ pub fn movement(
 ) {
     let bindings = query_bindings.single();
 
-    if let Ok((mut s_angular_velocity, s_collider, _s_id, mut s_transform, mut s_velocity)) =
+    if let Ok((mut s_angular_velocity, s_collider, spaceship, mut s_transform, mut s_velocity)) =
         query_spaceship.get_single_mut()
     {
-        if !s_collider.last {
+        // if !s_collider.last {
+        if !cache.contains_entity(spaceship) {
             if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
                 s_angular_velocity.0 += ROTATION_SPEED;
                 // s_angular_velocity.0 =

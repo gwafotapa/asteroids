@@ -46,13 +46,11 @@ pub fn spawn(
         .spawn(Asteroid { radius })
         .insert(Health(health))
         .insert(Mass(mass))
-        .insert(Velocity(Vec3::ZERO))
-        // .insert(Velocity(velocity))
-        // .insert(Topology::Disk)
+        // .insert(Velocity(Vec3::ZERO))
+        .insert(Velocity(velocity))
         .insert(Collider {
             last: false,
             now: false,
-            // sleep: 0,
             aabb: Aabb {
                 hw: radius,
                 hh: radius,

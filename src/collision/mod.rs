@@ -15,12 +15,48 @@ pub mod aftermath;
 pub mod impact;
 pub mod math;
 
+#[derive(Clone, Copy, Debug, Eq)]
+struct Collision(Entity, Entity);
+
+impl PartialEq for Collision {
+    fn eq(&self, other: &Self) -> bool {
+        (self.0 == other.0 && self.1 == other.1) || (self.0 == other.1 && self.1 == other.0)
+    }
+}
+
+#[derive(Debug, Default, Resource)]
+pub struct Cache {
+    old: Vec<Collision>,
+    new: Vec<Collision>,
+}
+
+impl Cache {
+    fn add(&mut self, collision: Collision) {
+        self.new.push(collision);
+    }
+
+    fn contains(&self, collision: Collision) -> bool {
+        self.old.contains(&collision)
+    }
+
+    pub fn contains_entity(&self, e: Entity) -> bool {
+        self.old.iter().any(|&Collision(a, b)| e == a || e == b)
+    }
+
+    fn update(&mut self) {
+        std::mem::swap(&mut self.old, &mut self.new);
+        self.new.clear();
+    }
+}
+
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
+    mut cache: ResMut<Cache>,
     mut query_spaceship: Query<
         (
             &mut AngularVelocity,
-            &mut Collider,
+            &Collider,
+            Entity,
             &mut Health,
             &Mass,
             &Transform,
@@ -29,20 +65,22 @@ pub fn spaceship_and_asteroid(
         With<Spaceship>,
     >,
     mut query_asteroid: Query<
-        (&mut Collider, &Transform, &Mass, &mut Velocity),
+        (&Collider, Entity, &Transform, &Mass, &mut Velocity),
         (With<Asteroid>, Without<Spaceship>),
     >,
 ) {
     if let Ok((
         mut s_angular_velocity,
-        mut s_collider,
+        s_collider,
+        s_entity,
         mut _s_health,
         s_mass,
         s_transform,
         mut s_velocity,
     )) = query_spaceship.get_single_mut()
     {
-        for (mut a_collider, a_transform, a_mass, mut a_velocity) in query_asteroid.iter_mut() {
+        for (a_collider, a_entity, a_transform, a_mass, mut a_velocity) in query_asteroid.iter_mut()
+        {
             if math::collision(
                 *a_transform,
                 *s_transform,
@@ -54,11 +92,12 @@ pub fn spaceship_and_asteroid(
                 //     "{}",
                 //     s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
                 // );
-                let tmp_a_velocity = *a_velocity;
-                let tmp_s_velocity = *s_velocity;
-                a_collider.now = true;
-                s_collider.now = true;
-                if !a_collider.last || !s_collider.last {
+                // let tmp_a_velocity = *a_velocity;
+                // let tmp_s_velocity = *s_velocity;
+                // a_collider.now = true;
+                // s_collider.now = true;
+                println!("Collision");
+                if !cache.contains(Collision(a_entity, s_entity)) {
                     aftermath::compute(
                         a_transform,
                         s_transform,
@@ -70,29 +109,33 @@ pub fn spaceship_and_asteroid(
                         None,
                     );
                 }
-                println!(
-                    "{}\nSpaceship [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\nAsteroid [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\n",
-                    s_collider.last,
-                    tmp_s_velocity.0.x,
-		    tmp_s_velocity.0.y,
-                    s_velocity.0.x,
-                    s_velocity.0.y,
-                    tmp_a_velocity.0.x,
-		    tmp_a_velocity.0.y,
-                    a_velocity.0.x,
-                    a_velocity.0.y
-                );
+                cache.add(Collision(a_entity, s_entity));
+                // println!(
+                //     "{}\nSpaceship [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\nAsteroid [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\n",
+                //     s_collider.last,
+                //     tmp_s_velocity.0.x,
+                //     tmp_s_velocity.0.y,
+                //     s_velocity.0.x,
+                //     s_velocity.0.y,
+                //     tmp_a_velocity.0.x,
+                //     tmp_a_velocity.0.y,
+                //     a_velocity.0.x,
+                //     a_velocity.0.y
+                // );
                 return;
             }
         }
     }
 }
 
-pub fn update(mut query: Query<&mut Collider>) {
-    for mut collider in &mut query {
-        collider.last = collider.now;
-        collider.now = false;
-    }
+// pub fn update(mut query: Query<&mut Collider>) {
+//     for mut collider in &mut query {
+//         collider.last = collider.now;
+//         collider.now = false;
+//     }
+// }
+pub fn cache_update(mut cache: ResMut<Cache>) {
+    cache.update();
 }
 
 pub fn fire_and_asteroid(
