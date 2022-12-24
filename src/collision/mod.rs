@@ -8,46 +8,14 @@ use crate::{
     AngularVelocity, Health, Mass, Velocity,
 };
 
+use cache::{Cache, Collision};
 use impact::Impact;
 pub use math::{Aabb, Collider, Topology};
 
+pub mod cache;
 pub mod impact;
 pub mod math;
 pub mod response;
-
-#[derive(Clone, Copy, Debug, Eq)]
-struct Collision(Entity, Entity);
-
-impl PartialEq for Collision {
-    fn eq(&self, other: &Self) -> bool {
-        (self.0 == other.0 && self.1 == other.1) || (self.0 == other.1 && self.1 == other.0)
-    }
-}
-
-#[derive(Debug, Default, Resource)]
-pub struct Cache {
-    old: Vec<Collision>,
-    new: Vec<Collision>,
-}
-
-impl Cache {
-    fn add(&mut self, collision: Collision) {
-        self.new.push(collision);
-    }
-
-    fn contains(&self, collision: Collision) -> bool {
-        self.old.contains(&collision)
-    }
-
-    pub fn contains_entity(&self, e: Entity) -> bool {
-        self.old.iter().any(|&Collision(a, b)| e == a || e == b)
-    }
-
-    fn update(&mut self) {
-        std::mem::swap(&mut self.old, &mut self.new);
-        self.new.clear();
-    }
-}
 
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
@@ -134,9 +102,6 @@ pub fn spaceship_and_asteroid(
 //         collider.now = false;
 //     }
 // }
-pub fn cache_update(mut cache: ResMut<Cache>) {
-    cache.update();
-}
 
 pub fn fire_and_asteroid(
     mut commands: Commands,

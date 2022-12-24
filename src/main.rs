@@ -10,7 +10,7 @@ fn main() {
 
     App::new()
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
-        .insert_resource(collision::Cache::default())
+        .insert_resource(collision::cache::Cache::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Asteroids".to_string(),
@@ -111,7 +111,7 @@ fn main() {
                 .into(),
         )
         .add_system(
-            collision::cache_update
+            collision::cache::update
                 .run_in_state(GameState::InGame)
                 .after("collision"),
         )

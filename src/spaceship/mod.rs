@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 
 use crate::{
     blast::Blast,
-    collision::{math::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{cache::Cache, math::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
     keyboard::KeyboardBindings,
     AngularVelocity, Health, Mass, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
@@ -384,7 +384,7 @@ pub fn movement(
     // meshes: ResMut<Assets<Mesh>>,
     // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    cache: Res<crate::collision::Cache>,
+    cache: Res<Cache>,
     mut query_spaceship: Query<
         (&mut AngularVelocity, Entity, &mut Transform, &mut Velocity),
         With<Spaceship>,
