@@ -11,9 +11,9 @@ use crate::{
 use impact::Impact;
 pub use math::{Aabb, Collider, Topology};
 
-pub mod response;
 pub mod impact;
 pub mod math;
+pub mod response;
 
 #[derive(Clone, Copy, Debug, Eq)]
 struct Collision(Entity, Entity);
@@ -591,6 +591,7 @@ pub fn asteroids_and_spaceship(
     mut cache: ResMut<Cache>,
     mut query: Query<
         (
+            Option<&mut AngularVelocity>,
             &Collider,
             Entity,
             &mut Health,
@@ -604,10 +605,26 @@ pub fn asteroids_and_spaceship(
     let mut i = 0;
     loop {
         let mut iter = query.iter_mut().skip(i);
-        if let Some((collider1, entity1, mut _health1, mass1, transform1, mut velocity1)) =
-            iter.next()
+        if let Some((
+            mut angular_velocity1,
+            collider1,
+            entity1,
+            mut _health1,
+            mass1,
+            transform1,
+            mut velocity1,
+        )) = iter.next()
         {
-            for (collider2, entity2, mut _health2, mass2, transform2, mut velocity2) in iter {
+            for (
+                mut angular_velocity2,
+                collider2,
+                entity2,
+                mut _health2,
+                mass2,
+                transform2,
+                mut velocity2,
+            ) in iter
+            {
                 if math::collision(
                     *transform1,
                     *transform2,
@@ -627,8 +644,8 @@ pub fn asteroids_and_spaceship(
                             *mass2,
                             &mut velocity1,
                             &mut velocity2,
-                            None,
-                            None,
+                            angular_velocity1.as_deref_mut(),
+                            angular_velocity2.as_deref_mut(),
                         );
                     }
                     cache.add(Collision(entity1, entity2));
