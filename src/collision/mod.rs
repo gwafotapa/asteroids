@@ -11,7 +11,7 @@ use crate::{
 use impact::Impact;
 pub use math::{Aabb, Collider, Topology};
 
-pub mod aftermath;
+pub mod response;
 pub mod impact;
 pub mod math;
 
@@ -98,7 +98,7 @@ pub fn spaceship_and_asteroid(
                 // s_collider.now = true;
                 println!("Collision");
                 if !cache.contains(Collision(a_entity, s_entity)) {
-                    aftermath::compute(
+                    response::compute(
                         a_transform,
                         s_transform,
                         *a_mass,
@@ -412,7 +412,7 @@ pub fn spaceship_and_boss(
                 Some(&meshes),
             ) {
                 if !cache.contains(Collision(spaceship, boss_core)) {
-                    aftermath::compute(
+                    response::compute(
                         s_transform,
                         bc_transform,
                         *s_mass,
@@ -439,7 +439,7 @@ pub fn spaceship_and_boss(
                     Some(&meshes),
                 ) {
                     if !cache.contains(Collision(spaceship, boss_edge)) {
-                        aftermath::compute(
+                        response::compute(
                             s_transform,
                             &be_global_transform,
                             *s_mass,
@@ -498,7 +498,7 @@ pub fn boss_and_asteroid(
                 ) {
                     println!("Collision boss / asteroid");
                     if !cache.contains(Collision(asteroid, boss_edge)) {
-                        aftermath::compute(
+                        response::compute(
                             a_transform,
                             &be_transform.compute_transform(),
                             *a_mass,
@@ -522,7 +522,7 @@ pub fn boss_and_asteroid(
                 Some(&meshes),
             ) {
                 if !cache.contains(Collision(asteroid, boss_core)) {
-                    aftermath::compute(
+                    response::compute(
                         a_transform,
                         bc_transform,
                         *a_mass,
@@ -564,7 +564,7 @@ pub fn asteroid_and_asteroid(
             for (collider2, asteroid2, mut _health2, mass2, transform2, mut velocity2) in iter {
                 if math::collision(*transform1, *transform2, &collider1, &collider2, None) {
                     if !cache.contains(Collision(asteroid1, asteroid2)) {
-                        aftermath::compute(
+                        response::compute(
                             transform1,
                             transform2,
                             *mass1,
@@ -620,7 +620,7 @@ pub fn asteroids_and_spaceship(
                     //     mass1.0 * velocity1.0.length() + mass2.0 * velocity2.0.length()
                     // );
                     if !cache.contains(Collision(entity1, entity2)) {
-                        aftermath::compute(
+                        response::compute(
                             transform1,
                             transform2,
                             *mass1,
