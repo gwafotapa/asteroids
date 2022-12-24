@@ -5,9 +5,6 @@ pub mod triangle;
 
 #[derive(Clone, Component)]
 pub struct Collider {
-    pub last: bool, // true if the entity collided last frame
-    pub now: bool,  // true if the entity is colliding this frame
-    // pub sleep: u32,
     pub aabb: Aabb,
     pub topology: Topology,
 }

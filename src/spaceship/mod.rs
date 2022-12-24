@@ -220,9 +220,6 @@ pub fn spawn(
         .insert(AngularVelocity(ANGULAR_VELOCITY))
         // .insert(AABB)
         .insert(Collider {
-            last: false,
-            now: false,
-            // sleep: 0,
             aabb: AABB,
             topology: Topology::Triangles {
                 mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
@@ -286,9 +283,6 @@ pub fn attack(
             .insert(Health(FIRE_HEALTH))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
             .insert(Collider {
-                last: false,
-                now: false,
-                // sleep: 0,
                 aabb: Aabb { hw: 0.0, hh: 0.0 },
                 topology: Topology::Point,
             })
@@ -392,23 +386,16 @@ pub fn movement(
     keys: Res<Input<KeyCode>>,
     cache: Res<crate::collision::Cache>,
     mut query_spaceship: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &mut Transform,
-            &mut Velocity,
-        ),
+        (&mut AngularVelocity, Entity, &mut Transform, &mut Velocity),
         With<Spaceship>,
     >,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     let bindings = query_bindings.single();
 
-    if let Ok((mut s_angular_velocity, s_collider, spaceship, mut s_transform, mut s_velocity)) =
+    if let Ok((mut s_angular_velocity, spaceship, mut s_transform, mut s_velocity)) =
         query_spaceship.get_single_mut()
     {
-        // if !s_collider.last {
         if !cache.contains_entity(spaceship) {
             if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
                 s_angular_velocity.0 += ROTATION_SPEED;

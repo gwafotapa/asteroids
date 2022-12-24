@@ -49,8 +49,6 @@ pub fn spawn(
         // .insert(Velocity(Vec3::ZERO))
         .insert(Velocity(velocity))
         .insert(Collider {
-            last: false,
-            now: false,
             aabb: Aabb {
                 hw: radius,
                 hh: radius,
