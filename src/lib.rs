@@ -32,16 +32,19 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 // const SHINE_FACTOR: f32 = 1.0 / DIM_FACTOR;
 
 #[derive(Component, Clone, Copy)]
-pub struct Velocity(Vec3);
+pub struct Health(i32);
 
 #[derive(Component, Clone, Copy)]
 pub struct Mass(f32);
 
-// #[derive(Component)]
-// struct SpawnedTime(Instant);
+#[derive(Component, Clone, Copy)]
+pub struct Velocity(Vec3);
 
 #[derive(Component, Clone, Copy)]
-pub struct Health(i32);
+pub struct AngularVelocity(f32); // radians per frame
+
+// #[derive(Component)]
+// struct SpawnedTime(Instant);
 
 // // Warning: Should generate some double despawn (with debris::update for example)
 // pub fn exit_game(

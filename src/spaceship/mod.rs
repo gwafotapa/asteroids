@@ -5,13 +5,15 @@ use crate::{
     collision::{math::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
     keyboard::KeyboardBindings,
-    Health, Mass, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    AngularVelocity, Health, Mass, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;
 
 pub const HEALTH: i32 = 100;
 pub const SPACESHIP_Z: f32 = 500.0;
+const ANGULAR_VELOCITY: f32 = 0.0;
+const ANGULAR_DRAG: f32 = 0.1;
 
 // Center of gravity of the spaceship
 const SG: Vec3 = Vec3 {
@@ -119,6 +121,8 @@ const AABB: Aabb = Aabb { hw: S2.x, hh: S4.y };
 
 // const VELOCITY_MAX: f32 = 5.0;
 pub const ACCELERATION: f32 = 0.1;
+const ROTATION_SPEED: f32 = 0.01;
+const ROTATION_SPEED_MAX: f32 = 0.05;
 pub const DRAG: f32 = 0.01;
 pub const POSITION: Vec3 = Vec3 {
     // x: -WINDOW_WIDTH / 4.0,
@@ -223,6 +227,7 @@ pub fn spawn(
             y: 0.0,
             z: 0.0,
         }))
+        .insert(AngularVelocity(ANGULAR_VELOCITY))
         // .insert(AABB)
         .insert(Collider {
             last: false,
@@ -395,59 +400,46 @@ pub fn movement(
     // meshes: ResMut<Assets<Mesh>>,
     // materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    mut query_spaceship: Query<(&Collider, Entity, &mut Transform, &mut Velocity), With<Spaceship>>,
+    mut query_spaceship: Query<
+        (
+            &mut AngularVelocity,
+            &Collider,
+            Entity,
+            &mut Transform,
+            &mut Velocity,
+        ),
+        With<Spaceship>,
+    >,
     query_bindings: Query<&KeyboardBindings>,
 ) {
-    // if keys.just_pressed(KeyCode::Space) {
-    //     // Space was pressed
-    // }
-
-    // if keys.just_released(KeyCode::LControl) {
-    //     // Left Ctrl was released
-    // }
     let bindings = query_bindings.single();
 
-    if let Ok((s_collider, _s_id, mut s_transform, mut s_velocity)) =
+    if let Ok((mut s_angular_velocity, s_collider, _s_id, mut s_transform, mut s_velocity)) =
         query_spaceship.get_single_mut()
     {
         if !s_collider.last {
             if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
-                let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), 0.04);
-                s_transform.rotation *= rotation;
-                // c_transform.rotation *= rotation;
+                s_angular_velocity.0 += ROTATION_SPEED;
+                // s_angular_velocity.0 =
+                // ROTATION_SPEED_MAX.min(s_angular_velocity.0 + ROTATION_SPEED);
             } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
-                let rotation = Quat::from_axis_angle(Vec3::from([0.0, 0.0, 1.0]), -0.04);
-                s_transform.rotation *= rotation;
-                // c_transform.rotation *= rotation;
+                s_angular_velocity.0 -= ROTATION_SPEED;
+                // s_angular_velocity.0 =
+                //     -ROTATION_SPEED_MAX.max(s_angular_velocity.0 - ROTATION_SPEED);
             }
 
             if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
-                // accelerate(&*s_transform, &mut s_velocity);
-
-                let direction = s_transform.rotation * Vec3::X;
-                s_velocity.0 += ACCELERATION * direction;
-                // if s_velocity.0.length() > SPEED_MAX {
-                //     s_velocity.0 = SPEED_MAX * s_velocity.0.normalize();
-                // }
+                s_velocity.0 += ACCELERATION * (s_transform.rotation * Vec3::X);
             } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
-                // decelerate(&*s_transform, &mut s_velocity);
-                let direction = s_transform.rotation * Vec3::NEG_X;
-                s_velocity.0 += 0.5 * ACCELERATION * direction;
-                // if s_velocity.0.length() > 0.5 * SPEED_MAX {
-                //     s_velocity.0 = 0.5 * SPEED_MAX * s_velocity.0.normalize();
-                // }
+                s_velocity.0 += 0.5 * ACCELERATION * (s_transform.rotation * Vec3::NEG_X);
             }
-            // } else {
-            //     decelerate();
-            // }
-            // if keys.any_just_pressed([KeyCode::Delete, KeyCode::Back]) {
-            //     // Either delete or backspace was just pressed
-            // }
 
             s_velocity.0 *= 1.0 - DRAG;
+            s_angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
             debug!("Spaceship velocity: {}", s_velocity.0);
         }
 
+        s_transform.rotation *= Quat::from_axis_angle(Vec3::Z, s_angular_velocity.0);
         s_transform.translation += s_velocity.0;
     }
 }
