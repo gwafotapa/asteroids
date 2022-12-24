@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     keyboard::KeyboardBindings,
-    spaceship::{Spaceship, SPACESHIP_Z},
+    spaceship::{self, Spaceship},
     Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
@@ -100,7 +100,7 @@ pub fn update(
                 };
                 y = direction.y / direction.x * x;
             }
-            let c_destination = s_transform.translation + Vec3::new(x, y, CAMERA_Z - SPACESHIP_Z);
+            let c_destination = s_transform.translation + Vec3::new(x, y, CAMERA_Z - spaceship::Z);
             let c_path = c_destination - c_transform.translation;
             c_transform.translation += SPEED * c_path;
         } else {

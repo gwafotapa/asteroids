@@ -5,7 +5,7 @@ use crate::{
     boss::{BossCore, BossEdge},
     fire::{Enemy, Fire},
     spaceship::Spaceship,
-    Health, Mass, Velocity,
+    AngularVelocity, Health, Mass, Velocity,
 };
 
 use impact::Impact;
@@ -18,7 +18,14 @@ pub mod math;
 pub fn spaceship_and_asteroid(
     meshes: Res<Assets<Mesh>>,
     mut query_spaceship: Query<
-        (&mut Collider, &mut Health, &Mass, &Transform, &mut Velocity),
+        (
+            &mut AngularVelocity,
+            &mut Collider,
+            &mut Health,
+            &Mass,
+            &Transform,
+            &mut Velocity,
+        ),
         With<Spaceship>,
     >,
     mut query_asteroid: Query<
@@ -26,8 +33,14 @@ pub fn spaceship_and_asteroid(
         (With<Asteroid>, Without<Spaceship>),
     >,
 ) {
-    if let Ok((mut s_collider, mut _s_health, s_mass, s_transform, mut s_velocity)) =
-        query_spaceship.get_single_mut()
+    if let Ok((
+        mut s_angular_velocity,
+        mut s_collider,
+        mut _s_health,
+        s_mass,
+        s_transform,
+        mut s_velocity,
+    )) = query_spaceship.get_single_mut()
     {
         for (mut a_collider, a_transform, a_mass, mut a_velocity) in query_asteroid.iter_mut() {
             if math::collision(
@@ -47,12 +60,14 @@ pub fn spaceship_and_asteroid(
                 s_collider.now = true;
                 if !a_collider.last || !s_collider.last {
                     aftermath::compute(
-                        &mut a_velocity, // &mut Velocity(Vec3::ZERO),
-                        &mut s_velocity,
                         a_transform,
                         s_transform,
                         *a_mass,
                         *s_mass,
+                        &mut a_velocity, // &mut Velocity(Vec3::ZERO),
+                        &mut s_velocity,
+                        Some(&mut s_angular_velocity),
+                        None,
                     );
                 }
                 println!(
@@ -346,12 +361,14 @@ pub fn spaceship_and_boss(
                 bc_collider.now = true;
                 if !s_collider.last || !bc_collider.last {
                     aftermath::compute(
-                        &mut s_velocity,
-                        &mut bc_velocity,
                         s_transform,
                         bc_transform,
                         *s_mass,
                         *bc_mass,
+                        &mut s_velocity,
+                        &mut bc_velocity,
+                        None,
+                        None,
                     );
                 }
                 // s_health.0 = 0;
@@ -372,12 +389,14 @@ pub fn spaceship_and_boss(
                     be_collider.now = true;
                     if !s_collider.last || !be_collider.last {
                         aftermath::compute(
-                            &mut s_velocity,
-                            &mut bc_velocity,
                             s_transform,
                             &be_global_transform,
                             *s_mass,
                             *bc_mass,
+                            &mut s_velocity,
+                            &mut bc_velocity,
+                            None,
+                            None,
                         );
                     }
                     // s_health.0 = 0;
@@ -422,12 +441,14 @@ pub fn boss_and_asteroid(
                     be_collider.now = true;
                     if !a_collider.last || !be_collider.last {
                         aftermath::compute(
-                            &mut a_velocity,
-                            &mut bc_velocity,
                             a_transform,
                             &be_transform.compute_transform(),
                             *a_mass,
                             *bc_mass,
+                            &mut a_velocity,
+                            &mut bc_velocity,
+                            None,
+                            None,
                         );
                     }
                     // a_health.0 = 0;
@@ -445,12 +466,14 @@ pub fn boss_and_asteroid(
                 bc_collider.now = true;
                 if !a_collider.last || !bc_collider.last {
                     aftermath::compute(
-                        &mut a_velocity,
-                        &mut bc_velocity,
                         a_transform,
                         bc_transform,
                         *a_mass,
                         *bc_mass,
+                        &mut a_velocity,
+                        &mut bc_velocity,
+                        None,
+                        None,
                     );
                 }
                 // a_health.0 = 0;
@@ -474,12 +497,14 @@ pub fn asteroid_and_asteroid(
                 if math::collision(*transform1, *transform2, &collider1, &collider2, None) {
                     if !collider1.last || !collider2.last {
                         aftermath::compute(
-                            &mut velocity1,
-                            &mut velocity2,
                             transform1,
                             transform2,
                             *mass1,
                             *mass2,
+                            &mut velocity1,
+                            &mut velocity2,
+                            None,
+                            None,
                         );
                     }
                     collider1.now = true;
@@ -521,12 +546,14 @@ pub fn asteroids_and_spaceship(
                     // );
                     if !collider1.last || !collider2.last {
                         aftermath::compute(
-                            &mut velocity1,
-                            &mut velocity2,
                             transform1,
                             transform2,
                             *mass1,
                             *mass2,
+                            &mut velocity1,
+                            &mut velocity2,
+                            None,
+                            None,
                         );
                     }
                     break;

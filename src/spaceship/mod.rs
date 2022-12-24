@@ -11,9 +11,33 @@ use crate::{
 pub mod flame;
 
 pub const HEALTH: i32 = 100;
-pub const SPACESHIP_Z: f32 = 500.0;
+pub const POSITION: Vec3 = Vec3 {
+    x: WINDOW_WIDTH / 2.0,
+    y: WINDOW_HEIGHT / 2.0,
+    z: Z,
+};
+pub const Z: f32 = 500.0;
+
+const ACCELERATION: f32 = 0.1;
+const ANGULAR_DRAG: f32 = 0.5;
 const ANGULAR_VELOCITY: f32 = 0.0;
-const ANGULAR_DRAG: f32 = 0.1;
+const ATTACK_COLOR: Color = Color::YELLOW;
+const ATTACK_SOURCE: Vec3 = S2;
+const BLAST_RADIUS: f32 = 8.0;
+const BLAST_VERTICES: usize = 8;
+const COLOR: Color = Color::BLUE;
+const DRAG: f32 = 0.01;
+const FIRE_HEALTH: i32 = 20;
+const FIRE_IMPACT_RADIUS: f32 = 12.0;
+const FIRE_IMPACT_VERTICES: usize = 16;
+const FIRE_RADIUS: f32 = 3.0;
+const FIRE_VELOCITY: Vec3 = Vec3 {
+    x: 20.0,
+    y: 0.0,
+    z: 0.0,
+};
+const FIRE_VERTICES: usize = 4;
+const ROTATION_SPEED: f32 = 0.03;
 
 // Center of gravity of the spaceship
 const SG: Vec3 = Vec3 {
@@ -119,40 +143,6 @@ const AABB: Aabb = Aabb { hw: S2.x, hh: S4.y };
 //     [0.0, -15.0, 0.0],
 // ];
 
-// const VELOCITY_MAX: f32 = 5.0;
-pub const ACCELERATION: f32 = 0.1;
-const ROTATION_SPEED: f32 = 0.01;
-const ROTATION_SPEED_MAX: f32 = 0.05;
-pub const DRAG: f32 = 0.01;
-pub const POSITION: Vec3 = Vec3 {
-    // x: -WINDOW_WIDTH / 4.0,
-    // x: -WINDOW_WIDTH / 2.0,
-    // x: MAP_CENTER_X,
-    // y: MAP_CENTER_Y,
-    // x: 0.0,
-    // y: 0.0,
-    x: WINDOW_WIDTH / 2.0,
-    y: WINDOW_HEIGHT / 2.0,
-    // y: -crate::WINDOW_HEIGHT,
-    z: SPACESHIP_Z,
-};
-const ATTACK_SOURCE: Vec3 = S2;
-const SPACESHIP_COLOR: Color = Color::BLUE;
-const ATTACK_COLOR: Color = Color::YELLOW;
-const BLAST_RADIUS: f32 = 8.0;
-const BLAST_VERTICES: usize = 8;
-const FIRE_RADIUS: f32 = 3.0;
-const FIRE_VERTICES: usize = 4;
-const FIRE_HEALTH: i32 = 20;
-const FIRE_IMPACT_RADIUS: f32 = 12.0;
-const FIRE_IMPACT_VERTICES: usize = 16;
-const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 20.0,
-    y: 0.0,
-    z: 0.0,
-};
-pub const SPEED_MAX: f32 = 12.0;
-
 #[derive(Component)]
 pub struct Spaceship;
 
@@ -251,7 +241,7 @@ pub fn spawn(
             mesh: mesh_handle.into(),
             transform: Transform::from_translation(POSITION),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
-            material: materials.add(SPACESHIP_COLOR.into()),
+            material: materials.add(COLOR.into()),
             ..default()
         });
 }
