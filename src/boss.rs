@@ -7,14 +7,18 @@ use crate::{
     collision::{math::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Enemy, Fire},
     spaceship::{self, Spaceship},
-    Health, Mass, Velocity, PLANE_Z,
+    AngularVelocity, Health, Mass, MomentOfInertia, Velocity, PLANE_Z,
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
 pub const DISTANCE_TO_BOSS: f32 = 1000.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
-const MASS: f32 = 20.0;
+const AREA: f32 = PI * (INNER_RADIUS + OUTER_RADIUS) / 2.0 * (INNER_RADIUS + OUTER_RADIUS) / 2.0;
+// const MASS: f32 = 20.0;
+const MASS: f32 = AREA;
+const MOMENT_OF_INERTIA: f32 =
+    0.5 * MASS * (INNER_RADIUS + OUTER_RADIUS) / 2.0 * (INNER_RADIUS + OUTER_RADIUS) / 2.0;
 
 // #[derive(Component)]
 // pub struct Boss;
@@ -114,6 +118,7 @@ const A15: Vec3 = Vec3 {
 // ];
 
 const ACCELERATION: f32 = 0.15;
+const ANGULAR_DRAG: f32 = 0.25;
 const DRAG: f32 = 0.05;
 const ATTACK_COLOR: Color = Color::RED;
 const BLAST_RADIUS: f32 = 15.0;
@@ -134,7 +139,7 @@ const FIRE_IMPACT_VERTICES: usize = 32;
 //     z: BOSS_Z,
 // };
 // const ROTATION_SPEED: f32 = 0.05;
-const ROTATION_SPEED: f32 = 0.0; //0.01;
+const ROTATION_SPEED: f32 = 0.01;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
@@ -212,12 +217,19 @@ pub fn spawn(
     // mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
     let mesh_handle = meshes.add(mesh);
 
+    println!(
+        "boss\narea: {}\nmass: {}\nmoment of inertia: {}\n",
+        AREA, MASS, MOMENT_OF_INERTIA
+    );
+
     let boss_core = commands
         // .spawn(Boss)
         .spawn(BossCore { edges: EDGES })
         .insert(Health(CORE_HEALTH))
         .insert(Mass(MASS))
         .insert(Velocity(Vec3::ZERO))
+        .insert(MomentOfInertia(MOMENT_OF_INERTIA))
+        .insert(AngularVelocity(0.0))
         .insert(Collider {
             aabb: Aabb {
                 hw: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
@@ -290,33 +302,40 @@ pub fn spawn(
 }
 
 pub fn movement(
-    mut query_boss: Query<(&BossCore, &mut Transform, &mut Velocity)>,
+    mut query_boss: Query<(
+        &mut AngularVelocity,
+        &BossCore,
+        &mut Transform,
+        &mut Velocity,
+    )>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<BossCore>)>,
 ) {
-    if let Ok((boss, mut b_transform, mut velocity)) = query_boss.get_single_mut() {
-        let (acceleration, rotation_speed);
+    if let Ok((mut angular_velocity, boss, mut b_transform, mut velocity)) =
+        query_boss.get_single_mut()
+    {
         if let Ok(s_transform) = query_spaceship.get_single() {
             if boss.edges > 0 {
                 let mut direction = (s_transform.translation - b_transform.translation).normalize();
                 let mut rng = rand::thread_rng();
                 let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
-                direction = Quat::from_axis_angle(Vec3::new(0.0, 0.0, 1.0), angle) * direction;
-                acceleration = ACCELERATION * direction;
-                rotation_speed = ROTATION_SPEED;
+                direction = Quat::from_axis_angle(Vec3::Z, angle) * direction;
+                velocity.0 += ACCELERATION * direction;
+                angular_velocity.0 += ROTATION_SPEED;
             } else {
                 let direction = (s_transform.translation - b_transform.translation).normalize();
-                acceleration = 2.0 * ACCELERATION * direction;
-                rotation_speed = 2.0 * ROTATION_SPEED;
+                velocity.0 += 2.0 * ACCELERATION * direction;
+                angular_velocity.0 += 2.0 * ROTATION_SPEED;
             }
         } else {
-            acceleration = Vec3::ZERO;
-            rotation_speed = ROTATION_SPEED;
+            // velocity.0 += Vec3::ZERO;
+            angular_velocity.0 -= ROTATION_SPEED;
         }
 
-        velocity.0 += acceleration;
         velocity.0 *= 1.0 - DRAG;
+        angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
+
         b_transform.translation += velocity.0;
-        b_transform.rotation *= Quat::from_axis_angle(Vec3::new(0.0, 0.0, 1.0), rotation_speed);
+        b_transform.rotation *= Quat::from_axis_angle(Vec3::Z, angular_velocity.0);
     }
 }
 

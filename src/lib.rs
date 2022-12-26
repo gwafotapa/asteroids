@@ -38,6 +38,9 @@ pub struct Health(i32);
 pub struct Mass(f32);
 
 #[derive(Component, Clone, Copy)]
+pub struct MomentOfInertia(f32);
+
+#[derive(Component, Clone, Copy)]
 pub struct Velocity(Vec3);
 
 #[derive(Component, Clone, Copy)]

@@ -5,9 +5,11 @@ use std::f32::consts::PI;
 use crate::{
     collision::{Aabb, Collider, Topology},
     spaceship::Spaceship,
+    AngularVelocity,
     // map::ASTEROIDS_MAX_PER_SECTOR,
     Health,
     Mass,
+    MomentOfInertia,
     Velocity,
     PLANE_Z,
     WINDOW_HEIGHT,
@@ -32,15 +34,24 @@ pub fn spawn(
 ) {
     let mut rng = rand::thread_rng();
     let health = rng.gen_range(10..HEALTH_MAX + 1);
-    let mass = 0.3 * health as f32;
     let radius = (health * 2) as f32;
+    let area = PI * radius.powi(2);
+    // let mass = 0.3 * health as f32;
+    let mass = area;
+    let moment_of_inertia = 0.5 * mass * radius.powi(2);
     let rho = rng.gen_range(1.0..VELOCITY_LENGTH_MAX);
     let theta = rng.gen_range(0.0..2.0 * PI);
     let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);
+    let angular_velocity = rng.gen_range(0.0..0.01);
     let xmin = sector[0] as f32 * WINDOW_WIDTH;
     let ymin = sector[1] as f32 * WINDOW_HEIGHT;
     let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
     let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
+
+    println!(
+        "asteroid\narea: {}\nmass: {}\nmoment of inertia: {}\n",
+        area, mass, moment_of_inertia
+    );
 
     commands
         .spawn(Asteroid { radius })
@@ -48,6 +59,8 @@ pub fn spawn(
         .insert(Mass(mass))
         // .insert(Velocity(Vec3::ZERO))
         .insert(Velocity(velocity))
+        .insert(MomentOfInertia(moment_of_inertia))
+        .insert(AngularVelocity(angular_velocity))
         .insert(Collider {
             aabb: Aabb {
                 hw: radius,
@@ -112,18 +125,30 @@ pub fn spawn(
 
 pub fn update(
     mut commands: Commands,
-    mut query_asteroid: Query<(Entity, &mut Health, &mut Transform, &Velocity), With<Asteroid>>,
+    mut query_asteroid: Query<
+        (
+            &AngularVelocity,
+            Entity,
+            &mut Health,
+            &mut Transform,
+            &Velocity,
+        ),
+        With<Asteroid>,
+    >,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Asteroid>)>,
 ) {
     if let Ok(s_transform) = query_spaceship.get_single() {
         let Vec3 { x: xs, y: ys, z: _ } = s_transform.translation;
-        for (a_id, mut _a_health, mut a_transform, a_velocity) in query_asteroid.iter_mut() {
+        for (a_angular_velocity, a_id, mut _a_health, mut a_transform, a_velocity) in
+            query_asteroid.iter_mut()
+        {
             let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
             if (xa - xs).abs() > 2.0 * WINDOW_WIDTH || (ya - ys).abs() > 2.0 * WINDOW_HEIGHT {
                 // a_health.0 = 0;
                 commands.entity(a_id).despawn();
             } else {
                 a_transform.translation += a_velocity.0;
+                a_transform.rotation *= Quat::from_axis_angle(Vec3::Z, a_angular_velocity.0);
             }
         }
     }

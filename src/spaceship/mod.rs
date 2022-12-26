@@ -1,16 +1,22 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
+use std::f32::consts::PI;
 
 use crate::{
     blast::Blast,
     collision::{cache::Cache, math::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
     keyboard::KeyboardBindings,
-    AngularVelocity, Health, Mass, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    AngularVelocity, Health, Mass, MomentOfInertia, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;
 
 pub const HEALTH: i32 = 100;
+const AREA: f32 = (S2.x - S4.x) * S4.y + (S6.x - S8.x) * S8.y + (S10.x - S11.x) * (S10.y - S9.y)
+    - (S6.x + 13.0) * 12.0; // looking at assets/spaceship.ggb
+const MASS: f32 = AREA;
+// const MASS: f32 = 1.0;
+const MOMENT_OF_INERTIA: f32 = 0.5 * MASS * AREA / PI;
 pub const POSITION: Vec3 = Vec3 {
     x: WINDOW_WIDTH / 2.0,
     y: WINDOW_HEIGHT / 2.0,
@@ -207,16 +213,21 @@ pub fn spawn(
     // spaceship.set_indices(Some(Indices::U32(indices)));
 
     let mesh_handle = meshes.add(mesh);
+    println!(
+        "spaceship\narea: {}\nmass: {}\nmoment of inertia: {}\n",
+        AREA, MASS, MOMENT_OF_INERTIA
+    );
 
     commands
         .spawn(Spaceship)
         .insert(Health(HEALTH))
-        .insert(Mass(1.0))
+        .insert(Mass(MASS))
         .insert(Velocity(Vec3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         }))
+        .insert(MomentOfInertia(MOMENT_OF_INERTIA))
         .insert(AngularVelocity(ANGULAR_VELOCITY))
         // .insert(AABB)
         .insert(Collider {
@@ -418,7 +429,7 @@ pub fn movement(
             debug!("Spaceship velocity: {}", s_velocity.0);
         }
 
-        s_transform.rotation *= Quat::from_axis_angle(Vec3::Z, s_angular_velocity.0);
         s_transform.translation += s_velocity.0;
+        s_transform.rotation *= Quat::from_axis_angle(Vec3::Z, s_angular_velocity.0);
     }
 }
