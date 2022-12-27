@@ -48,10 +48,10 @@ pub fn spawn(
     let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
     let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
 
-    println!(
-        "asteroid\narea: {}\nmass: {}\nmoment of inertia: {}\n",
-        area, mass, moment_of_inertia
-    );
+    // println!(
+    //     "asteroid\narea: {}\nmass: {}\nmoment of inertia: {}\n",
+    //     area, mass, moment_of_inertia
+    // );
 
     commands
         .spawn(Asteroid { radius })

@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 
 use crate::{
     blast::Blast,
-    collision::{cache::Cache, math::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::Fire,
     keyboard::KeyboardBindings,
     AngularVelocity, Health, Mass, MomentOfInertia, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,

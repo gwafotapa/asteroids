@@ -1,7 +1,7 @@
 #![allow(clippy::type_complexity)]
 use bevy::prelude::*;
 
-use crate::collision::math::{triangle::TriangleXY, Collider, Topology};
+use crate::collision::detection::{triangle::TriangleXY, Collider, Topology};
 
 pub use crate::{game_state::GameState, spaceship::Spaceship};
 

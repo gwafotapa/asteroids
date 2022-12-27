@@ -4,7 +4,7 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     blast::Blast,
-    collision::{math::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Enemy, Fire},
     spaceship::{self, Spaceship},
     AngularVelocity, Health, Mass, MomentOfInertia, Velocity, PLANE_Z,
