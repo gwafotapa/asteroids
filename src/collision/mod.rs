@@ -73,7 +73,9 @@ pub fn spaceship_and_asteroid(
                 &a_collider,
                 &s_collider,
                 Some(&meshes),
-            ) {
+            )
+            .is_some()
+            {
                 // println!(
                 //     "{}",
                 //     s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
@@ -151,7 +153,9 @@ pub fn fire_and_asteroid(
                 f_collider,
                 a_collider,
                 None,
-            ) {
+            )
+            .is_some()
+            {
                 a_health.0 -= 1;
                 f_health.0 = 0;
                 let color = materials.get(f_color).unwrap().color;
@@ -238,7 +242,9 @@ pub fn fire_and_boss(
                 f_collider,
                 bp_collider,
                 Some(&meshes),
-            ) {
+            )
+            .is_some()
+            {
                 f_health.0 = 0;
                 let f_color = materials.get(f_color).unwrap().color;
 
@@ -326,7 +332,9 @@ pub fn fire_and_spaceship(
                 f_collider,
                 s_collider,
                 Some(&meshes),
-            ) {
+            )
+            .is_some()
+            {
                 f_health.0 = 0;
                 s_health.0 -= 1;
                 let f_color = materials.get(f_color).unwrap().color;
@@ -420,7 +428,9 @@ pub fn spaceship_and_boss(
                 &s_collider,
                 &bc_collider,
                 Some(&meshes),
-            ) {
+            )
+            .is_some()
+            {
                 if !cache.contains(Collision(spaceship, boss_core)) {
                     response::compute(
                         s_transform,
@@ -449,7 +459,9 @@ pub fn spaceship_and_boss(
                     &s_collider,
                     &be_collider,
                     Some(&meshes),
-                ) {
+                )
+                .is_some()
+                {
                     if !cache.contains(Collision(spaceship, boss_edge)) {
                         println!("spaceship -- w1: {}", s_angular_velocity.0);
                         println!("boss      -- w2: {}", bc_angular_velocity.0);
@@ -539,7 +551,9 @@ pub fn boss_and_asteroid(
                     &a_collider,
                     &be_collider,
                     Some(&meshes),
-                ) {
+                )
+                .is_some()
+                {
                     // println!("Collision boss / asteroid");
                     if !cache.contains(Collision(asteroid, boss_edge)) {
                         response::compute(
@@ -566,7 +580,9 @@ pub fn boss_and_asteroid(
                 &a_collider,
                 &bc_collider,
                 Some(&meshes),
-            ) {
+            )
+            .is_some()
+            {
                 if !cache.contains(Collision(asteroid, boss_core)) {
                     response::compute(
                         a_transform,
@@ -630,7 +646,9 @@ pub fn asteroid_and_asteroid(
                 mut velocity2,
             ) in iter
             {
-                if detection::collision(*transform1, *transform2, &collider1, &collider2, None) {
+                if detection::collision(*transform1, *transform2, &collider1, &collider2, None)
+                    .is_some()
+                {
                     if !cache.contains(Collision(asteroid1, asteroid2)) {
                         response::compute(
                             transform1,
@@ -704,7 +722,9 @@ pub fn asteroids_and_spaceship(
                     &collider1,
                     &collider2,
                     Some(&meshes),
-                ) {
+                )
+                .is_some()
+                {
                     // println!(
                     //     "{}",
                     //     mass1.0 * velocity1.0.length() + mass2.0 * velocity2.0.length()

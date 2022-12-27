@@ -22,6 +22,11 @@ pub enum Topology {
     Triangles { mesh_handle: Mesh2dHandle },
 }
 
+pub struct Contact {
+    point: Vec2,
+    normal: Vec2,
+}
+
 // Determines if point p is in the rectangle of center c, half width hw and half height hh
 pub fn point_in_rectangle(p: Vec2, c: Vec2, hw: f32, hh: f32) -> bool {
     p.x >= c.x - hw && p.x <= c.x + hw && p.y >= c.y - hh && p.y <= c.y + hh
@@ -36,11 +41,18 @@ pub fn point_in_rectangle(p: Vec2, c: Vec2, hw: f32, hh: f32) -> bool {
 //
 // Since (abc) is CCW, this is equivalent to
 // det(pa, pb) >= 0, det(pb, pc) >= 0 and det(pc, pa) >= 0
-pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> bool {
+pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> Option<Contact> {
     let [a, b, c] = t.into().to_array();
     let [pa, pb, pc] = [a - p, b - p, c - p];
 
-    pa.perp_dot(pb) > 0.0 && pb.perp_dot(pc) > 0.0 && pc.perp_dot(pa) > 0.0
+    if pa.perp_dot(pb) > 0.0 && pb.perp_dot(pc) > 0.0 && pc.perp_dot(pa) > 0.0 {
+        Some(Contact {
+            point: p,
+            normal: Vec2::ZERO,
+        })
+    } else {
+        None
+    }
 }
 
 // Determines if point p is in CCW triangle (abc).
@@ -91,24 +103,36 @@ pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aa
 //
 // This happens iff the distance from c to [ab] is less than r.
 // https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
-pub fn disk_intersects_line_segment(c: Vec2, r: f32, a: Vec2, b: Vec2) -> bool {
-    let [ab, ac] = [b - a, c - a];
-    let ah = ac.project_onto(ab);
+pub fn disk_intersects_line_segment(c: Vec2, r: f32, a: Vec2, b: Vec2) -> Option<Contact> {
+    let m = point_of_line_segment_closest_to_point(c, a, b);
+    let cm = m - c;
+    if cm.length() < r {
+        Some(Contact {
+            point: m,
+            normal: cm.normalize(),
+        })
+    } else {
+        None
+    }
+}
 
-    // Compute the point m of [ab] closest to the disk
+// https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
+fn point_of_line_segment_closest_to_point(p: Vec2, a: Vec2, b: Vec2) -> Vec2 {
+    let [ab, ap] = [b - a, p - a];
+    let ah = ap.project_onto(ab);
+
+    // Compute the point m of [ab] closest to the disk center
     // Consider k such that ah = k.ab then
     // if k <= 0 then m = a
     // else if k >= 1 then m = b
     // else m = h
-    let m = if ah.x.signum() != ab.x.signum() {
+    if ah.x.signum() != ab.x.signum() {
         a
     } else if ah.x.abs() >= ab.x.abs() {
         b
     } else {
         a + ah
-    };
-
-    (m - c).length() < r
+    }
 }
 
 // Determines if the circle of center o and radius r intersects the line segment [mn].
@@ -142,45 +166,92 @@ pub fn circle_intersects_line_segment(o: Vec2, r: f32, m: Vec2, n: Vec2) -> bool
 }
 
 // Determines if the disk of center o and radius r intersects the CCW triangle abc
-pub fn disk_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> bool {
+pub fn disk_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> Option<Contact> {
     let [a, b, c] = t.into().to_array();
-    a.distance(o) < r
-        || disk_intersects_line_segment(o, r, a, b)
-        || disk_intersects_line_segment(o, r, b, c)
-        || disk_intersects_line_segment(o, r, c, a)
-        || point_in_triangle(o, [a, b, c])
+    // a.distance(o) < r
+    disk_intersects_line_segment(o, r, a, b)
+        .or(disk_intersects_line_segment(o, r, b, c))
+        .or(disk_intersects_line_segment(o, r, c, a))
+    // || point_in_triangle(o, [a, b, c])
 }
 
-pub fn triangles_intersect(t1: impl Into<TriangleXY>, t2: impl Into<TriangleXY>) -> bool {
+pub fn triangles_intersect(
+    t1: impl Into<TriangleXY>,
+    t2: impl Into<TriangleXY>,
+) -> Option<Contact> {
     let [a1, b1, c1] = t1.into().to_array();
     let [a2, b2, c2] = t2.into().to_array();
 
     // We only need to test 8 line segments intersections.
     line_segments_intersect(a1, b1 - a1, a2, b2 - a2)
-        || line_segments_intersect(a1, b1 - a1, b2, c2 - b2)
-        || line_segments_intersect(a1, b1 - a1, c2, a2 - c2)
-        || line_segments_intersect(b1, c1 - b1, a2, b2 - a2)
-        || line_segments_intersect(b1, c1 - b1, b2, c2 - b2)
-        || line_segments_intersect(b1, c1 - b1, c2, a2 - c2)
-        || line_segments_intersect(c1, a1 - c1, a2, b2 - a2)
-        || line_segments_intersect(c1, a1 - c1, b2, c2 - b2)
+        .or(line_segments_intersect(a1, b1 - a1, b2, c2 - b2))
+        .or(line_segments_intersect(a1, b1 - a1, c2, a2 - c2))
+        .or(line_segments_intersect(b1, c1 - b1, a2, b2 - a2))
+        .or(line_segments_intersect(b1, c1 - b1, b2, c2 - b2))
+        .or(line_segments_intersect(b1, c1 - b1, c2, a2 - c2))
+        .or(line_segments_intersect(c1, a1 - c1, a2, b2 - a2))
+        .or(line_segments_intersect(c1, a1 - c1, b2, c2 - b2))
 }
 
 // Determines if line segments [p, p+r] and [q, q+s] intersect
 // without checking for the degenerate overlapping case (and returning false in that case)
 // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> bool {
+pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> Option<Contact> {
     let rs = r.perp_dot(s);
     if rs == 0.0 {
-        return false;
+        return None;
     }
-    let t = (q - p).perp_dot(s);
-    let u = (q - p).perp_dot(r);
+    // let t = (q - p).perp_dot(s);
+    // let u = (q - p).perp_dot(r);
 
-    if rs > 0.0 {
-        t > 0.0 && u > 0.0 && t < rs && u < rs
+    // if rs > 0.0 {
+    //     t > 0.0 && u > 0.0 && t < rs && u < rs
+    // } else {
+    //     t < 0.0 && u < 0.0 && t > rs && u > rs
+    // }
+    let t = (q - p).perp_dot(s) / rs;
+    let u = (q - p).perp_dot(r) / rs;
+
+    if t > 0.0 && u > 0.0 && t < 1.0 && u < 1.0 {
+        let c = p + t * r;
+        let [cp, cpr, cq, cqs] = [
+            (p - c).length(),
+            (p + r - c).length(),
+            (q - c).length(),
+            (q + s - c).length(),
+        ];
+
+        if cp.min(cpr) < cq.min(cqs) {
+            let h = if cp < cpr { p + r } else { p };
+            let qh = h - q;
+            if s.perp_dot(qh) > 0.0 {
+                Some(Contact {
+                    point: c,
+                    normal: s.perp().normalize(),
+                })
+            } else {
+                Some(Contact {
+                    point: c,
+                    normal: Vec2::NEG_Y.rotate(s).normalize(),
+                })
+            }
+        } else {
+            let h = if cq < cqs { q + s } else { q };
+            let ph = h - p;
+            if r.perp_dot(ph) > 0.0 {
+                Some(Contact {
+                    point: c,
+                    normal: r.perp().normalize(),
+                })
+            } else {
+                Some(Contact {
+                    point: c,
+                    normal: Vec2::NEG_Y.rotate(r).normalize(),
+                })
+            }
+        }
     } else {
-        t < 0.0 && u < 0.0 && t > rs && u > rs
+        None
     }
 }
 
@@ -188,10 +259,10 @@ fn point_in_transformed_triangles(
     point: Transform,
     triangles_transform: Transform,
     vertices: &[[f32; 3]],
-) -> bool {
+) -> Option<Contact> {
     let mut iter = vertices.chunks_exact(3);
     while let Some(&[a, b, c]) = iter.next() {
-        if point_in_triangle(
+        if let Some(contact) = point_in_triangle(
             triangles_transform
                 .rotation
                 .inverse()
@@ -199,11 +270,11 @@ fn point_in_transformed_triangles(
                 .truncate(),
             [a, b, c],
         ) {
-            return true;
+            return Some(contact);
         }
     }
 
-    false
+    None
 }
 
 fn transformed_triangles_intersect(
@@ -211,7 +282,7 @@ fn transformed_triangles_intersect(
     t2: Transform,
     vertices1: &[[f32; 3]],
     vertices2: &[[f32; 3]],
-) -> bool {
+) -> Option<Contact> {
     let mut iter1 = vertices1.chunks_exact(3);
     while let Some(&[a1, b1, c1]) = iter1.next() {
         // Apply t1 to triangle1
@@ -233,13 +304,13 @@ fn transformed_triangles_intersect(
 
         let mut iter2 = vertices2.chunks_exact(3);
         while let Some(&[a2, b2, c2]) = iter2.next() {
-            if triangles_intersect([a1, b1, c1], [a2, b2, c2]) {
-                return true;
+            if let Some(contact) = triangles_intersect([a1, b1, c1], [a2, b2, c2]) {
+                return Some(contact);
             }
         }
     }
 
-    false
+    None
 }
 
 fn disk_intersects_transformed_triangles(
@@ -247,10 +318,10 @@ fn disk_intersects_transformed_triangles(
     radius: f32,
     triangles_transform: Transform,
     vertices: &[[f32; 3]],
-) -> bool {
+) -> Option<Contact> {
     let mut iter = vertices.chunks_exact(3);
     while let Some(&[a, b, c]) = iter.next() {
-        if disk_intersects_triangle(
+        if let Some(contact) = disk_intersects_triangle(
             triangles_transform
                 .rotation
                 .inverse()
@@ -259,11 +330,23 @@ fn disk_intersects_transformed_triangles(
             radius,
             [a, b, c],
         ) {
-            return true;
+            return Some(contact);
         }
     }
 
-    false
+    None
+}
+
+fn disks_intersect(c1: Vec2, r1: f32, c2: Vec2, r2: f32) -> Option<Contact> {
+    if c1.distance(c2) < r1 + r2 {
+        let normal = (c2 - c1).normalize();
+        Some(Contact {
+            point: c1 + r1 * normal,
+            normal,
+        })
+    } else {
+        None
+    }
 }
 
 pub fn collision(
@@ -272,21 +355,33 @@ pub fn collision(
     c1: &Collider,
     c2: &Collider,
     meshes: Option<&Assets<Mesh>>,
-) -> bool {
+) -> Option<Contact> {
     if !rectangles_intersect(
         t1.translation.truncate(),
         c1.aabb,
         t2.translation.truncate(),
         c2.aabb,
     ) {
-        return false;
+        return None;
     }
 
     match (t1, t2, &c1.topology, &c2.topology) {
-        (_, _, Topology::Point, Topology::Point) => true,
-        (_, _, Topology::Point, Topology::Disk { radius })
-        | (_, _, Topology::Disk { radius }, Topology::Point) => {
-            t1.translation.distance(t2.translation) < *radius
+        (_, _, Topology::Point, Topology::Point) => Some(Contact {
+            point: t1.translation.truncate(),
+            normal: Vec2::ZERO,
+        }),
+        (point, disk, Topology::Point, Topology::Disk { radius })
+        | (disk, point, Topology::Disk { radius }, Topology::Point) => {
+            if t1.translation.distance(t2.translation) < *radius {
+                let point = point.translation.truncate();
+                let center = disk.translation.truncate();
+                Some(Contact {
+                    point,
+                    normal: (point - center).normalize(),
+                })
+            } else {
+                None
+            }
         }
         (point, triangles, Topology::Point, Topology::Triangles { mesh_handle })
         | (triangles, point, Topology::Triangles { mesh_handle }, Topology::Point) => {
@@ -302,7 +397,12 @@ pub fn collision(
             }
         }
         (_, _, Topology::Disk { radius: radius1 }, Topology::Disk { radius: radius2 }) => {
-            t1.translation.distance(t2.translation) < radius1 + radius2
+            disks_intersect(
+                t1.translation.truncate(),
+                *radius1,
+                t2.translation.truncate(),
+                *radius2,
+            )
         }
         (disk, triangles, Topology::Disk { radius }, Topology::Triangles { mesh_handle })
         | (triangles, disk, Topology::Triangles { mesh_handle }, Topology::Disk { radius }) => {
