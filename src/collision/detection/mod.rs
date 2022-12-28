@@ -23,8 +23,8 @@ pub enum Topology {
 }
 
 pub struct Contact {
-    point: Vec2,
-    normal: Vec2,
+    pub point: Vec2,
+    pub normal: Vec2,
 }
 
 // Determines if point p is in the rectangle of center c, half width hw and half height hh
@@ -107,6 +107,7 @@ pub fn disk_intersects_line_segment(c: Vec2, r: f32, a: Vec2, b: Vec2) -> Option
     let m = point_of_line_segment_closest_to_point(c, a, b);
     let cm = m - c;
     if cm.length() < r {
+        // println!("b");
         Some(Contact {
             point: m,
             normal: cm.normalize(),
@@ -170,8 +171,8 @@ pub fn disk_intersects_triangle(o: Vec2, r: f32, t: impl Into<TriangleXY>) -> Op
     let [a, b, c] = t.into().to_array();
     // a.distance(o) < r
     disk_intersects_line_segment(o, r, a, b)
-        .or(disk_intersects_line_segment(o, r, b, c))
-        .or(disk_intersects_line_segment(o, r, c, a))
+        .or_else(|| disk_intersects_line_segment(o, r, b, c))
+        .or_else(|| disk_intersects_line_segment(o, r, c, a))
     // || point_in_triangle(o, [a, b, c])
 }
 
@@ -184,13 +185,13 @@ pub fn triangles_intersect(
 
     // We only need to test 8 line segments intersections.
     line_segments_intersect(a1, b1 - a1, a2, b2 - a2)
-        .or(line_segments_intersect(a1, b1 - a1, b2, c2 - b2))
-        .or(line_segments_intersect(a1, b1 - a1, c2, a2 - c2))
-        .or(line_segments_intersect(b1, c1 - b1, a2, b2 - a2))
-        .or(line_segments_intersect(b1, c1 - b1, b2, c2 - b2))
-        .or(line_segments_intersect(b1, c1 - b1, c2, a2 - c2))
-        .or(line_segments_intersect(c1, a1 - c1, a2, b2 - a2))
-        .or(line_segments_intersect(c1, a1 - c1, b2, c2 - b2))
+        .or_else(|| line_segments_intersect(a1, b1 - a1, b2, c2 - b2))
+        .or_else(|| line_segments_intersect(a1, b1 - a1, c2, a2 - c2))
+        .or_else(|| line_segments_intersect(b1, c1 - b1, a2, b2 - a2))
+        .or_else(|| line_segments_intersect(b1, c1 - b1, b2, c2 - b2))
+        .or_else(|| line_segments_intersect(b1, c1 - b1, c2, a2 - c2))
+        .or_else(|| line_segments_intersect(c1, a1 - c1, a2, b2 - a2))
+        .or_else(|| line_segments_intersect(c1, a1 - c1, b2, c2 - b2))
 }
 
 // Determines if line segments [p, p+r] and [q, q+s] intersect
@@ -270,7 +271,15 @@ fn point_in_transformed_triangles(
                 .truncate(),
             [a, b, c],
         ) {
-            return Some(contact);
+            return Some(Contact {
+                point: triangles_transform
+                    .transform_point(contact.point.extend(0.0))
+                    .truncate(),
+                normal: triangles_transform
+                    .rotation
+                    .mul_vec3(contact.normal.extend(0.0))
+                    .truncate(),
+            });
         }
     }
 
@@ -305,7 +314,10 @@ fn transformed_triangles_intersect(
         let mut iter2 = vertices2.chunks_exact(3);
         while let Some(&[a2, b2, c2]) = iter2.next() {
             if let Some(contact) = triangles_intersect([a1, b1, c1], [a2, b2, c2]) {
-                return Some(contact);
+                return Some(Contact {
+                    point: t2.transform_point(contact.point.extend(0.0)).truncate(),
+                    normal: t2.rotation.mul_vec3(contact.normal.extend(0.0)).truncate(),
+                });
             }
         }
     }
@@ -330,7 +342,15 @@ fn disk_intersects_transformed_triangles(
             radius,
             [a, b, c],
         ) {
-            return Some(contact);
+            return Some(Contact {
+                point: triangles_transform
+                    .transform_point(contact.point.extend(0.0))
+                    .truncate(),
+                normal: triangles_transform
+                    .rotation
+                    .mul_vec3(contact.normal.extend(0.0))
+                    .truncate(),
+            });
         }
     }
 

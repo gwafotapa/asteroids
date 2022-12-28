@@ -67,15 +67,13 @@ pub fn spaceship_and_asteroid(
             mut a_velocity,
         ) in query_asteroid.iter_mut()
         {
-            if detection::collision(
+            if let Some(contact) = detection::collision(
                 *a_transform,
                 *s_transform,
                 &a_collider,
                 &s_collider,
                 Some(&meshes),
-            )
-            .is_some()
-            {
+            ) {
                 // println!(
                 //     "{}",
                 //     s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
@@ -84,7 +82,6 @@ pub fn spaceship_and_asteroid(
                 // let tmp_s_velocity = *s_velocity;
                 // a_collider.now = true;
                 // s_collider.now = true;
-                // println!("Collision");
                 if !cache.contains(Collision(a_entity, s_entity)) {
                     response::compute(
                         a_transform,
@@ -97,6 +94,7 @@ pub fn spaceship_and_asteroid(
                         &mut s_velocity,
                         &mut a_angular_velocity,
                         &mut s_angular_velocity,
+                        contact,
                     );
                 }
                 cache.add(Collision(a_entity, s_entity));
@@ -422,15 +420,13 @@ pub fn spaceship_and_boss(
             mut bc_velocity,
         )) = query_boss_core.get_single_mut()
         {
-            if detection::collision(
+            if let Some(contact) = detection::collision(
                 *s_transform,
                 *bc_transform,
                 &s_collider,
                 &bc_collider,
                 Some(&meshes),
-            )
-            .is_some()
-            {
+            ) {
                 if !cache.contains(Collision(spaceship, boss_core)) {
                     response::compute(
                         s_transform,
@@ -443,6 +439,7 @@ pub fn spaceship_and_boss(
                         &mut bc_velocity,
                         &mut s_angular_velocity,
                         &mut bc_angular_velocity,
+                        contact,
                     );
                 }
                 cache.add(Collision(spaceship, boss_core));
@@ -453,15 +450,13 @@ pub fn spaceship_and_boss(
                 let be_global_transform = Transform::from_translation(
                     bc_transform.transform_point(be_transform.translation),
                 );
-                if detection::collision(
+                if let Some(contact) = detection::collision(
                     *s_transform,
                     be_global_transform,
                     &s_collider,
                     &be_collider,
                     Some(&meshes),
-                )
-                .is_some()
-                {
+                ) {
                     if !cache.contains(Collision(spaceship, boss_edge)) {
                         println!("spaceship -- w1: {}", s_angular_velocity.0);
                         println!("boss      -- w2: {}", bc_angular_velocity.0);
@@ -476,6 +471,7 @@ pub fn spaceship_and_boss(
                             &mut bc_velocity,
                             &mut s_angular_velocity,
                             &mut bc_angular_velocity,
+                            contact,
                         );
                         println!("spaceship -- w'1: {}", s_angular_velocity.0);
                         println!("boss      -- w'2: {}", bc_angular_velocity.0);
@@ -545,15 +541,13 @@ pub fn boss_and_asteroid(
         ) in query_asteroid.iter_mut()
         {
             for (be_collider, boss_edge, be_transform) in query_boss_edge.iter_mut() {
-                if detection::collision(
+                if let Some(contact) = detection::collision(
                     *a_transform,
                     be_transform.compute_transform(),
                     &a_collider,
                     &be_collider,
                     Some(&meshes),
-                )
-                .is_some()
-                {
+                ) {
                     // println!("Collision boss / asteroid");
                     if !cache.contains(Collision(asteroid, boss_edge)) {
                         response::compute(
@@ -567,6 +561,7 @@ pub fn boss_and_asteroid(
                             &mut bc_velocity,
                             &mut a_angular_velocity,
                             &mut bc_angular_velocity,
+                            contact,
                         );
                     }
                     cache.add(Collision(asteroid, boss_edge));
@@ -574,15 +569,13 @@ pub fn boss_and_asteroid(
                     return;
                 }
             }
-            if detection::collision(
+            if let Some(contact) = detection::collision(
                 *a_transform,
                 *bc_transform,
                 &a_collider,
                 &bc_collider,
                 Some(&meshes),
-            )
-            .is_some()
-            {
+            ) {
                 if !cache.contains(Collision(asteroid, boss_core)) {
                     response::compute(
                         a_transform,
@@ -595,6 +588,7 @@ pub fn boss_and_asteroid(
                         &mut bc_velocity,
                         &mut a_angular_velocity,
                         &mut bc_angular_velocity,
+                        contact,
                     );
                 }
                 cache.add(Collision(asteroid, boss_core));
@@ -646,8 +640,8 @@ pub fn asteroid_and_asteroid(
                 mut velocity2,
             ) in iter
             {
-                if detection::collision(*transform1, *transform2, &collider1, &collider2, None)
-                    .is_some()
+                if let Some(contact) =
+                    detection::collision(*transform1, *transform2, &collider1, &collider2, None)
                 {
                     if !cache.contains(Collision(asteroid1, asteroid2)) {
                         response::compute(
@@ -661,6 +655,7 @@ pub fn asteroid_and_asteroid(
                             &mut velocity2,
                             &mut angular_velocity1,
                             &mut angular_velocity2,
+                            contact,
                         );
                     }
                     cache.add(Collision(asteroid1, asteroid2));
@@ -716,15 +711,13 @@ pub fn asteroids_and_spaceship(
                 mut velocity2,
             ) in iter
             {
-                if detection::collision(
+                if let Some(contact) = detection::collision(
                     *transform1,
                     *transform2,
                     &collider1,
                     &collider2,
                     Some(&meshes),
-                )
-                .is_some()
-                {
+                ) {
                     // println!(
                     //     "{}",
                     //     mass1.0 * velocity1.0.length() + mass2.0 * velocity2.0.length()
@@ -741,6 +734,7 @@ pub fn asteroids_and_spaceship(
                             &mut velocity2,
                             &mut angular_velocity1,
                             &mut angular_velocity2,
+                            contact,
                         );
                     }
                     cache.add(Collision(entity1, entity2));

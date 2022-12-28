@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{AngularVelocity, Mass, MomentOfInertia, Velocity};
+use crate::{collision::detection::Contact, AngularVelocity, Mass, MomentOfInertia, Velocity};
 
 // https://en.wikipedia.org/wiki/Elastic_collision
+// https://fotino.me/2d-rigid-body-collision-response/
 pub fn compute(
     transform1: &Transform,
     transform2: &Transform,
@@ -14,22 +15,39 @@ pub fn compute(
     mut velocity2: &mut Velocity,
     angular_velocity1: &mut AngularVelocity,
     angular_velocity2: &mut AngularVelocity,
+    contact: Contact,
 ) {
-    let [x1, x2] = [
-        transform1.translation.truncate(),
-        transform2.translation.truncate(),
-    ];
+    // let [x1, x2] = [
+    //     transform1.translation.truncate(),
+    //     transform2.translation.truncate(),
+    // ];
+    println!(
+        "t1: {}\nt2: {}\ncontact: {}\nnormal: {}",
+        transform1.translation, transform2.translation, contact.point, contact.normal
+    );
     let [m1, m2] = [mass1.0, mass2.0];
     let [i1, i2] = [moment_of_inertia1.0, moment_of_inertia2.0];
-    let [u1, u2] = [velocity1.0.truncate(), velocity2.0.truncate()];
+    let [v1, v2] = [velocity1.0, velocity2.0];
     let [w1, w2] = [angular_velocity1.0, angular_velocity2.0];
 
-    let tmp = 2.0 * (u1 - u2).dot(x1 - x2) / ((m1 + m2) * (x1 - x2).dot(x1 - x2)) * (x1 - x2);
-    let [v1, v2] = [u1 - m2 * tmp, u2 + m1 * tmp];
-    // println!("u1: {}\nv1: {}\nu2: {}\nv2: {}\n", u1, w1, u2, v2);
-    velocity1.0 = v1.extend(velocity1.0.z);
-    velocity2.0 = v2.extend(velocity2.0.z);
+    let r1 = (contact.point - transform1.translation.truncate()).extend(0.0);
+    let r2 = (contact.point - transform2.translation.truncate()).extend(0.0);
+    let n = contact.normal.extend(0.0);
+    let j = -2.0 * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
+        / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
 
-    angular_velocity1.0 = ((i1 - i2) * w1 + 2.0 * i2 * w2) / (i1 + i2);
-    angular_velocity2.0 = ((i2 - i1) * w2 + 2.0 * i1 * w1) / (i1 + i2);
+    velocity1.0 = v1 + j / m1 * n;
+    velocity2.0 = v2 - j / m2 * n;
+
+    angular_velocity1.0 = w1 + j / i1 * r1.cross(n).z;
+    angular_velocity2.0 = w2 - j / i2 * r2.cross(n).z;
+
+    // let tmp = 2.0 * (u1 - u2).dot(x1 - x2) / ((m1 + m2) * (x1 - x2).dot(x1 - x2)) * (x1 - x2);
+    // let [v1, v2] = [u1 - m2 * tmp, u2 + m1 * tmp];
+    // println!("u1: {}\nv1: {}\nu2: {}\nv2: {}\n", u1, w1, u2, v2);
+    // velocity1.0 = v1.extend(velocity1.0.z);
+    // velocity2.0 = v2.extend(velocity2.0.z);
+
+    // angular_velocity1.0 = ((i1 - i2) * w1 + 2.0 * i2 * w2) / (i1 + i2);
+    // angular_velocity2.0 = ((i2 - i1) * w2 + 2.0 * i1 * w1) / (i1 + i2);
 }
