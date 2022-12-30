@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{collision::detection::Contact, AngularVelocity, Mass, MomentOfInertia, Velocity};
 
+const RESTITUTION: f32 = 1.0;
 // https://en.wikipedia.org/wiki/Elastic_collision
 // https://fotino.me/2d-rigid-body-collision-response/
 pub fn compute(
@@ -35,6 +36,16 @@ pub fn compute(
     let n = contact.normal.extend(0.0);
     let j = -2.0 * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
         / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
+
+    let r1n = (contact.point - transform1.translation.truncate())
+        .perp()
+        .extend(0.0);
+    let r2n = (contact.point - transform2.translation.truncate())
+        .perp()
+        .extend(0.0);
+    let j2 = -(1.0 + RESTITUTION) * (v1 + w1 * r1n - v2 - w2 * r2n).dot(n)
+        / (1.0 / m1 + 1.0 / m2 + (r1n.dot(n)).powi(2) / i1 + (r2n.dot(n)).powi(2) / i2);
+    println!("j: {}\nj2: {}\n", j, j2);
 
     velocity1.0 = v1 + j / m1 * n;
     velocity2.0 = v2 - j / m2 * n;
