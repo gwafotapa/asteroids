@@ -4,7 +4,7 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     blast::Blast,
-    collision::{detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Enemy, Fire},
     spaceship::{self, Spaceship},
     AngularVelocity, Health, Mass, MomentOfInertia, Velocity, PLANE_Z,
@@ -138,7 +138,7 @@ const FIRE_IMPACT_VERTICES: usize = 32;
 //     y: 0.0,
 //     z: BOSS_Z,
 // };
-// const ROTATION_SPEED: f32 = 0.05;
+// const ROTATION_SPEED: f32 = 0.0;
 const ROTATION_SPEED: f32 = 0.01;
 
 #[derive(Component)]
@@ -302,37 +302,48 @@ pub fn spawn(
 }
 
 pub fn movement(
-    mut query_boss: Query<(
+    mut query_boss_core: Query<(
         &mut AngularVelocity,
         &BossCore,
         &mut Transform,
         &mut Velocity,
     )>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<BossCore>)>,
+    cache: Res<Cache>,
+    query_boss_entity: Query<Entity, Or<(With<BossCore>, With<BossEdge>)>>,
 ) {
     if let Ok((mut angular_velocity, boss, mut b_transform, mut velocity)) =
-        query_boss.get_single_mut()
+        query_boss_core.get_single_mut()
     {
-        if let Ok(s_transform) = query_spaceship.get_single() {
-            if boss.edges > 0 {
-                let mut direction = (s_transform.translation - b_transform.translation).normalize();
-                let mut rng = rand::thread_rng();
-                let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
-                direction = Quat::from_axis_angle(Vec3::Z, angle) * direction;
-                velocity.0 += ACCELERATION * direction;
-                angular_velocity.0 += ROTATION_SPEED;
-            } else {
-                let direction = (s_transform.translation - b_transform.translation).normalize();
-                velocity.0 += 2.0 * ACCELERATION * direction;
-                angular_velocity.0 += 2.0 * ROTATION_SPEED;
+        'no_collision: {
+            for id in &query_boss_entity {
+                if cache.contains_entity(id) {
+                    break 'no_collision;
+                }
             }
-        } else {
-            // velocity.0 += Vec3::ZERO;
-            angular_velocity.0 -= ROTATION_SPEED;
-        }
 
-        velocity.0 *= 1.0 - DRAG;
-        angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
+            if let Ok(s_transform) = query_spaceship.get_single() {
+                if boss.edges > 0 {
+                    let mut direction =
+                        (s_transform.translation - b_transform.translation).normalize();
+                    let mut rng = rand::thread_rng();
+                    let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
+                    direction = Quat::from_axis_angle(Vec3::Z, angle) * direction;
+                    velocity.0 += ACCELERATION * direction;
+                    angular_velocity.0 += ROTATION_SPEED;
+                } else {
+                    let direction = (s_transform.translation - b_transform.translation).normalize();
+                    velocity.0 += 2.0 * ACCELERATION * direction;
+                    angular_velocity.0 += 2.0 * ROTATION_SPEED;
+                }
+            } else {
+                // velocity.0 += Vec3::ZERO;
+                angular_velocity.0 -= ROTATION_SPEED;
+            }
+
+            velocity.0 *= 1.0 - DRAG;
+            angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
+        }
 
         b_transform.translation += velocity.0;
         b_transform.rotation *= Quat::from_axis_angle(Vec3::Z, angular_velocity.0);
