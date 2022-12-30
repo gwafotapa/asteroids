@@ -26,7 +26,6 @@ pub const Z: f32 = 500.0;
 
 const ACCELERATION: f32 = 0.1;
 const ANGULAR_DRAG: f32 = 0.5;
-const ANGULAR_VELOCITY: f32 = 0.0;
 const ATTACK_COLOR: Color = Color::YELLOW;
 const ATTACK_SOURCE: Vec3 = S2;
 const BLAST_RADIUS: f32 = 8.0;
@@ -47,7 +46,7 @@ const ROTATION_SPEED: f32 = 0.03;
 
 // Center of gravity of the spaceship
 const SG: Vec3 = Vec3 {
-    x: -11.0,
+    x: -11.0 + 4.0,
     y: 0.0,
     z: 0.0,
 };
@@ -92,33 +91,33 @@ const S8: Vec3 = Vec3 {
     z: 0.0 - SG.z,
 };
 const S9: Vec3 = Vec3 {
-    x: 8.0,
-    y: 16.0,
+    x: -3.0 - SG.x,
+    y: 16.0 - SG.y,
     z: 0.0 - SG.z,
 };
 const S10: Vec3 = Vec3 {
-    x: 8.0,
-    y: 22.0,
+    x: -3.0 - SG.x,
+    y: 22.0 - SG.y,
     z: 0.0 - SG.z,
 };
 const S11: Vec3 = Vec3 {
-    x: -4.0,
-    y: 22.0,
+    x: -15.0 - SG.x,
+    y: 22.0 - SG.y,
     z: 0.0 - SG.z,
 };
 const S12: Vec3 = Vec3 {
-    x: -4.0,
-    y: -22.0,
+    x: -15.0 - SG.x,
+    y: -22.0 - SG.y,
     z: 0.0 - SG.z,
 };
 const S13: Vec3 = Vec3 {
-    x: 8.0,
-    y: -22.0,
+    x: -3.0 - SG.x,
+    y: -22.0 - SG.y,
     z: 0.0 - SG.z,
 };
 const S14: Vec3 = Vec3 {
-    x: 8.0,
-    y: -16.0,
+    x: -3.0 - SG.x,
+    y: -16.0 - SG.y,
     z: 0.0 - SG.z,
 };
 pub const TRIANGLES: [Triangle; 6] = [
@@ -228,7 +227,7 @@ pub fn spawn(
             z: 0.0,
         }))
         .insert(MomentOfInertia(MOMENT_OF_INERTIA))
-        .insert(AngularVelocity(ANGULAR_VELOCITY))
+        .insert(AngularVelocity(0.0))
         // .insert(AABB)
         .insert(Collider {
             aabb: AABB,
