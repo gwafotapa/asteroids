@@ -449,7 +449,8 @@ pub fn spaceship_and_boss(
             for (be_collider, boss_edge, be_transform) in query_boss_edge.iter_mut() {
                 let be_global_transform = Transform::from_translation(
                     bc_transform.transform_point(be_transform.translation),
-                );
+                )
+                .with_rotation(be_transform.rotation);
                 if let Some(contact) = detection::collision(
                     *s_transform,
                     be_global_transform,
@@ -462,7 +463,7 @@ pub fn spaceship_and_boss(
                         println!("boss      -- w2: {}", bc_angular_velocity.0);
                         response::compute(
                             s_transform,
-                            &be_global_transform,
+                            bc_transform,
                             *s_mass,
                             *bc_mass,
                             *s_moment_of_inertia,

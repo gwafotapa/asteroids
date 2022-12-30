@@ -34,7 +34,8 @@ pub fn compute(
     let r1 = (contact.point - transform1.translation.truncate()).extend(0.0);
     let r2 = (contact.point - transform2.translation.truncate()).extend(0.0);
     let n = contact.normal.extend(0.0);
-    let j = -2.0 * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
+    let j = -(1.0 + RESTITUTION)
+        * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
         / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
 
     let r1n = (contact.point - transform1.translation.truncate())
@@ -50,8 +51,11 @@ pub fn compute(
     velocity1.0 = v1 + j / m1 * n;
     velocity2.0 = v2 - j / m2 * n;
 
-    angular_velocity1.0 = w1 + j / i1 * r1.cross(n).z;
-    angular_velocity2.0 = w2 - j / i2 * r2.cross(n).z;
+    // angular_velocity1.0 = w1 + j / i1 * r1.cross(n).z;
+    // angular_velocity2.0 = w2 - j / i2 * r2.cross(n).z;
+
+    angular_velocity1.0 = w1 + j / i1 * r1n.dot(n);
+    angular_velocity2.0 = w2 - j / i2 * r2n.dot(n);
 
     // let tmp = 2.0 * (u1 - u2).dot(x1 - x2) / ((m1 + m2) * (x1 - x2).dot(x1 - x2)) * (x1 - x2);
     // let [v1, v2] = [u1 - m2 * tmp, u2 + m1 * tmp];
