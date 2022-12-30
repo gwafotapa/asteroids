@@ -105,12 +105,12 @@ pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aa
 // https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
 pub fn disk_intersects_line_segment(c: Vec2, r: f32, a: Vec2, b: Vec2) -> Option<Contact> {
     let m = point_of_line_segment_closest_to_point(c, a, b);
-    let cm = m - c;
-    if cm.length() < r {
+    let mc = c - m;
+    if mc.length() < r {
         // println!("b");
         Some(Contact {
             point: m,
-            normal: cm.normalize(),
+            normal: mc.normalize(),
         })
     } else {
         None
@@ -222,35 +222,14 @@ pub fn line_segments_intersect(p: Vec2, r: Vec2, q: Vec2, s: Vec2) -> Option<Con
             (q + s - c).length(),
         ];
 
-        if cp.min(cpr) < cq.min(cqs) {
-            let h = if cp < cpr { p + r } else { p };
-            let qh = h - q;
-            if s.perp_dot(qh) > 0.0 {
-                Some(Contact {
-                    point: c,
-                    normal: s.perp().normalize(),
-                })
-            } else {
-                Some(Contact {
-                    point: c,
-                    normal: Vec2::NEG_Y.rotate(s).normalize(),
-                })
-            }
+        let normal = if cp.min(cpr) < cq.min(cqs) {
+            (s.perp_dot(if cp < cpr { p } else { p + r } - q).signum() * Vec2::NEG_Y).rotate(s)
         } else {
-            let h = if cq < cqs { q + s } else { q };
-            let ph = h - p;
-            if r.perp_dot(ph) > 0.0 {
-                Some(Contact {
-                    point: c,
-                    normal: r.perp().normalize(),
-                })
-            } else {
-                Some(Contact {
-                    point: c,
-                    normal: Vec2::NEG_Y.rotate(r).normalize(),
-                })
-            }
+            (r.perp_dot(if cq < cqs { q } else { q + s } - p).signum() * Vec2::Y).rotate(r)
         }
+        .normalize();
+
+        Some(Contact { point: c, normal })
     } else {
         None
     }
@@ -359,9 +338,9 @@ fn disk_intersects_transformed_triangles(
 
 fn disks_intersect(c1: Vec2, r1: f32, c2: Vec2, r2: f32) -> Option<Contact> {
     if c1.distance(c2) < r1 + r2 {
-        let normal = (c2 - c1).normalize();
+        let normal = (c1 - c2).normalize();
         Some(Contact {
-            point: c1 + r1 * normal,
+            point: c2 + r2 * normal,
             normal,
         })
     } else {
@@ -390,14 +369,12 @@ pub fn collision(
             point: t1.translation.truncate(),
             normal: Vec2::ZERO,
         }),
-        (point, disk, Topology::Point, Topology::Disk { radius })
-        | (disk, point, Topology::Disk { radius }, Topology::Point) => {
+        (point, _, Topology::Point, Topology::Disk { radius })
+        | (_, point, Topology::Disk { radius }, Topology::Point) => {
             if t1.translation.distance(t2.translation) < *radius {
-                let point = point.translation.truncate();
-                let center = disk.translation.truncate();
                 Some(Contact {
-                    point,
-                    normal: (point - center).normalize(),
+                    point: point.translation.truncate(),
+                    normal: (t1.translation - t2.translation).truncate().normalize(),
                 })
             } else {
                 None
@@ -432,7 +409,12 @@ pub fn collision(
                 .unwrap()
                 .attribute(Mesh::ATTRIBUTE_POSITION)
             {
-                disk_intersects_transformed_triangles(disk, *radius, triangles, vertices)
+                let mut contact =
+                    disk_intersects_transformed_triangles(disk, *radius, triangles, vertices);
+                if let Topology::Disk { radius: _ } = c2.topology {
+                    contact.as_mut().map(|c| c.normal = -c.normal);
+                }
+                contact
             } else {
                 panic!("Cannot access triangle's mesh");
             }
