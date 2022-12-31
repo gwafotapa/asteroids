@@ -405,12 +405,15 @@ pub fn attack(
                             impact_radius: FIRE_IMPACT_RADIUS,
                             impact_vertices: FIRE_IMPACT_VERTICES,
                         })
-                        .insert(Health(FIRE_HEALTH))
                         .insert(Enemy)
+                        .insert(Health(FIRE_HEALTH))
+                        .insert(Mass(1.0))
+                        .insert(MomentOfInertia(1.0))
                         .insert(Velocity(
                             (s_transform.translation - attack_absolute_translation).normalize()
                                 * FIRE_VELOCITY,
                         ))
+                        .insert(AngularVelocity(1.0))
                         // .insert(Topology::Point)
                         .insert(Collider {
                             aabb: Aabb { hw: 0.0, hh: 0.0 },

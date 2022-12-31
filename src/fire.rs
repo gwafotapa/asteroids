@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{collision::impact::Impact, Health, Velocity};
+use crate::{collision::impact::Impact, AngularVelocity, Health, Velocity};
 
 #[derive(Component)]
 pub struct Fire {
@@ -11,9 +11,10 @@ pub struct Fire {
 #[derive(Component)]
 pub struct Enemy;
 
-pub fn movement(mut query: Query<(&mut Transform, &Velocity), With<Fire>>) {
-    for (mut transform, velocity) in query.iter_mut() {
+pub fn movement(mut query: Query<(&mut Transform, &Velocity, &AngularVelocity), With<Fire>>) {
+    for (mut transform, velocity, angular_velocity) in query.iter_mut() {
         transform.translation += velocity.0;
+        transform.rotation *= Quat::from_axis_angle(Vec3::Z, angular_velocity.0);
         transform.scale -= Vec3::new(1.0, 1.0, 0.0);
     }
 }

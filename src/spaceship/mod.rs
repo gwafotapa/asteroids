@@ -296,7 +296,10 @@ pub fn attack(
                 impact_vertices: FIRE_IMPACT_VERTICES,
             })
             .insert(Health(FIRE_HEALTH))
+            .insert(Mass(1.0))
+            .insert(MomentOfInertia(1.0))
             .insert(Velocity(transform.rotation * FIRE_VELOCITY))
+            .insert(AngularVelocity(0.0))
             .insert(Collider {
                 aabb: Aabb { hw: 0.0, hh: 0.0 },
                 topology: Topology::Point,
