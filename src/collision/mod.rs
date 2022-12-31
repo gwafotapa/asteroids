@@ -11,7 +11,6 @@ use crate::{
 
 use cache::{Cache, Collision};
 pub use detection::{Aabb, Collider, Topology};
-use impact::Impact;
 
 pub mod cache;
 pub mod detection;
@@ -19,20 +18,17 @@ pub mod impact;
 pub mod response;
 
 pub fn boss_and_fire(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
+    meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<
         (
             &Collider,
             &Handle<ColorMaterial>,
-            // Entity,
-            &Fire,
             &Transform,
             &mut Health,
             // &mut Velocity,
         ),
-        Without<Enemy>,
+        (With<Fire>, Without<Enemy>),
     >,
     // mut query_boss_core: Query<
     //     (
@@ -50,28 +46,16 @@ pub fn boss_and_fire(
             Option<&BossCore>,
             &Collider,
             &Handle<ColorMaterial>,
-            Entity,
             &GlobalTransform,
             &mut Health,
         ),
-        (Or<(With<BossEdge>, With<BossCore>)>, Without<Fire>),
+        (Or<(With<BossCore>, With<BossEdge>)>, Without<Fire>),
     >,
 ) {
-    for (bp_core, bp_collider, bp_color, bp_entity, bp_transform, mut bp_health) in
-        query_boss_part.iter_mut()
+    for (bp_core, bp_collider, bp_color, bp_transform, mut bp_health) in query_boss_part.iter_mut()
     {
         let bp_transform = bp_transform.compute_transform();
-        for (f_collider, f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
-            // if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-            //     .get(&bp_mesh.0)
-            //     .unwrap()
-            //     .attribute(Mesh::ATTRIBUTE_POSITION)
-            // {
-            // if detection::collision_point_triangles(
-            //     f_transform,
-            //     &bp_transform,
-            //     vertices,
-            //     bp_collider.aabb,
+        for (f_collider, f_color, f_transform, mut f_health) in query_fire.iter_mut() {
             if detection::collision(
                 *f_transform,
                 bp_transform,
@@ -94,38 +78,7 @@ pub fn boss_and_fire(
                     b += (b2 - b) / (1. + bp_health.0 as f32);
                     bp_color.color = Color::rgb(r, g, b);
                 }
-
-                let impact = commands
-                    .spawn(Impact)
-                    .insert(Health(10))
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: fire.impact_radius,
-                                vertices: fire.impact_vertices,
-                            }))
-                            .into(),
-                        transform: Transform::from_translation(
-                            bp_transform
-                                .rotation
-                                .inverse()
-                                .mul_vec3(f_transform.translation - bp_transform.translation),
-                        ),
-                        // transform: *f_transform,
-                        material: materials.add(f_color.into()),
-                        ..default()
-                    })
-                    .id();
-
-                commands.entity(bp_entity).add_child(impact);
-                // } else {
-                //     f_velocity.0 = -f_velocity.0;
-                //     commands.entity(f_entity).insert(Enemy);
-                // }
             }
-            // } else {
-            //     panic!("Cannot find the boss's mesh to compute collision");
-            // }
         }
     }
 }
