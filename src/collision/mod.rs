@@ -18,137 +18,6 @@ pub mod detection;
 pub mod impact;
 pub mod response;
 
-pub fn spaceship_and_asteroid(
-    // mut commands: Commands,
-    meshes: Res<Assets<Mesh>>,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    mut cache: ResMut<Cache>,
-    mut query_spaceship: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &mut Health,
-            &Mass,
-            &MomentOfInertia,
-            &Transform,
-            // &mut Transform,
-            &mut Velocity,
-        ),
-        With<Spaceship>,
-    >,
-    mut query_asteroid: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &Mass,
-            &MomentOfInertia,
-            &Transform,
-            // &mut Transform,
-            &mut Velocity,
-        ),
-        (With<Asteroid>, Without<Spaceship>),
-    >,
-) {
-    if let Ok((
-        mut s_angular_velocity,
-        s_collider,
-        s_entity,
-        mut _s_health,
-        s_mass,
-        s_moment_of_inertia,
-        mut s_transform,
-        mut s_velocity,
-    )) = query_spaceship.get_single_mut()
-    {
-        for (
-            mut a_angular_velocity,
-            a_collider,
-            a_entity,
-            a_mass,
-            a_moment_of_inertia,
-            mut a_transform,
-            mut a_velocity,
-        ) in query_asteroid.iter_mut()
-        {
-            if let Some(contact) = detection::collision(
-                *a_transform,
-                *s_transform,
-                &a_collider,
-                &s_collider,
-                Some(&meshes),
-            ) {
-                // commands
-                //     .spawn(crate::wreckage::WreckageDebris)
-                //     .insert(ColorMesh2dBundle {
-                //         mesh: meshes
-                //             .add(Mesh::from(shape::Circle {
-                //                 radius: 3.0,
-                //                 vertices: 32,
-                //             }))
-                //             .into(),
-                //         transform: Transform::from_xyz(contact.point.x, contact.point.y, 500.0),
-                //         ..Default::default()
-                //     });
-                // commands.insert_resource(NextState(GameState::Paused));
-                // println!(
-                //     "{}",
-                //     s_mass.0 * s_velocity.0.length() + a_mass.0 * a_velocity.0.length()
-                // );
-                // let tmp_a_velocity = *a_velocity;
-                // let tmp_s_velocity = *s_velocity;
-                // a_collider.now = true;
-                // s_collider.now = true;
-                if !cache.contains(Collision(a_entity, s_entity)) {
-                    println!(
-                        "normal: {}\nw1: {}\nw2: {}",
-                        contact.normal, a_angular_velocity.0, s_angular_velocity.0
-                    );
-                    response::compute(
-                        &mut a_transform,
-                        &mut s_transform,
-                        *a_mass,
-                        *s_mass,
-                        *a_moment_of_inertia,
-                        *s_moment_of_inertia,
-                        &mut a_velocity, // &mut Velocity(Vec3::ZERO),
-                        &mut s_velocity,
-                        &mut a_angular_velocity,
-                        &mut s_angular_velocity,
-                        contact,
-                    );
-                    println!(
-                        "w'1: {}\nw'2: {}\n",
-                        a_angular_velocity.0, s_angular_velocity.0
-                    );
-                }
-                cache.add(Collision(a_entity, s_entity));
-                // println!(
-                //     "{}\nSpaceship [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\nAsteroid [vx: {:.2}, vy: {:.2}] / [vx: {:.2}, vy: {:.2}]\n",
-                //     s_collider.last,
-                //     tmp_s_velocity.0.x,
-                //     tmp_s_velocity.0.y,
-                //     s_velocity.0.x,
-                //     s_velocity.0.y,
-                //     tmp_a_velocity.0.x,
-                //     tmp_a_velocity.0.y,
-                //     a_velocity.0.x,
-                //     a_velocity.0.y
-                // );
-                return;
-            }
-        }
-    }
-}
-
-// pub fn update(mut query: Query<&mut Collider>) {
-//     for mut collider in &mut query {
-//         collider.last = collider.now;
-//         collider.now = false;
-//     }
-// }
-
 pub fn fire_and_asteroid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -649,81 +518,6 @@ pub fn boss_and_asteroid(
     }
 }
 
-pub fn asteroid_and_asteroid(
-    mut cache: ResMut<Cache>,
-    mut query: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &mut Health,
-            &Mass,
-            &MomentOfInertia,
-            &Transform,
-            // &mut Transform,
-            &mut Velocity,
-        ),
-        With<Asteroid>,
-    >,
-) {
-    let mut i = 0;
-    loop {
-        let mut iter = query.iter_mut().skip(i);
-        if let Some((
-            mut angular_velocity1,
-            collider1,
-            asteroid1,
-            mut _health1,
-            mass1,
-            moment_of_inertia1,
-            transform1,
-            // mut transform1,
-            mut velocity1,
-        )) = iter.next()
-        {
-            for (
-                mut angular_velocity2,
-                collider2,
-                asteroid2,
-                mut _health2,
-                mass2,
-                moment_of_inertia2,
-                transform2,
-                // mut transform2,
-                mut velocity2,
-            ) in iter
-            {
-                if let Some(contact) =
-                    detection::collision(*transform1, *transform2, &collider1, &collider2, None)
-                {
-                    if !cache.contains(Collision(asteroid1, asteroid2)) {
-                        response::compute(
-                            &transform1,
-                            &transform2,
-                            // &mut transform1,
-                            // &mut transform2,
-                            *mass1,
-                            *mass2,
-                            *moment_of_inertia1,
-                            *moment_of_inertia2,
-                            &mut velocity1,
-                            &mut velocity2,
-                            &mut angular_velocity1,
-                            &mut angular_velocity2,
-                            contact,
-                        );
-                    }
-                    cache.add(Collision(asteroid1, asteroid2));
-                    break;
-                }
-            }
-            i += 1;
-        } else {
-            break;
-        }
-    }
-}
-
 pub fn asteroids_and_spaceship(
     meshes: Res<Assets<Mesh>>,
     mut cache: ResMut<Cache>,
@@ -735,7 +529,7 @@ pub fn asteroids_and_spaceship(
             &mut Health,
             &Mass,
             &MomentOfInertia,
-            &mut Transform,
+            &Transform,
             &mut Velocity,
         ),
         Or<(With<Asteroid>, With<Spaceship>)>,
@@ -751,7 +545,7 @@ pub fn asteroids_and_spaceship(
             mut _health1,
             mass1,
             moment_of_inertia1,
-            mut transform1,
+            transform1,
             mut velocity1,
         )) = iter.next()
         {
@@ -762,7 +556,7 @@ pub fn asteroids_and_spaceship(
                 mut _health2,
                 mass2,
                 moment_of_inertia2,
-                mut transform2,
+                transform2,
                 mut velocity2,
             ) in iter
             {
@@ -777,10 +571,27 @@ pub fn asteroids_and_spaceship(
                     //     "{}",
                     //     mass1.0 * velocity1.0.length() + mass2.0 * velocity2.0.length()
                     // );
+                    // commands
+                    //     .spawn(crate::wreckage::WreckageDebris)
+                    //     .insert(ColorMesh2dBundle {
+                    //         mesh: meshes
+                    //             .add(Mesh::from(shape::Circle {
+                    //                 radius: 3.0,
+                    //                 vertices: 32,
+                    //             }))
+                    //             .into(),
+                    //         transform: Transform::from_xyz(contact.point.x, contact.point.y, 500.0),
+                    //         ..Default::default()
+                    //     });
+                    // commands.insert_resource(NextState(GameState::Paused));
+                    println!(
+                        "normal: {}\nw1: {}\nw2: {}",
+                        contact.normal, angular_velocity1.0, angular_velocity2.0
+                    );
                     if !cache.contains(Collision(entity1, entity2)) {
                         response::compute(
-                            &mut transform1,
-                            &mut transform2,
+                            transform1,
+                            transform2,
                             *mass1,
                             *mass2,
                             *moment_of_inertia1,
@@ -792,6 +603,10 @@ pub fn asteroids_and_spaceship(
                             contact,
                         );
                     }
+                    println!(
+                        "w'1: {}\nw'2: {}\n",
+                        angular_velocity1.0, angular_velocity2.0
+                    );
                     cache.add(Collision(entity1, entity2));
                     break;
                 }
