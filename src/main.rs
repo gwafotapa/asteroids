@@ -105,10 +105,11 @@ fn main() {
                 .with_system(collision::asteroid_fire_spaceship)
                 // .with_system(collision::fire_and_asteroid)
                 // .with_system(collision::fire_and_spaceship)
-                .with_system(collision::fire_and_boss)
-                .with_system(collision::spaceship_and_boss)
+                .with_system(collision::boss_and_fire)
+                // .with_system(collision::spaceship_and_boss)
                 // .with_system(collision::asteroid_and_asteroid)
-                .with_system(collision::boss_and_asteroid)
+                // .with_system(collision::boss_and_asteroid)
+                .with_system(collision::boss_and_asteroid_or_spaceship)
                 // .with_system(collision::fire_and_fire),
                 .into(),
         )

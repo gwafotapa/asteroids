@@ -18,7 +18,7 @@ pub mod detection;
 pub mod impact;
 pub mod response;
 
-pub fn fire_and_boss(
+pub fn boss_and_fire(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -130,29 +130,11 @@ pub fn fire_and_boss(
     }
 }
 
-pub fn spaceship_and_boss(
+pub fn boss_and_asteroid_or_spaceship(
     // mut commands: Commands,
     meshes: Res<Assets<Mesh>>,
     // mut meshes: ResMut<Assets<Mesh>>,
     mut cache: ResMut<Cache>,
-    mut query_spaceship: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &mut Health,
-            &Mass,
-            &MomentOfInertia,
-            &Transform,
-            // &mut Transform,
-            &mut Velocity,
-        ),
-        With<Spaceship>,
-    >,
-    mut query_boss_edge: Query<
-        (&Collider, Entity, &mut Transform),
-        (With<BossEdge>, Without<Spaceship>),
-    >,
     mut query_boss_core: Query<
         (
             &mut AngularVelocity,
@@ -164,54 +146,69 @@ pub fn spaceship_and_boss(
             // &mut Transform,
             &mut Velocity,
         ),
-        (With<BossCore>, Without<BossEdge>, Without<Spaceship>),
+        With<BossCore>,
+    >,
+    mut query_boss_edge: Query<(&Collider, Entity, &Transform), With<BossEdge>>,
+    mut query_asteroid_spaceship: Query<
+        (
+            &mut AngularVelocity,
+            &Collider,
+            Entity,
+            &mut Health,
+            &Mass,
+            &MomentOfInertia,
+            &Transform,
+            // &mut Transform,
+            &mut Velocity,
+        ),
+        (Without<BossCore>, Or<(With<Asteroid>, With<Spaceship>)>),
     >,
 ) {
     if let Ok((
-        mut s_angular_velocity,
-        s_collider,
-        spaceship,
-        mut _s_health,
-        s_mass,
-        s_moment_of_inertia,
-        mut s_transform,
-        mut s_velocity,
-    )) = query_spaceship.get_single_mut()
+        mut bc_angular_velocity,
+        bc_collider,
+        boss_core,
+        bc_mass,
+        bc_moment_of_inertia,
+        mut bc_transform,
+        mut bc_velocity,
+    )) = query_boss_core.get_single_mut()
     {
-        if let Ok((
-            mut bc_angular_velocity,
-            bc_collider,
-            boss_core,
-            bc_mass,
-            bc_moment_of_inertia,
-            mut bc_transform,
-            mut bc_velocity,
-        )) = query_boss_core.get_single_mut()
+        for (
+            mut as_angular_velocity,
+            as_collider,
+            spaceship,
+            mut _as_health,
+            as_mass,
+            as_moment_of_inertia,
+            mut as_transform,
+            mut as_velocity,
+        ) in query_asteroid_spaceship.iter_mut()
         {
             if let Some(contact) = detection::collision(
-                *s_transform,
+                *as_transform,
                 *bc_transform,
-                &s_collider,
+                &as_collider,
                 &bc_collider,
                 Some(&meshes),
             ) {
                 if !cache.contains(Collision(spaceship, boss_core)) {
                     response::compute(
-                        &mut s_transform,
+                        &mut as_transform,
                         &mut bc_transform,
-                        *s_mass,
+                        *as_mass,
                         *bc_mass,
-                        *s_moment_of_inertia,
+                        *as_moment_of_inertia,
                         *bc_moment_of_inertia,
-                        &mut s_velocity,
+                        &mut as_velocity,
                         &mut bc_velocity,
-                        &mut s_angular_velocity,
+                        &mut as_angular_velocity,
                         &mut bc_angular_velocity,
                         contact,
                     );
                 }
                 cache.add(Collision(spaceship, boss_core));
-                // s_health.0 = 0;
+                // as_health.0 = 0;
                 return;
             }
             for (be_collider, boss_edge, be_transform) in query_boss_edge.iter_mut() {
@@ -220,14 +217,14 @@ pub fn spaceship_and_boss(
                 )
                 .with_rotation(bc_transform.rotation * be_transform.rotation);
                 if let Some(contact) = detection::collision(
-                    *s_transform,
+                    *as_transform,
                     be_global_transform,
-                    &s_collider,
+                    &as_collider,
                     &be_collider,
                     Some(&meshes),
                 ) {
                     // TODO
-                    // contact.normal = (s_transform.translation - bc_transform.translation)
+                    // contact.normal = (as_transform.translation - bc_transform.translation)
                     //     .truncate()
                     //     .normalize();
 
@@ -244,144 +241,29 @@ pub fn spaceship_and_boss(
                     // commands.insert_resource(NextState(GameState::Paused));
 
                     if !cache.contains(Collision(spaceship, boss_edge)) {
-                        println!("spaceship -- w1: {}", s_angular_velocity.0);
-                        println!("boss      -- w2: {}", bc_angular_velocity.0);
+                        // println!("spaceship -- w1: {}", as_angular_velocity.0);
+                        // println!("boss      -- w2: {}", bc_angular_velocity.0);
                         response::compute(
-                            &mut s_transform,
+                            &mut as_transform,
                             &mut bc_transform,
-                            *s_mass,
+                            *as_mass,
                             *bc_mass,
-                            *s_moment_of_inertia,
+                            *as_moment_of_inertia,
                             *bc_moment_of_inertia,
-                            &mut s_velocity,
+                            &mut as_velocity,
                             &mut bc_velocity,
-                            &mut s_angular_velocity,
+                            &mut as_angular_velocity,
                             &mut bc_angular_velocity,
                             contact,
                         );
-                        println!("spaceship -- w'1: {}", s_angular_velocity.0);
-                        println!("boss      -- w'2: {}", bc_angular_velocity.0);
-                        println!("");
+                        // println!("spaceship -- w'1: {}", as_angular_velocity.0);
+                        // println!("boss      -- w'2: {}", bc_angular_velocity.0);
+                        // println!("");
                     }
                     cache.add(Collision(spaceship, boss_edge));
-                    // s_health.0 = 0;
+                    // as_health.0 = 0;
                     return;
                 }
-            }
-        }
-    }
-}
-
-pub fn boss_and_asteroid(
-    meshes: Res<Assets<Mesh>>,
-    mut cache: ResMut<Cache>,
-    mut query_asteroid: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &mut Health,
-            &Mass,
-            &MomentOfInertia,
-            &Transform,
-            // &mut Transform,
-            &mut Velocity,
-        ),
-        With<Asteroid>,
-    >,
-    mut query_boss_edge: Query<
-        (&Collider, Entity, &GlobalTransform),
-        (With<BossEdge>, Without<Asteroid>),
-    >,
-    mut query_boss_core: Query<
-        (
-            &mut AngularVelocity,
-            &Collider,
-            Entity,
-            &Mass,
-            &MomentOfInertia,
-            &Transform,
-            // &mut Transform,
-            &mut Velocity,
-        ),
-        (With<BossCore>, Without<BossEdge>, Without<Asteroid>),
-    >,
-) {
-    if let Ok((
-        mut bc_angular_velocity,
-        bc_collider,
-        boss_core,
-        bc_mass,
-        bc_moment_of_inertia,
-        mut bc_transform,
-        mut bc_velocity,
-    )) = query_boss_core.get_single_mut()
-    {
-        for (
-            mut a_angular_velocity,
-            a_collider,
-            asteroid,
-            mut _a_health,
-            a_mass,
-            a_moment_of_inertia,
-            mut a_transform,
-            mut a_velocity,
-        ) in query_asteroid.iter_mut()
-        {
-            for (be_collider, boss_edge, be_transform) in query_boss_edge.iter_mut() {
-                if let Some(contact) = detection::collision(
-                    *a_transform,
-                    be_transform.compute_transform(),
-                    &a_collider,
-                    &be_collider,
-                    Some(&meshes),
-                ) {
-                    // println!("Collision boss / asteroid");
-                    if !cache.contains(Collision(asteroid, boss_edge)) {
-                        response::compute(
-                            &mut a_transform,
-                            &mut be_transform.compute_transform(),
-                            *a_mass,
-                            *bc_mass,
-                            *a_moment_of_inertia,
-                            *bc_moment_of_inertia,
-                            &mut a_velocity,
-                            &mut bc_velocity,
-                            &mut a_angular_velocity,
-                            &mut bc_angular_velocity,
-                            contact,
-                        );
-                    }
-                    cache.add(Collision(asteroid, boss_edge));
-                    // a_health.0 = 0;
-                    return;
-                }
-            }
-            if let Some(contact) = detection::collision(
-                *a_transform,
-                *bc_transform,
-                &a_collider,
-                &bc_collider,
-                Some(&meshes),
-            ) {
-                if !cache.contains(Collision(asteroid, boss_core)) {
-                    response::compute(
-                        &mut a_transform,
-                        &mut bc_transform,
-                        *a_mass,
-                        *bc_mass,
-                        *a_moment_of_inertia,
-                        *bc_moment_of_inertia,
-                        &mut a_velocity,
-                        &mut bc_velocity,
-                        &mut a_angular_velocity,
-                        &mut bc_angular_velocity,
-                        contact,
-                    );
-                }
-                cache.add(Collision(asteroid, boss_core));
-                // a_health.0 = 0;
-                return;
             }
         }
     }
@@ -499,21 +381,6 @@ pub fn asteroid_fire_spaceship(
             i += 1;
         } else {
             break;
-        }
-    }
-}
-
-#[cfg(fire)]
-pub fn fire_and_fire(
-    mut query_ally: Query<(&mut Health, &Transform), (With<Fire>, Without<Enemy>)>,
-    mut query_enemy: Query<(&mut Health, &Transform), (With<Fire>, With<Enemy>)>,
-) {
-    for (mut a_health, a_transform) in query_ally.iter_mut() {
-        for (mut e_health, e_transform) in query_enemy.iter_mut() {
-            if (a_transform.translation - e_transform.translation).length() < 5.0 {
-                a_health.0 = 0;
-                e_health.0 = 0;
-            }
         }
     }
 }
