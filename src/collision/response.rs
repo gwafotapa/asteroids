@@ -1,13 +1,17 @@
+// https://en.wikipedia.org/wiki/Elastic_collision
+// https://fotino.me/2d-rigid-body-collision-response
+// https://www.chrishecker.com/Rigid_Body_Dynamics
 use bevy::prelude::*;
 
 use crate::{collision::detection::Contact, AngularVelocity, Mass, MomentOfInertia, Velocity};
 
 const RESTITUTION: f32 = 1.0;
-// https://en.wikipedia.org/wiki/Elastic_collision
-// https://fotino.me/2d-rigid-body-collision-response/
+
 pub fn compute(
     transform1: &Transform,
     transform2: &Transform,
+    // transform1: &mut Transform,
+    // transform2: &mut Transform,
     mass1: Mass,
     mass2: Mass,
     moment_of_inertia1: MomentOfInertia,
@@ -18,6 +22,12 @@ pub fn compute(
     angular_velocity2: &mut AngularVelocity,
     contact: Contact,
 ) {
+    // Go back in time to separate colliding bodies
+    // transform1.translation -= velocity1.0;
+    // transform2.translation -= velocity2.0;
+    // transform1.rotation *= Quat::from_axis_angle(Vec3::Z, -angular_velocity1.0);
+    // transform2.rotation *= Quat::from_axis_angle(Vec3::Z, -angular_velocity2.0);
+
     // let [x1, x2] = [
     //     transform1.translation.truncate(),
     //     transform2.translation.truncate(),
@@ -37,7 +47,7 @@ pub fn compute(
     let j = -(1.0 + RESTITUTION)
         * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
         / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
-    println!("j: {}", j);
+    // println!("j: {}", j);
 
     let r1n = (contact.point - transform1.translation.truncate())
         .perp()
@@ -47,6 +57,7 @@ pub fn compute(
         .extend(0.0);
     let j2 = -(1.0 + RESTITUTION) * (v1 + w1 * r1n - v2 - w2 * r2n).dot(n)
         / (1.0 / m1 + 1.0 / m2 + (r1n.dot(n)).powi(2) / i1 + (r2n.dot(n)).powi(2) / i2);
+    assert!((j - j2).abs() < 0.1);
     // println!("j: {}\nj2: {}\n", j, j2);
 
     velocity1.0 = v1 + j / m1 * n;
@@ -54,6 +65,10 @@ pub fn compute(
 
     angular_velocity1.0 = w1 + j / i1 * r1.cross(n).z;
     angular_velocity2.0 = w2 - j / i2 * r2.cross(n).z;
+    // println!(
+    //     "normal: {}\nw1: {}\nw'1: {}\nw2: {}\nw'2: {}\n",
+    //     contact.normal, w1, angular_velocity1.0, w2, angular_velocity2.0
+    // );
 
     // angular_velocity1.0 = w1 + j / i1 * r1n.dot(n);
     // angular_velocity2.0 = w2 - j / i2 * r2n.dot(n);
