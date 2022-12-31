@@ -1,11 +1,12 @@
 use bevy::prelude::*;
+// use iyes_loopless::prelude::*;
 
 use crate::{
     asteroid::Asteroid,
     boss::{BossCore, BossEdge},
     fire::{Enemy, Fire},
     spaceship::Spaceship,
-    AngularVelocity, Health, Mass, MomentOfInertia, Velocity,
+    AngularVelocity, GameState, Health, Mass, MomentOfInertia, Velocity,
 };
 
 use cache::{Cache, Collision};
@@ -367,7 +368,8 @@ pub fn fire_and_spaceship(
 }
 
 pub fn spaceship_and_boss(
-    meshes: Res<Assets<Mesh>>,
+    // mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut cache: ResMut<Cache>,
     mut query_spaceship: Query<
         (
@@ -450,14 +452,31 @@ pub fn spaceship_and_boss(
                 let be_global_transform = Transform::from_translation(
                     bc_transform.transform_point(be_transform.translation),
                 )
-                .with_rotation(be_transform.rotation);
-                if let Some(contact) = detection::collision(
+                .with_rotation(bc_transform.rotation * be_transform.rotation);
+                if let Some(mut contact) = detection::collision(
                     *s_transform,
                     be_global_transform,
                     &s_collider,
                     &be_collider,
                     Some(&meshes),
                 ) {
+                    // TODO
+                    // contact.normal = (s_transform.translation - bc_transform.translation)
+                    //     .truncate()
+                    //     .normalize();
+
+                    // commands.spawn(ColorMesh2dBundle {
+                    //     mesh: meshes
+                    //         .add(Mesh::from(shape::Circle {
+                    //             radius: 3.0,
+                    //             vertices: 32,
+                    //         }))
+                    //         .into(),
+                    //     transform: Transform::from_xyz(contact.point.x, contact.point.y, 500.0),
+                    //     ..Default::default()
+                    // });
+                    // commands.insert_resource(NextState(GameState::Paused));
+
                     if !cache.contains(Collision(spaceship, boss_edge)) {
                         println!("spaceship -- w1: {}", s_angular_velocity.0);
                         println!("boss      -- w2: {}", bc_angular_velocity.0);

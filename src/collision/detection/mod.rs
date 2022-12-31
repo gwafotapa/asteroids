@@ -295,8 +295,8 @@ fn transformed_triangles_intersect(
             if let Some(contact) = triangles_intersect([a1, b1, c1], [a2, b2, c2]) {
                 return Some(Contact {
                     point: t2.transform_point(contact.point.extend(0.0)).truncate(),
-                    // normal: t2.rotation.mul_vec3(contact.normal.extend(0.0)).truncate(),
-                    normal: (t1.translation - t2.translation).truncate().normalize(),
+                    normal: t2.rotation.mul_vec3(contact.normal.extend(0.0)).truncate(),
+                    // normal: (t1.translation - t2.translation).truncate().normalize(),
                 });
             }
         }
