@@ -18,48 +18,27 @@ pub mod detection;
 pub mod impact;
 pub mod response;
 
-pub fn fire_and_asteroid(
+pub fn fire_and_asteroid_or_spaceship(
+    meshes: Res<Assets<Mesh>>,
     mut query_fire: Query<(&Collider, &mut Health, &Transform), With<Fire>>,
-    mut query_asteroid: Query<
+    mut query_asteroid_spaceship: Query<
         (&Collider, &mut Health, &Transform),
-        (With<Asteroid>, Without<Fire>),
+        (Or<(With<Spaceship>, With<Asteroid>)>, Without<Fire>),
     >,
 ) {
     for (f_collider, mut f_health, f_transform) in query_fire.iter_mut() {
-        for (a_collider, mut a_health, a_transform) in query_asteroid.iter_mut() {
-            if detection::collision(*f_transform, *a_transform, f_collider, a_collider, None)
-                .is_some()
-            {
-                a_health.0 -= 1;
-                f_health.0 = 0;
-
-                break;
-            }
-        }
-    }
-}
-
-pub fn fire_and_spaceship(
-    meshes: Res<Assets<Mesh>>,
-    mut query_fire: Query<(&Collider, &mut Health, &Transform), (With<Fire>, With<Enemy>)>,
-    mut query_spaceship: Query<
-        (&Collider, &mut Health, &Transform),
-        (With<Spaceship>, Without<Fire>),
-    >,
-) {
-    if let Ok((s_collider, mut s_health, s_transform)) = query_spaceship.get_single_mut() {
-        for (f_collider, mut f_health, f_transform) in query_fire.iter_mut() {
+        for (collider, mut health, transform) in query_asteroid_spaceship.iter_mut() {
             if detection::collision(
                 *f_transform,
-                *s_transform,
+                *transform,
                 f_collider,
-                s_collider,
+                collider,
                 Some(&meshes),
             )
             .is_some()
             {
                 f_health.0 = 0;
-                s_health.0 -= 1;
+                health.0 -= 1;
             }
         }
     }

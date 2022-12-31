@@ -127,11 +127,18 @@ const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const CORE_HEALTH: i32 = 50;
 const EDGE_HEALTH: i32 = 10;
 const FIRE_VELOCITY: f32 = 8.0;
-const FIRE_RADIUS: f32 = 5.0;
+const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE;
+const FIRE_RANGE: f32 = 100.0;
 const FIRE_VERTICES: usize = 32;
 const FIRE_HEALTH: i32 = 100;
 const FIRE_IMPACT_RADIUS: f32 = 15.0;
 const FIRE_IMPACT_VERTICES: usize = 32;
+const FIRE_INIT_SCALE: Vec3 = Vec3 {
+    x: FIRE_RANGE,
+    y: FIRE_RANGE,
+    z: 0.0,
+};
+
 // const INITIAL_POSITION: Vec3 = Vec3 {
 //     // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
 //     x: WINDOW_WIDTH / 2.0,
@@ -395,7 +402,6 @@ pub fn attack(
 
                     commands
                         .spawn(Fire {
-                            scale_down: 1.0 / FIRE_HEALTH as f32,
                             impact_radius: FIRE_IMPACT_RADIUS,
                             impact_vertices: FIRE_IMPACT_VERTICES,
                         })
@@ -417,7 +423,8 @@ pub fn attack(
                                     vertices: FIRE_VERTICES,
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(attack_absolute_translation),
+                            transform: Transform::from_translation(attack_absolute_translation)
+                                .with_scale(FIRE_INIT_SCALE),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
                         });
