@@ -19,57 +19,47 @@ pub mod impact;
 pub mod response;
 
 pub fn fire_and_asteroid(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_fire: Query<(
-        &Collider,
-        &Handle<ColorMaterial>,
-        &Fire,
-        &Transform,
-        &mut Health,
-    )>,
+    mut query_fire: Query<(&Collider, &mut Health, &Transform), With<Fire>>,
     mut query_asteroid: Query<
-        (&Collider, &GlobalTransform, &mut Health),
+        (&Collider, &mut Health, &Transform),
         (With<Asteroid>, Without<Fire>),
     >,
 ) {
-    for (f_collider, f_color, fire, f_transform, mut f_health) in query_fire.iter_mut() {
-        for (a_collider, a_transform, mut a_health) in query_asteroid.iter_mut() {
-            // if detection::collision_point_circle(
-            //     f_transform,
-            //     &a_transform.compute_transform(),
-            //     asteroid.radius,
-            if detection::collision(
-                *f_transform,
-                a_transform.compute_transform(),
-                f_collider,
-                a_collider,
-                None,
-            )
-            .is_some()
+    for (f_collider, mut f_health, f_transform) in query_fire.iter_mut() {
+        for (a_collider, mut a_health, a_transform) in query_asteroid.iter_mut() {
+            if detection::collision(*f_transform, *a_transform, f_collider, a_collider, None)
+                .is_some()
             {
                 a_health.0 -= 1;
                 f_health.0 = 0;
-                let color = materials.get(f_color).unwrap().color;
-
-                let _impact = commands
-                    .spawn(Impact)
-                    .insert(Health(10))
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: fire.impact_radius,
-                                vertices: fire.impact_vertices,
-                            }))
-                            .into(),
-                        transform: Transform::from_translation(f_transform.translation),
-                        material: materials.add(color.into()),
-                        ..default()
-                    })
-                    .id();
 
                 break;
+            }
+        }
+    }
+}
+
+pub fn fire_and_spaceship(
+    meshes: Res<Assets<Mesh>>,
+    mut query_fire: Query<(&Collider, &mut Health, &Transform), (With<Fire>, With<Enemy>)>,
+    mut query_spaceship: Query<
+        (&Collider, &mut Health, &Transform),
+        (With<Spaceship>, Without<Fire>),
+    >,
+) {
+    if let Ok((s_collider, mut s_health, s_transform)) = query_spaceship.get_single_mut() {
+        for (f_collider, mut f_health, f_transform) in query_fire.iter_mut() {
+            if detection::collision(
+                *f_transform,
+                *s_transform,
+                f_collider,
+                s_collider,
+                Some(&meshes),
+            )
+            .is_some()
+            {
+                f_health.0 = 0;
+                s_health.0 -= 1;
             }
         }
     }
@@ -182,80 +172,6 @@ pub fn fire_and_boss(
             }
             // } else {
             //     panic!("Cannot find the boss's mesh to compute collision");
-            // }
-        }
-    }
-}
-
-pub fn fire_and_spaceship(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query_fire: Query<
-        (
-            &Collider,
-            &Handle<ColorMaterial>,
-            &Fire,
-            &mut Health,
-            &Transform,
-        ),
-        With<Enemy>,
-    >,
-    mut query_spaceship: Query<
-        (&Collider, Entity, &mut Health, &Transform),
-        (With<Spaceship>, Without<Fire>),
-    >,
-) {
-    if let Ok((s_collider, s_entity, mut s_health, s_transform)) = query_spaceship.get_single_mut()
-    {
-        for (f_collider, f_color, fire, mut f_health, f_transform) in query_fire.iter_mut() {
-            // if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
-            //     .get(&s_mesh.0)
-            //     .unwrap()
-            //     .attribute(Mesh::ATTRIBUTE_POSITION)
-            // {
-            // if detection::collision_point_triangles(
-            //     f_transform,
-            //     s_transform,
-            //     vertices,
-            //     s_collider.aabb,
-            if detection::collision(
-                *f_transform,
-                *s_transform,
-                f_collider,
-                s_collider,
-                Some(&meshes),
-            )
-            .is_some()
-            {
-                f_health.0 = 0;
-                s_health.0 -= 1;
-                let f_color = materials.get(f_color).unwrap().color;
-
-                let impact = commands
-                    .spawn(Impact)
-                    .insert(Health(10))
-                    .insert(ColorMesh2dBundle {
-                        mesh: meshes
-                            .add(Mesh::from(shape::Circle {
-                                radius: fire.impact_radius,
-                                vertices: fire.impact_vertices,
-                            }))
-                            .into(),
-                        transform: Transform::from_translation(
-                            s_transform
-                                .rotation
-                                .inverse()
-                                .mul_vec3(f_transform.translation - s_transform.translation),
-                        ),
-                        // transform: Transform::from_translation(f_transform.translation()),
-                        material: materials.add(f_color.into()),
-                        ..default()
-                    })
-                    .id();
-
-                commands.entity(s_entity).add_child(impact);
-            }
             // }
         }
     }

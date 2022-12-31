@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{Health, Velocity};
+use crate::{collision::impact::Impact, Health, Velocity};
 
 #[derive(Component)]
 pub struct Fire {
@@ -12,23 +12,38 @@ pub struct Fire {
 #[derive(Component)]
 pub struct Enemy;
 
-pub fn update(mut query: Query<(&Fire, &mut Health, &mut Transform, &Velocity)>) {
-    for (fire, mut health, mut transform, velocity) in query.iter_mut() {
+pub fn update(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut query: Query<(
+        &Handle<ColorMaterial>,
+        &Fire,
+        &mut Health,
+        &mut Transform,
+        &Velocity,
+    )>,
+) {
+    for (color, fire, mut health, mut transform, velocity) in query.iter_mut() {
         transform.translation += velocity.0;
         health.0 -= 1;
         transform.scale -= fire.scale_down;
-        // transform.scale *= 0.97;
-        // transform.scale.z = 1.0;
-        // if transform.scale.x < 0.1 {
-        //     health.0 = 0;
-        // }
-        // if transform.translation.x > WINDOW_WIDTH / 2.0
-        //     || transform.translation.x < -WINDOW_WIDTH / 2.0
-        //     || transform.translation.y > WINDOW_HEIGHT / 2.0
-        //     || transform.translation.y < -WINDOW_HEIGHT / 2.0
-        // {
-        //     health.0 = 0;
-        // }
+
+        if health.0 <= 0 {
+            commands
+                .spawn(Impact)
+                .insert(Health(10))
+                .insert(ColorMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: fire.impact_radius,
+                            vertices: fire.impact_vertices,
+                        }))
+                        .into(),
+                    transform: Transform::from_translation(transform.translation),
+                    material: color.clone(),
+                    ..default()
+                });
+        }
     }
 }
 
