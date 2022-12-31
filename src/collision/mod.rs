@@ -437,7 +437,7 @@ pub fn asteroids_and_spaceship(
             mut angular_velocity1,
             collider1,
             entity1,
-            mut _health1,
+            mut health1,
             mass1,
             moment_of_inertia1,
             transform1,
@@ -448,7 +448,7 @@ pub fn asteroids_and_spaceship(
                 mut angular_velocity2,
                 collider2,
                 entity2,
-                mut _health2,
+                mut health2,
                 mass2,
                 moment_of_inertia2,
                 transform2,
@@ -462,6 +462,11 @@ pub fn asteroids_and_spaceship(
                     &collider2,
                     Some(&meshes),
                 ) {
+                    // println!(
+                    //     "m1(v1 - v2): {}\n",
+                    //     (mass1.0 * velocity1.0 - mass2.0 * velocity2.0).length()
+                    // );
+
                     // println!(
                     //     "{}",
                     //     mass1.0 * velocity1.0.length() + mass2.0 * velocity2.0.length()
@@ -479,10 +484,10 @@ pub fn asteroids_and_spaceship(
                     //         ..Default::default()
                     //     });
                     // commands.insert_resource(NextState(GameState::Paused));
-                    println!(
-                        "normal: {}\nw1: {}\nw2: {}",
-                        contact.normal, angular_velocity1.0, angular_velocity2.0
-                    );
+                    // println!(
+                    //     "normal: {}\nw1: {}\nw2: {}",
+                    //     contact.normal, angular_velocity1.0, angular_velocity2.0
+                    // );
                     if !cache.contains(Collision(entity1, entity2)) {
                         response::compute(
                             transform1,
@@ -497,11 +502,20 @@ pub fn asteroids_and_spaceship(
                             &mut angular_velocity2,
                             contact,
                         );
+                        let dv = (velocity1.0 - velocity2.0).length();
+                        let h1 = mass2.0 / mass1.0 * dv;
+                        let h2 = mass1.0 / mass2.0 * dv;
+                        health1.0 -= (h1 / 10.0) as i32;
+                        health2.0 -= (h2 / 10.0) as i32;
+                        println!("m1: {}, v1: {}", mass1.0, velocity1.0);
+                        println!("m2: {}, v2: {}", mass2.0, velocity2.0);
+                        println!("dv = v1 - v2: {}", dv);
+                        println!("m2/m1 * dv: {}, m1/m2 * dv: {}", h1, h2);
                     }
-                    println!(
-                        "w'1: {}\nw'2: {}\n",
-                        angular_velocity1.0, angular_velocity2.0
-                    );
+                    // println!(
+                    //     "w'1: {}\nw'2: {}\n",
+                    //     angular_velocity1.0, angular_velocity2.0
+                    // );
                     cache.add(Collision(entity1, entity2));
                     break;
                 }
