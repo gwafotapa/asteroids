@@ -18,32 +18,6 @@ pub mod detection;
 pub mod impact;
 pub mod response;
 
-pub fn fire_and_asteroid_or_spaceship(
-    meshes: Res<Assets<Mesh>>,
-    mut query_fire: Query<(&Collider, &mut Health, &Transform), With<Fire>>,
-    mut query_asteroid_spaceship: Query<
-        (&Collider, &mut Health, &Transform),
-        (Or<(With<Spaceship>, With<Asteroid>)>, Without<Fire>),
-    >,
-) {
-    for (f_collider, mut f_health, f_transform) in query_fire.iter_mut() {
-        for (collider, mut health, transform) in query_asteroid_spaceship.iter_mut() {
-            if detection::collision(
-                *f_transform,
-                *transform,
-                f_collider,
-                collider,
-                Some(&meshes),
-            )
-            .is_some()
-            {
-                f_health.0 = 0;
-                health.0 -= 1;
-            }
-        }
-    }
-}
-
 pub fn fire_and_boss(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -413,7 +387,7 @@ pub fn boss_and_asteroid(
     }
 }
 
-pub fn asteroids_and_spaceship(
+pub fn asteroid_fire_spaceship(
     meshes: Res<Assets<Mesh>>,
     mut cache: ResMut<Cache>,
     mut query: Query<
@@ -427,7 +401,7 @@ pub fn asteroids_and_spaceship(
             &Transform,
             &mut Velocity,
         ),
-        Or<(With<Asteroid>, With<Spaceship>)>,
+        Or<(With<Asteroid>, With<Fire>, With<Spaceship>)>,
     >,
 ) {
     let mut i = 0;
@@ -503,14 +477,16 @@ pub fn asteroids_and_spaceship(
                             contact,
                         );
                         let dv = (velocity1.0 - velocity2.0).length();
-                        let h1 = mass2.0 / mass1.0 * dv;
-                        let h2 = mass1.0 / mass2.0 * dv;
-                        health1.0 -= (h1 / 10.0) as i32;
-                        health2.0 -= (h2 / 10.0) as i32;
-                        println!("m1: {}, v1: {}", mass1.0, velocity1.0);
-                        println!("m2: {}, v2: {}", mass2.0, velocity2.0);
-                        println!("dv = v1 - v2: {}", dv);
-                        println!("m2/m1 * dv: {}, m1/m2 * dv: {}", h1, h2);
+                        let h1 = (mass2.0 / mass1.0 * dv / 10.0) as i32 + 1;
+                        let h2 = (mass1.0 / mass2.0 * dv / 10.0) as i32 + 1;
+                        println!("health1: {}, h1: {}", health1.0, h1);
+                        println!("health2: {}, h2: {}", health2.0, h2);
+                        health1.0 -= h1;
+                        health2.0 -= h2;
+                        // println!("m1: {}, v1: {}", mass1.0, velocity1.0);
+                        // println!("m2: {}, v2: {}", mass2.0, velocity2.0);
+                        // println!("dv = v1 - v2: {}", dv);
+                        // println!("m2/m1 * dv: {}, m1/m2 * dv: {}", h1, h2);
                     }
                     // println!(
                     //     "w'1: {}\nw'2: {}\n",
