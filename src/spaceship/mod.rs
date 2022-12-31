@@ -45,80 +45,80 @@ const FIRE_VERTICES: usize = 4;
 const ROTATION_SPEED: f32 = 0.03;
 
 // Center of gravity of the spaceship
-const SG: Vec3 = Vec3 {
-    x: -11.0 + 4.0,
+// const SG: Vec3 = Vec3 {
+//     x: -11.0 + 4.0,
+//     y: 0.0,
+//     z: 0.0,
+// };
+const S1: Vec3 = Vec3 {
+    x: -26.0,
+    y: -30.0,
+    z: 0.0,
+};
+const S2: Vec3 = Vec3 {
+    x: 34.0,
     y: 0.0,
     z: 0.0,
 };
-const S1: Vec3 = Vec3 {
-    x: -30.0 - SG.x,
-    y: -30.0 - SG.y,
-    z: 0.0 - SG.z,
-};
-const S2: Vec3 = Vec3 {
-    x: 30.0 - SG.x,
-    y: 0.0 - SG.y,
-    z: 0.0 - SG.z,
-};
 const S3: Vec3 = Vec3 {
-    x: -20.0 - SG.x,
-    y: 0.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -16.0,
+    y: 0.0,
+    z: 0.0,
 };
 const S4: Vec3 = Vec3 {
-    x: -30.0 - SG.x,
-    y: 30.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -26.0,
+    y: 30.0,
+    z: 0.0,
 };
 const S5: Vec3 = Vec3 {
-    x: -40.0 - SG.x,
-    y: -20.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -36.0,
+    y: -20.0,
+    z: 0.0,
 };
 const S6: Vec3 = Vec3 {
-    x: -SG.x,
-    y: 0.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: 15.0,
+    y: 0.0,
+    z: 0.0,
 };
 const S7: Vec3 = Vec3 {
-    x: -30.0 - SG.x,
-    y: 0.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -26.0,
+    y: 0.0,
+    z: 0.0,
 };
 const S8: Vec3 = Vec3 {
-    x: -40.0 - SG.x,
-    y: 20.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -36.0,
+    y: 20.0,
+    z: 0.0,
 };
 const S9: Vec3 = Vec3 {
-    x: -3.0 - SG.x,
-    y: 16.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: 1.0,
+    y: 16.0,
+    z: 0.0,
 };
 const S10: Vec3 = Vec3 {
-    x: -3.0 - SG.x,
-    y: 22.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: 1.0,
+    y: 22.0,
+    z: 0.0,
 };
 const S11: Vec3 = Vec3 {
-    x: -15.0 - SG.x,
-    y: 22.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -11.0,
+    y: 22.0,
+    z: 0.0,
 };
 const S12: Vec3 = Vec3 {
-    x: -15.0 - SG.x,
-    y: -22.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: -11.0,
+    y: -22.0,
+    z: 0.0,
 };
 const S13: Vec3 = Vec3 {
-    x: -3.0 - SG.x,
-    y: -22.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: 1.0,
+    y: -22.0,
+    z: 0.0,
 };
 const S14: Vec3 = Vec3 {
-    x: -3.0 - SG.x,
-    y: -16.0 - SG.y,
-    z: 0.0 - SG.z,
+    x: 1.0,
+    y: -16.0,
+    z: 0.0,
 };
 pub const TRIANGLES: [Triangle; 6] = [
     Triangle(S1, S2, S3),
