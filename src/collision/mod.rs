@@ -337,3 +337,169 @@ pub fn asteroid_fire_spaceship(
         }
     }
 }
+
+pub fn with<C: Component>(
+    meshes: Res<Assets<Mesh>>,
+    mut cache: ResMut<Cache>,
+    mut query: Query<
+        (
+            &mut AngularVelocity,
+            &Collider,
+            Entity,
+            &mut Health,
+            &Mass,
+            &MomentOfInertia,
+            &Transform,
+            &mut Velocity,
+        ),
+        With<C>,
+    >,
+) {
+    let mut i = 0;
+    loop {
+        let mut iter = query.iter_mut().skip(i);
+        if let Some((
+            mut angular_velocity1,
+            collider1,
+            entity1,
+            mut health1,
+            mass1,
+            moment_of_inertia1,
+            transform1,
+            mut velocity1,
+        )) = iter.next()
+        {
+            for (
+                mut angular_velocity2,
+                collider2,
+                entity2,
+                mut health2,
+                mass2,
+                moment_of_inertia2,
+                transform2,
+                mut velocity2,
+            ) in iter
+            {
+                if let Some(contact) = detection::collision(
+                    *transform1,
+                    *transform2,
+                    &collider1,
+                    &collider2,
+                    Some(&meshes),
+                ) {
+                    if !cache.contains(Collision(entity1, entity2)) {
+                        response::compute(
+                            transform1,
+                            transform2,
+                            *mass1,
+                            *mass2,
+                            *moment_of_inertia1,
+                            *moment_of_inertia2,
+                            &mut velocity1,
+                            &mut velocity2,
+                            &mut angular_velocity1,
+                            &mut angular_velocity2,
+                            contact,
+                        );
+                        let dv = (velocity1.0 - velocity2.0).length();
+                        let h1 = (mass2.0 / mass1.0 * dv / 10.0) as i32 + 1;
+                        let h2 = (mass1.0 / mass2.0 * dv / 10.0) as i32 + 1;
+                        // println!("health1: {}, h1: {}", health1.0, h1);
+                        // println!("health2: {}, h2: {}", health2.0, h2);
+                        health1.0 -= h1;
+                        health2.0 -= h2;
+                    }
+                    cache.add(Collision(entity1, entity2));
+                    break;
+                }
+            }
+            i += 1;
+        } else {
+            break;
+        }
+    }
+}
+
+pub fn between<C1: Component, C2: Component>(
+    meshes: Res<Assets<Mesh>>,
+    mut cache: ResMut<Cache>,
+    mut query_c1: Query<
+        (
+            &mut AngularVelocity,
+            &Collider,
+            Entity,
+            &mut Health,
+            &Mass,
+            &MomentOfInertia,
+            &Transform,
+            &mut Velocity,
+        ),
+        With<C1>,
+    >,
+    mut query_c2: Query<
+        (
+            &mut AngularVelocity,
+            &Collider,
+            Entity,
+            &mut Health,
+            &Mass,
+            &MomentOfInertia,
+            &Transform,
+            &mut Velocity,
+        ),
+        With<C2>,
+    >,
+) {
+    for (
+        mut c1_angular_velocity,
+        c1_collider,
+        c1_entity,
+        mut c1_health,
+        c1_mass,
+        c1_moment_of_inertia,
+        c1_transform,
+        mut c1_velocity,
+    ) in query_c1.iter_mut()
+    {
+        for (
+            mut c2_angular_velocity,
+            c2_collider,
+            c2_entity,
+            mut c2_health,
+            c2_mass,
+            c2_moment_of_inertia,
+            c2_transform,
+            mut c2_velocity,
+        ) in query_c2.iter_mut()
+        {
+            if let Some(contact) = detection::collision(
+                *c1_transform,
+                *c2_transform,
+                &c1_collider,
+                &c2_collider,
+                Some(&meshes),
+            ) {
+                if !cache.contains(Collision(c1_entity, c2_entity)) {
+                    response::compute(
+                        c1_transform,
+                        c2_transform,
+                        *c1_mass,
+                        *c2_mass,
+                        *c1_moment_of_inertia,
+                        *c2_moment_of_inertia,
+                        &mut c1_velocity,
+                        &mut c2_velocity,
+                        &mut c1_angular_velocity,
+                        &mut c2_angular_velocity,
+                        contact,
+                    );
+                    let dv = (c1_velocity.0 - c2_velocity.0).length();
+                    c1_health.0 -= (c2_mass.0 / c1_mass.0 * dv / 10.0) as i32 + 1;
+                    c2_health.0 -= (c1_mass.0 / c2_mass.0 * dv / 10.0) as i32 + 1;
+                }
+                cache.add(Collision(c1_entity, c2_entity));
+                break;
+            }
+        }
+    }
+}
