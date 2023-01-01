@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use asteroids::collision::math;
+use asteroids::collision::detection;
 
 const A: Vec2 = Vec2 { x: -9.0, y: 6.0 };
 const B: Vec2 = Vec2 { x: -7.0, y: 2.0 };
@@ -38,22 +38,22 @@ const VWZ: [Vec2; 3] = [V, W, Z];
 
 #[test]
 fn intersect_triangles() {
-    assert!(math::triangles_intersect(ABC, DEF));
-    assert!(!math::triangles_intersect(ABC, GHI));
-    assert!(!math::triangles_intersect(ABC, STU));
-    assert!(!math::triangles_intersect(ABC, VWZ));
-    assert!(!math::triangles_intersect(DEF, GHI));
-    assert!(!math::triangles_intersect(DEF, JKL));
-    assert!(math::triangles_intersect(DEF, PQR));
-    assert!(math::triangles_intersect(DEF, VWZ));
-    assert!(math::triangles_intersect(GHI, JKL));
-    assert!(math::triangles_intersect([H, I, G], PQR));
-    assert!(!math::triangles_intersect(GHI, MNO));
-    assert!(math::triangles_intersect(GHI, PQR));
-    assert!(!math::triangles_intersect(GHI, STU));
-    assert!(math::triangles_intersect(GHI, [J, L, Q]));
-    assert!(!math::triangles_intersect(JKL, PQR));
-    assert!(!math::triangles_intersect(MNO, VWZ));
-    assert!(!math::triangles_intersect(PQR, STU));
-    assert!(!math::triangles_intersect(PQR, VWZ));
+    assert!(detection::triangles_intersect(ABC, DEF).is_some());
+    assert!(detection::triangles_intersect(ABC, GHI).is_none());
+    assert!(detection::triangles_intersect(ABC, STU).is_none());
+    assert!(detection::triangles_intersect(ABC, VWZ).is_none());
+    assert!(detection::triangles_intersect(DEF, GHI).is_none());
+    assert!(detection::triangles_intersect(DEF, JKL).is_none());
+    assert!(detection::triangles_intersect(DEF, PQR).is_some());
+    assert!(detection::triangles_intersect(DEF, VWZ).is_some());
+    assert!(detection::triangles_intersect(GHI, JKL).is_some());
+    assert!(detection::triangles_intersect([H, I, G], PQR).is_some());
+    assert!(detection::triangles_intersect(GHI, MNO).is_none());
+    assert!(detection::triangles_intersect(GHI, PQR).is_some());
+    assert!(detection::triangles_intersect(GHI, STU).is_none());
+    assert!(detection::triangles_intersect(GHI, [J, L, Q]).is_some());
+    assert!(detection::triangles_intersect(JKL, PQR).is_none());
+    assert!(detection::triangles_intersect(MNO, VWZ).is_none());
+    assert!(detection::triangles_intersect(PQR, STU).is_none());
+    assert!(detection::triangles_intersect(PQR, VWZ).is_none());
 }

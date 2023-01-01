@@ -1,4 +1,4 @@
-use asteroids::collision::{math::rectangles_intersect, Aabb};
+use asteroids::collision::{detection, Aabb};
 use bevy::prelude::*;
 
 const A: Vec2 = Vec2 { x: -8.0, y: 7.0 };
@@ -20,23 +20,23 @@ const RECT_H: Aabb = Aabb { hw: 2.5, hh: 1.5 };
 
 #[test]
 fn intersect_rectangles() {
-    assert!(rectangles_intersect(A, RECT_A, A, RECT_A));
-    assert!(rectangles_intersect(A, RECT_A, B, RECT_B));
-    assert!(!rectangles_intersect(A, RECT_A, C, RECT_C));
-    assert!(!rectangles_intersect(A, RECT_A, D, RECT_D));
-    assert!(!rectangles_intersect(A, RECT_A, E, RECT_E));
-    assert!(rectangles_intersect(B, RECT_B, C, RECT_C));
-    assert!(!rectangles_intersect(B, RECT_B, D, RECT_D));
-    assert!(!rectangles_intersect(B, RECT_B, F, RECT_F));
-    assert!(!rectangles_intersect(B, RECT_B, G, RECT_G));
-    assert!(!rectangles_intersect(B, RECT_B, H, RECT_H));
-    assert!(rectangles_intersect(C, RECT_C, B, RECT_B));
-    assert!(rectangles_intersect(E, RECT_E, F, RECT_F));
-    assert!(!rectangles_intersect(F, RECT_F, G, RECT_G));
-    assert!(!rectangles_intersect(E, RECT_E, G, RECT_G));
-    assert!(!rectangles_intersect(E, RECT_E, H, RECT_H));
-    assert!(rectangles_intersect(G, RECT_G, H, RECT_H));
-    assert!(!rectangles_intersect(H, RECT_H, A, RECT_A));
-    assert!(!rectangles_intersect(H, RECT_H, B, RECT_B));
-    assert!(!rectangles_intersect(H, RECT_H, C, RECT_C));
+    assert!(detection::rectangles_intersect(A, RECT_A, A, RECT_A));
+    assert!(detection::rectangles_intersect(A, RECT_A, B, RECT_B));
+    assert!(!detection::rectangles_intersect(A, RECT_A, C, RECT_C));
+    assert!(!detection::rectangles_intersect(A, RECT_A, D, RECT_D));
+    assert!(!detection::rectangles_intersect(A, RECT_A, E, RECT_E));
+    assert!(detection::rectangles_intersect(B, RECT_B, C, RECT_C));
+    assert!(!detection::rectangles_intersect(B, RECT_B, D, RECT_D));
+    assert!(!detection::rectangles_intersect(B, RECT_B, F, RECT_F));
+    assert!(!detection::rectangles_intersect(B, RECT_B, G, RECT_G));
+    assert!(!detection::rectangles_intersect(B, RECT_B, H, RECT_H));
+    assert!(detection::rectangles_intersect(C, RECT_C, B, RECT_B));
+    assert!(detection::rectangles_intersect(E, RECT_E, F, RECT_F));
+    assert!(!detection::rectangles_intersect(F, RECT_F, G, RECT_G));
+    assert!(!detection::rectangles_intersect(E, RECT_E, G, RECT_G));
+    assert!(!detection::rectangles_intersect(E, RECT_E, H, RECT_H));
+    assert!(detection::rectangles_intersect(G, RECT_G, H, RECT_H));
+    assert!(!detection::rectangles_intersect(H, RECT_H, A, RECT_A));
+    assert!(!detection::rectangles_intersect(H, RECT_H, B, RECT_B));
+    assert!(!detection::rectangles_intersect(H, RECT_H, C, RECT_C));
 }

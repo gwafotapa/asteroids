@@ -1,4 +1,4 @@
-use asteroids::collision::math::point_in_triangle;
+use asteroids::collision::detection;
 use bevy::prelude::*;
 
 const O: Vec2 = Vec2::ZERO;
@@ -19,22 +19,22 @@ const N: Vec2 = Vec2 { x: 2.0, y: 0.0 };
 
 #[test]
 fn points_in_triangles() {
-    assert!(point_in_triangle(D, [A, B, C]));
-    assert!(!point_in_triangle(E, [A, B, C]));
-    assert!(point_in_triangle(F, [A, B, C]));
-    assert!(point_in_triangle(G, [A, B, C]));
-    assert!(point_in_triangle(H, [A, B, C]));
-    assert!(!point_in_triangle(I, [A, B, C]));
-    assert!(!point_in_triangle(J, [A, B, C]));
-    assert!(!point_in_triangle(K, [A, B, C]));
-    assert!(!point_in_triangle(L, [A, B, C]));
-    assert!(!point_in_triangle(M, [A, B, C]));
-    assert!(!point_in_triangle(N, [A, B, C]));
-    assert!(point_in_triangle(O, [A, B, C]));
-    assert!(point_in_triangle(A, [J, K, M]));
-    assert!(point_in_triangle(N, [J, K, M]));
-    assert!(point_in_triangle(H, [J, K, M]));
-    assert!(!point_in_triangle(F, [J, K, M]));
-    assert!(!point_in_triangle(I, [J, K, M]));
-    assert!(!point_in_triangle(D, [J, K, M]));
+    assert!(detection::point_in_triangle(D, [A, B, C]).is_some());
+    assert!(detection::point_in_triangle(E, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(F, [A, B, C]).is_some());
+    assert!(detection::point_in_triangle(G, [A, B, C]).is_some());
+    assert!(detection::point_in_triangle(H, [A, B, C]).is_some());
+    assert!(detection::point_in_triangle(I, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(J, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(K, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(L, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(M, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(N, [A, B, C]).is_none());
+    assert!(detection::point_in_triangle(O, [A, B, C]).is_some());
+    assert!(detection::point_in_triangle(A, [J, K, M]).is_some());
+    assert!(detection::point_in_triangle(N, [J, K, M]).is_some());
+    assert!(detection::point_in_triangle(H, [J, K, M]).is_some());
+    assert!(detection::point_in_triangle(F, [J, K, M]).is_none());
+    assert!(detection::point_in_triangle(I, [J, K, M]).is_none());
+    assert!(detection::point_in_triangle(D, [J, K, M]).is_none());
 }

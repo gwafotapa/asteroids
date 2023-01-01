@@ -1,4 +1,4 @@
-use asteroids::collision::math::disk_intersects_line_segment;
+use asteroids::collision::detection;
 use bevy::prelude::*;
 
 const A: Vec2 = Vec2 { x: -5.0, y: 1.0 };
@@ -20,11 +20,11 @@ const P: Vec2 = Vec2 { x: -7.0, y: 2.0 };
 
 #[test]
 fn intersect_disk_and_line_segment() {
-    assert!(disk_intersects_line_segment(E, 2.0, A, B));
-    assert!(!disk_intersects_line_segment(C, 2.0, A, B));
-    assert!(disk_intersects_line_segment(E, 2.0, K, L));
-    assert!(disk_intersects_line_segment(C, 2.0, G, H));
-    assert!(!disk_intersects_line_segment(M, 3.0, G, H));
-    assert!(!disk_intersects_line_segment(M, 3.0, O, P));
-    assert!(disk_intersects_line_segment(M, 3.0, I, J));
+    assert!(detection::disk_intersects_line_segment(E, 2.0, A, B).is_some());
+    assert!(detection::disk_intersects_line_segment(C, 2.0, A, B).is_none());
+    assert!(detection::disk_intersects_line_segment(E, 2.0, K, L).is_some());
+    assert!(detection::disk_intersects_line_segment(C, 2.0, G, H).is_some());
+    assert!(detection::disk_intersects_line_segment(M, 3.0, G, H).is_none());
+    assert!(detection::disk_intersects_line_segment(M, 3.0, O, P).is_none());
+    assert!(detection::disk_intersects_line_segment(M, 3.0, I, J).is_some());
 }
