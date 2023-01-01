@@ -24,9 +24,15 @@ const MOMENT_OF_INERTIA: f32 =
 // pub struct Boss;
 
 #[derive(Component)]
-pub struct BossCore {
+pub struct Boss {
     pub edges: usize,
 }
+
+#[derive(Component)]
+pub struct BossPart;
+
+#[derive(Component)]
+pub struct BossCore;
 
 #[derive(Component)]
 pub struct BossEdge;
@@ -207,6 +213,18 @@ pub fn spawn(
     let y = DISTANCE_TO_BOSS * theta.sin() + spaceship::POSITION.y;
     let translation = Vec3::new(x, y, BOSS_Z);
 
+    let boss = commands
+        .spawn(Boss { edges: EDGES })
+        .insert(Mass(MASS))
+        .insert(Velocity(Vec3::ZERO))
+        .insert(MomentOfInertia(MOMENT_OF_INERTIA))
+        .insert(AngularVelocity(0.0))
+        .insert(SpatialBundle {
+            transform: Transform::from_translation(translation),
+            ..Default::default()
+        })
+        .id();
+
     // let translation = query.single().target;
     // if !level.boss_spawned && level.distance_to_boss == 0 && query_asteroid.is_empty() {
 
@@ -224,19 +242,15 @@ pub fn spawn(
     // mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices_uv);
     let mesh_handle = meshes.add(mesh);
 
-    println!(
-        "boss\narea: {}\nmass: {}\nmoment of inertia: {}\n",
-        AREA, MASS, MOMENT_OF_INERTIA
-    );
+    // println!(
+    //     "boss\narea: {}\nmass: {}\nmoment of inertia: {}\n",
+    //     AREA, MASS, MOMENT_OF_INERTIA
+    // );
 
     let boss_core = commands
         // .spawn(Boss)
-        .spawn(BossCore { edges: EDGES })
+        .spawn(BossCore)
         .insert(Health(CORE_HEALTH))
-        .insert(Mass(MASS))
-        .insert(Velocity(Vec3::ZERO))
-        .insert(MomentOfInertia(MOMENT_OF_INERTIA))
-        .insert(AngularVelocity(0.0))
         .insert(Collider {
             aabb: Aabb {
                 hw: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
@@ -248,11 +262,12 @@ pub fn spawn(
         })
         .insert(ColorMesh2dBundle {
             mesh: mesh_handle.into(),
-            transform: Transform::from_translation(translation),
             material: materials.add(COLOR.into()),
             ..default()
         })
         .id();
+
+    commands.entity(boss).add_child(boss_core);
 
     // Add the edges
     for i in 0..EDGES {
@@ -302,25 +317,20 @@ pub fn spawn(
             .insert(Attack(E2))
             .id();
 
-        commands.entity(boss_core).add_child(boss_edge);
+        commands.entity(boss).add_child(boss_edge);
     }
     // level.boss_spawned = true;
     // }
 }
 
 pub fn movement(
-    mut query_boss_core: Query<(
-        &mut AngularVelocity,
-        &BossCore,
-        &mut Transform,
-        &mut Velocity,
-    )>,
-    query_spaceship: Query<&Transform, (With<Spaceship>, Without<BossCore>)>,
+    mut query_boss: Query<(&mut AngularVelocity, &Boss, &mut Transform, &mut Velocity)>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Boss>)>,
     cache: Res<Cache>,
     query_boss_entity: Query<Entity, Or<(With<BossCore>, With<BossEdge>)>>,
 ) {
     if let Ok((mut angular_velocity, boss, mut b_transform, mut velocity)) =
-        query_boss_core.get_single_mut()
+        query_boss.get_single_mut()
     {
         'no_collision: {
             for id in &query_boss_entity {
@@ -361,11 +371,11 @@ pub fn attack(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss_core: Query<&Transform, With<BossCore>>,
+    query_boss: Query<&Transform, With<Boss>>,
     query_boss_edge: Query<(&Attack, Entity, &Transform), With<BossEdge>>,
     query_spaceship: Query<&Transform, With<Spaceship>>,
 ) {
-    if let Ok(b_transform) = query_boss_core.get_single() {
+    if let Ok(b_transform) = query_boss.get_single() {
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
@@ -487,19 +497,18 @@ pub fn attack(
 pub fn cut_off_edge(
     mut commands: Commands,
     mut query_boss_edge: Query<(Entity, &Health, &mut Transform), With<BossEdge>>,
-    mut query_boss_core: Query<(&mut BossCore, Entity, &Transform, &Velocity), Without<BossEdge>>,
+    mut query_boss: Query<(&mut Boss, Entity, &Transform, &Velocity), Without<BossEdge>>,
 ) {
-    if let Ok((mut core, core_id, core_transform, core_velocity)) = query_boss_core.get_single_mut()
-    {
+    if let Ok((mut boss, boss_id, boss_transform, boss_velocity)) = query_boss.get_single_mut() {
         for (edge_id, edge_health, mut edge_transform) in query_boss_edge.iter_mut() {
             if edge_health.0 > 0 {
                 continue;
             }
 
-            core.edges -= 1;
-            commands.entity(core_id).remove_children(&[edge_id]);
-            commands.entity(edge_id).insert(*core_velocity);
-            edge_transform.translation = core_transform.transform_point(edge_transform.translation);
+            boss.edges -= 1;
+            commands.entity(boss_id).remove_children(&[edge_id]);
+            commands.entity(edge_id).insert(*boss_velocity);
+            edge_transform.translation = boss_transform.transform_point(edge_transform.translation);
 
             // if let Some(children) = maybe_children {
             //     for child in children {
