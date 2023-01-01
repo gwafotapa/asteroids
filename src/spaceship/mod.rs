@@ -35,13 +35,8 @@ const DRAG: f32 = 0.01;
 const FIRE_HEALTH: i32 = 1;
 const FIRE_IMPACT_RADIUS: f32 = 12.0;
 const FIRE_IMPACT_VERTICES: usize = 16;
-const FIRE_INIT_SCALE: Vec3 = Vec3 {
-    x: FIRE_RANGE,
-    y: FIRE_RANGE,
-    z: 0.0,
-};
-const FIRE_RADIUS: f32 = 3.0 / FIRE_RANGE;
-const FIRE_RANGE: f32 = 20.0;
+const FIRE_RADIUS: f32 = 3.0 / FIRE_RANGE as f32;
+const FIRE_RANGE: u32 = 20;
 const FIRE_VELOCITY: Vec3 = Vec3 {
     x: 20.0,
     y: 0.0,
@@ -314,7 +309,7 @@ pub fn attack(
                 transform: Transform::from_translation(
                     transform.translation + transform.rotation * ATTACK_SOURCE,
                 )
-                .with_scale(FIRE_INIT_SCALE),
+                .with_scale(Vec3::new(FIRE_RANGE as f32, FIRE_RANGE as f32, 0.0)),
                 material: materials.add(ATTACK_COLOR.into()),
                 ..default()
             });
