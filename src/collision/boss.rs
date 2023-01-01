@@ -28,25 +28,28 @@ pub fn with_fire(
         ),
         (With<Fire>, Without<Enemy>),
     >,
+    query_boss: Query<(&Boss, &Transform)>,
     mut query_boss_part: Query<
         (
             Option<&BossEdge>,
             &Collider,
             &Handle<ColorMaterial>,
-            &GlobalTransform,
             &mut Health,
+            &Transform,
         ),
         (Or<(With<BossCore>, With<BossEdge>)>, Without<Fire>),
     >,
 ) {
-    let lone_core = query_boss_part.get_single().is_ok();
-    for (bp_edge, bp_collider, bp_color, bp_transform, mut bp_health) in query_boss_part.iter_mut()
+    let (boss, b_transform) = query_boss.single();
+    for (bp_edge, bp_collider, bp_color, mut bp_health, bp_transform) in query_boss_part.iter_mut()
     {
-        let bp_transform = bp_transform.compute_transform();
+        let bp_global_transform =
+            Transform::from_translation(b_transform.transform_point(bp_transform.translation))
+                .with_rotation(b_transform.rotation * bp_transform.rotation);
         for (f_collider, f_color, f_transform, mut f_health) in query_fire.iter_mut() {
             if detection::collision(
                 *f_transform,
-                bp_transform,
+                bp_global_transform,
                 f_collider,
                 bp_collider,
                 Some(&meshes),
@@ -54,16 +57,15 @@ pub fn with_fire(
             .is_some()
             {
                 f_health.0 = 0;
-                let f_color = materials.get(f_color).unwrap().color;
 
-                if bp_edge.is_some() || lone_core {
+                if bp_edge.is_some() || boss.edges == 1 {
                     bp_health.0 -= 1;
+                    let [fr, fg, fb, _] = materials.get(f_color).unwrap().color.as_rgba_f32();
                     let bp_color = materials.get_mut(bp_color).unwrap();
                     let [mut r, mut g, mut b, _] = bp_color.color.as_rgba_f32();
-                    let [r2, g2, b2, _] = f_color.as_rgba_f32();
-                    r += (r2 - r) / (1. + bp_health.0 as f32);
-                    g += (g2 - g) / (1. + bp_health.0 as f32);
-                    b += (b2 - b) / (1. + bp_health.0 as f32);
+                    r += (fr - r) / (1. + bp_health.0 as f32);
+                    g += (fg - g) / (1. + bp_health.0 as f32);
+                    b += (fb - b) / (1. + bp_health.0 as f32);
                     bp_color.color = Color::rgb(r, g, b);
                 }
             }
@@ -87,10 +89,7 @@ pub fn with_asteroid_or_spaceship(
         ),
         With<Boss>,
     >,
-    mut query_boss_part: Query<
-        (&Collider, Entity, &Transform),
-        Or<(With<BossCore>, With<BossEdge>)>,
-    >,
+    mut query_boss_part: Query<(&Collider, &Transform), Or<(With<BossCore>, With<BossEdge>)>>,
     mut query_asteroid_spaceship: Query<
         (
             &mut AngularVelocity,
@@ -125,7 +124,7 @@ pub fn with_asteroid_or_spaceship(
             mut as_velocity,
         ) in query_asteroid_spaceship.iter_mut()
         {
-            for (bp_collider, bp_edge, bp_transform) in query_boss_part.iter_mut() {
+            for (bp_collider, bp_transform) in query_boss_part.iter_mut() {
                 let bp_global_transform = Transform::from_translation(
                     b_transform.transform_point(bp_transform.translation),
                 )
@@ -154,7 +153,7 @@ pub fn with_asteroid_or_spaceship(
                     // });
                     // commands.insert_resource(NextState(GameState::Paused));
 
-                    if !cache.contains(Collision(spaceship, bp_edge)) {
+                    if !cache.contains(Collision(spaceship, b_id)) {
                         // println!("spaceship -- w1: {}", as_angular_velocity.0);
                         // println!("boss      -- w2: {}", b_angular_velocity.0);
                         response::compute(
@@ -174,7 +173,7 @@ pub fn with_asteroid_or_spaceship(
                         // println!("boss      -- w'2: {}", b_angular_velocity.0);
                         // println!("");
                     }
-                    cache.add(Collision(spaceship, bp_edge));
+                    cache.add(Collision(spaceship, b_id));
                     // as_health.0 = 0;
                     return;
                 }
