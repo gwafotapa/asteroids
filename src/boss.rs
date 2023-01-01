@@ -28,8 +28,8 @@ pub struct Boss {
     pub edges: usize,
 }
 
-#[derive(Component)]
-pub struct BossPart;
+// #[derive(Component)]
+// pub struct BossPart;
 
 #[derive(Component)]
 pub struct BossCore;
