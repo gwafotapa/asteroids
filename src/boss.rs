@@ -131,7 +131,7 @@ const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const CORE_HEALTH: i32 = 50;
-const EDGE_HEALTH: i32 = 10;
+const EDGE_HEALTH: i32 = 1;
 const FIRE_VELOCITY: f32 = 8.0;
 const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE;
 const FIRE_RANGE: f32 = 100.0;
@@ -497,19 +497,33 @@ pub fn attack(
 pub fn cut_off_edge(
     mut commands: Commands,
     mut query_boss_edge: Query<(Entity, &Health, &mut Transform), With<BossEdge>>,
-    mut query_boss: Query<(&mut Boss, Entity, &Transform, &Velocity), Without<BossEdge>>,
+    mut query_boss: Query<
+        (&AngularVelocity, &mut Boss, Entity, &Transform, &Velocity),
+        Without<BossEdge>,
+    >,
 ) {
-    if let Ok((mut boss, boss_id, boss_transform, boss_velocity)) = query_boss.get_single_mut() {
-        for (edge_id, edge_health, mut edge_transform) in query_boss_edge.iter_mut() {
-            if edge_health.0 > 0 {
+    if let Ok((b_angular_velocity, mut boss, b_id, b_transform, b_velocity)) =
+        query_boss.get_single_mut()
+    {
+        for (e_id, e_health, mut e_transform) in query_boss_edge.iter_mut() {
+            if e_health.0 > 0 {
                 continue;
             }
 
             boss.edges -= 1;
-            commands.entity(boss_id).remove_children(&[edge_id]);
-            commands.entity(edge_id).insert(*boss_velocity);
-            edge_transform.translation = boss_transform.transform_point(edge_transform.translation);
-
+            commands.entity(b_id).remove_children(&[e_id]);
+            let e_translation_relative_b = b_transform.rotation * e_transform.translation;
+            let e_tangential_velocity =
+                (Vec3::new(0.0, 0.0, b_angular_velocity.0)).cross(e_translation_relative_b);
+            // println!(
+            //     "boss angular velocity: {}\n, edge position: {}\n, tangential velocity: {}\n",
+            //     b_angular_velocity.0, e_translation_relative_b, e_tangential_velocity
+            // );
+            commands
+                .entity(e_id)
+                .insert(Velocity(b_velocity.0 + e_tangential_velocity));
+            e_transform.translation = b_transform.translation + e_translation_relative_b;
+            e_transform.rotation *= b_transform.rotation;
             // if let Some(children) = maybe_children {
             //     for child in children {
             //         if let Ok(mut child_transform) =

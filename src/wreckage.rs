@@ -40,7 +40,6 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Wrec
 pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     query: Query<
         (
             &Handle<ColorMaterial>,
@@ -61,7 +60,7 @@ pub fn wreck_with<C: Component>(
         }
 
         let mut rng = rand::thread_rng();
-        let color = materials.get(color).unwrap().color;
+        // let color = materials.get(color).unwrap().color;
         // let velocity = maybe_parent
         //     .map_or(maybe_velocity, |parent| {
         //         query.get_component::<Velocity>(**parent).ok()
@@ -115,7 +114,7 @@ pub fn wreck_with<C: Component>(
                                         }))
                                         .into(),
                                     transform: Transform::from_translation(debris),
-                                    material: materials.add(color.into()),
+                                    material: color.clone(),
                                     ..default()
                                 })
                                 .id();
@@ -149,7 +148,7 @@ pub fn wreck_with<C: Component>(
                                 }))
                                 .into(),
                             transform: Transform::from_translation(debris),
-                            material: materials.add(color.into()),
+                            material: color.clone(),
                             ..default()
                         })
                         .id();
