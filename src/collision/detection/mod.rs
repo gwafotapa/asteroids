@@ -338,7 +338,7 @@ fn disk_intersects_transformed_triangles(
 }
 
 fn disks_intersect(c1: Vec2, r1: f32, c2: Vec2, r2: f32) -> Option<Contact> {
-    if c1.distance(c2) < r1 + r2 {
+    if c1.distance(c2) <= r1 + r2 {
         let normal = (c1 - c2).normalize();
         Some(Contact {
             point: c2 + r2 * normal,

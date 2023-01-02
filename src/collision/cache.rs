@@ -11,8 +11,8 @@ impl PartialEq for Collision {
 
 #[derive(Debug, Default, Resource)]
 pub struct Cache {
-    old: Vec<Collision>,
-    new: Vec<Collision>,
+    pub old: Vec<Collision>,
+    pub new: Vec<Collision>,
 }
 
 impl Cache {

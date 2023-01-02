@@ -32,19 +32,19 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 // const SHINE_FACTOR: f32 = 1.0 / DIM_FACTOR;
 
 #[derive(Component, Clone, Copy)]
-pub struct Health(i32);
+pub struct Health(pub i32);
 
 #[derive(Component, Clone, Copy)]
-pub struct Mass(f32);
+pub struct Mass(pub f32);
 
 #[derive(Component, Clone, Copy)]
-pub struct MomentOfInertia(f32);
+pub struct MomentOfInertia(pub f32);
+
+#[derive(Component, Clone, Copy, Debug)]
+pub struct Velocity(pub Vec3);
 
 #[derive(Component, Clone, Copy)]
-pub struct Velocity(Vec3);
-
-#[derive(Component, Clone, Copy)]
-pub struct AngularVelocity(f32); // radians per frame
+pub struct AngularVelocity(pub f32); // radians per frame
 
 // #[derive(Component)]
 // struct SpawnedTime(Instant);

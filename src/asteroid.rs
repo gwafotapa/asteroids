@@ -21,7 +21,7 @@ const HEALTH_MAX: i32 = 60;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
 
-#[derive(Component)]
+#[derive(Clone, Component, Copy)]
 pub struct Asteroid {
     pub radius: f32,
 }
@@ -135,21 +135,19 @@ pub fn update(
         ),
         With<Asteroid>,
     >,
-    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Asteroid>)>,
+    query_camera: Query<&Transform, (With<Camera>, Without<Asteroid>)>,
 ) {
-    if let Ok(s_transform) = query_spaceship.get_single() {
-        let Vec3 { x: xs, y: ys, z: _ } = s_transform.translation;
-        for (a_angular_velocity, a_id, mut _a_health, mut a_transform, a_velocity) in
-            query_asteroid.iter_mut()
-        {
-            let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
-            if (xa - xs).abs() > 2.0 * WINDOW_WIDTH || (ya - ys).abs() > 2.0 * WINDOW_HEIGHT {
-                // a_health.0 = 0;
-                commands.entity(a_id).despawn();
-            } else {
-                a_transform.translation += a_velocity.0;
-                a_transform.rotation *= Quat::from_axis_angle(Vec3::Z, a_angular_velocity.0);
-            }
+    let Vec3 { x: xc, y: yc, z: _ } = query_camera.single().translation;
+    for (a_angular_velocity, a_id, mut _a_health, mut a_transform, a_velocity) in
+        query_asteroid.iter_mut()
+    {
+        let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
+        if (xa - xc).abs() > 2.0 * WINDOW_WIDTH || (ya - yc).abs() > 2.0 * WINDOW_HEIGHT {
+            // a_health.0 = 0;
+            commands.entity(a_id).despawn();
+        } else {
+            a_transform.translation += a_velocity.0;
+            a_transform.rotation *= Quat::from_axis_angle(Vec3::Z, a_angular_velocity.0);
         }
     }
 }
