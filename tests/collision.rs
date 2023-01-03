@@ -6,6 +6,10 @@ use asteroids::{
 use bevy::{prelude::*, sprite::Mesh2dHandle};
 use std::f32::consts::PI;
 
+const BLUE: &str = "\x1b[94m";
+const RED: &str = "\x1b[91m";
+const WHITE: &str = "\x1b[97m";
+
 #[test]
 fn collision() {
     let mut app = App::new();
@@ -37,76 +41,18 @@ fn collision() {
         angular_velocities,
     );
 
-    let radius1 = app.world.get::<Asteroid>(asteroids[0]).unwrap().radius;
-    let mass1 = app.world.get::<Mass>(asteroids[0]).unwrap().0;
-    let moment_of_inertia1 = app.world.get::<MomentOfInertia>(asteroids[0]).unwrap().0;
-    print!("\x1b[94m");
-    println!("radius 1: {:?}", radius1);
-    println!("mass 1: {:?}", mass1);
-    println!("moment of inertia 1: {:?}", moment_of_inertia1);
-    print!("\x1b[97m");
-    let radius2 = app.world.get::<Asteroid>(asteroids[1]).unwrap().radius;
-    let mass2 = app.world.get::<Mass>(asteroids[1]).unwrap().0;
-    let moment_of_inertia2 = app.world.get::<MomentOfInertia>(asteroids[1]).unwrap().0;
-    print!("\x1b[91m");
-    println!("radius 2: {:?}", radius2);
-    println!("mass 2: {:?}", mass2);
-    println!("moment of inertia 2: {:?}", moment_of_inertia2);
-    print!("\x1b[97m");
+    asteroid_print_static(&app, asteroids[0], Some(BLUE));
+    asteroid_print_static(&app, asteroids[1], Some(RED));
 
     println!("PRE COLLISION");
-    let Transform {
-        translation: translation1,
-        rotation: rotation1,
-        scale: _,
-    } = app.world.get::<Transform>(asteroids[0]).unwrap();
-    let velocity1 = app.world.get::<Velocity>(asteroids[0]).unwrap().0;
-    let angular_velocity1 = app.world.get::<AngularVelocity>(asteroids[0]).unwrap().0;
-    print!("\x1b[94m");
-    println!("transform 1: {:?} {:?}", translation1, rotation1);
-    println!("velocity 1: {:?}", velocity1);
-    println!("angular velocity 1: {:?}", angular_velocity1);
-    print!("\x1b[97m");
-    let Transform {
-        translation: translation2,
-        rotation: rotation2,
-        scale: _,
-    } = app.world.get::<Transform>(asteroids[1]).unwrap();
-    let velocity2 = app.world.get::<Velocity>(asteroids[1]).unwrap().0;
-    let angular_velocity2 = app.world.get::<AngularVelocity>(asteroids[1]).unwrap().0;
-    print!("\x1b[91m");
-    println!("transform 2: {:?} {:?}", translation2, rotation2);
-    println!("velocity 2: {:?}", velocity2);
-    println!("angular velocity 2: {:?}", angular_velocity2);
-    print!("\x1b[97m");
+    asteroid_print_dynamic(&app, asteroids[0], Some(BLUE));
+    asteroid_print_dynamic(&app, asteroids[1], Some(RED));
 
     app.update();
 
     println!("POST COLLISION");
-    let Transform {
-        translation: translation1,
-        rotation: rotation1,
-        scale: _,
-    } = app.world.get::<Transform>(asteroids[0]).unwrap();
-    let velocity1 = app.world.get::<Velocity>(asteroids[0]).unwrap().0;
-    let angular_velocity1 = app.world.get::<AngularVelocity>(asteroids[0]).unwrap().0;
-    print!("\x1b[94m");
-    println!("transform 1: {:?} {:?}", translation1, rotation1);
-    println!("velocity 1: {:?}", velocity1);
-    println!("angular velocity 1: {:?}", angular_velocity1);
-    print!("\x1b[97m");
-    let Transform {
-        translation: translation2,
-        rotation: rotation2,
-        scale: _,
-    } = app.world.get::<Transform>(asteroids[1]).unwrap();
-    let velocity2 = app.world.get::<Velocity>(asteroids[1]).unwrap().0;
-    let angular_velocity2 = app.world.get::<AngularVelocity>(asteroids[1]).unwrap().0;
-    print!("\x1b[91m");
-    println!("transform 2: {:?} {:?}", translation2, rotation2);
-    println!("velocity 2: {:?}", velocity2);
-    println!("angular velocity 2: {:?}", angular_velocity2);
-    print!("\x1b[97m");
+    asteroid_print_dynamic(&app, asteroids[0], Some(BLUE));
+    asteroid_print_dynamic(&app, asteroids[1], Some(RED));
 
     let cache = app.world.resource::<Cache>();
     println!("cache: {:?}", cache);
@@ -135,6 +81,40 @@ fn spawn_asteroids<const N: usize>(
     }
 
     asteroids
+}
+
+fn asteroid_print_static(app: &App, asteroid: Entity, maybe_color: Option<&str>) {
+    if let Some(color) = maybe_color {
+        print!("{}", color);
+    }
+    let radius = app.world.get::<Asteroid>(asteroid).unwrap().radius;
+    let mass = app.world.get::<Mass>(asteroid).unwrap().0;
+    let moment_of_inertia = app.world.get::<MomentOfInertia>(asteroid).unwrap().0;
+    println!("radius: {}", radius);
+    println!("mass: {}", mass);
+    println!("moment of inertia: {}", moment_of_inertia);
+    if maybe_color.is_some() {
+        print!("{}", WHITE);
+    }
+}
+
+fn asteroid_print_dynamic(app: &App, asteroid: Entity, maybe_color: Option<&str>) {
+    if let Some(color) = maybe_color {
+        print!("{}", color);
+    }
+    let Transform {
+        translation,
+        rotation,
+        scale: _,
+    } = app.world.get::<Transform>(asteroid).unwrap();
+    let velocity = app.world.get::<Velocity>(asteroid).unwrap().0;
+    let angular_velocity = app.world.get::<AngularVelocity>(asteroid).unwrap().0;
+    println!("transform: {:?} {:?}", translation, rotation);
+    println!("velocity: {:?}", velocity);
+    println!("angular velocity: {}", angular_velocity);
+    if maybe_color.is_some() {
+        print!("{}", WHITE);
+    }
 }
 
 fn spawn_asteroid(
