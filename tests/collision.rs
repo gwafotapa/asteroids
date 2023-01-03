@@ -1,6 +1,9 @@
 use asteroids::{
     asteroid::Asteroid,
-    collision::{cache::Cache, detection::*},
+    collision::{
+        cache::Cache,
+        detection::{triangle::Triangle, *},
+    },
     *,
 };
 use bevy::{app::PluginGroupBuilder, prelude::*, sprite::Mesh2dHandle};
@@ -24,6 +27,7 @@ fn asteroids_dimension_1() {
 
     let healths = [Health(100), Health(100)];
     let radii = [100.0, 100.0];
+    let maybe_masses = [None, None];
     let v = Vec3::new(10.0, 0.0, 0.0);
     let velocities = [Velocity(v), Velocity(-v)];
     let angular_velocities = [AngularVelocity(2.0 * PI), AngularVelocity(0.0)];
@@ -36,6 +40,7 @@ fn asteroids_dimension_1() {
         &mut app,
         healths,
         radii,
+        maybe_masses,
         transforms,
         velocities,
         angular_velocities,
@@ -76,6 +81,7 @@ fn asteroids_dimension_2() {
     let epsilon: f32 = 0.01;
     let healths = [Health(100), Health(100)];
     let radii = [100.0, 100.0];
+    let maybe_masses = [None, None];
     let velocities = [
         Velocity(Vec3::new(10.0, 0.0, 0.0)),
         Velocity(Vec3::new(-30.0, 0.0, 0.0)),
@@ -93,6 +99,7 @@ fn asteroids_dimension_2() {
         &mut app,
         healths,
         radii,
+        maybe_masses,
         transforms,
         velocities,
         angular_velocities,
@@ -131,24 +138,50 @@ fn asteroids_dimension_2() {
     );
 }
 
+fn spawn_spaceship_triangle(
+    app: &mut App,
+    maybe_health: Option<Health>,
+    maybe_mass: Option<Mass>,
+    maybe_moment_of_inertia: Option<MomentOfInertia>,
+    triangle: Triangle,
+    transform: Transform,
+    velocity: Velocity,
+    angular_velocity: AngularVelocity,
+) -> Entity {
+    let area = 1.0;
+    let mass = maybe_mass.unwrap_or(Mass(area));
+    let moment_of_inertia =
+        maybe_moment_of_inertia.unwrap_or_else(|| MomentOfInertia(0.5 * mass.0 * area / PI));
+    app.world
+        .spawn(Spaceship)
+        .insert(mass)
+        .insert(moment_of_inertia)
+        .insert(maybe_health.unwrap_or(Health(100)))
+        .insert(transform)
+        .insert(velocity)
+        .insert(angular_velocity)
+        .id()
+}
+
 fn spawn_asteroids<const N: usize>(
     app: &mut App,
-    health: [Health; N],
-    radius: [f32; N],
-    // mass: Option<Mass>,
-    transform: [Transform; N],
-    velocity: [Velocity; N],
-    angular_velocity: [AngularVelocity; N],
+    healths: [Health; N],
+    radii: [f32; N],
+    maybe_masses: [Option<Mass>; N],
+    transforms: [Transform; N],
+    velocities: [Velocity; N],
+    angular_velocities: [AngularVelocity; N],
 ) -> [Entity; N] {
     let mut asteroids = [Entity::from_raw(0); N];
     for i in 0..N {
         asteroids[i] = spawn_asteroid(
             app,
-            health[i],
-            radius[i],
-            transform[i],
-            velocity[i],
-            angular_velocity[i],
+            healths[i],
+            radii[i],
+            maybe_masses[i],
+            transforms[i],
+            velocities[i],
+            angular_velocities[i],
         );
     }
 
@@ -159,13 +192,12 @@ fn spawn_asteroid(
     app: &mut App,
     health: Health,
     radius: f32,
-    // mass: Option<Mass>,
+    maybe_mass: Option<Mass>,
     transform: Transform,
     velocity: Velocity,
     angular_velocity: AngularVelocity,
 ) -> Entity {
-    let area = PI * radius.powi(2);
-    let mass = Mass(area);
+    let mass = maybe_mass.unwrap_or_else(|| Mass(PI * radius.powi(2)));
     let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
     let mesh = Mesh2dHandle(app.world.resource_mut::<Assets<Mesh>>().add(Mesh::from(
         shape::Circle {
