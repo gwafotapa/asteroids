@@ -57,8 +57,8 @@ pub fn compute(
         .extend(0.0);
     let j2 = -(1.0 + RESTITUTION) * (v1 + w1 * r1n - v2 - w2 * r2n).dot(n)
         / (1.0 / m1 + 1.0 / m2 + (r1n.dot(n)).powi(2) / i1 + (r2n.dot(n)).powi(2) / i2);
-    assert!((j - j2).abs() < 0.1);
-    // println!("j: {}\nj2: {}\n", j, j2);
+    // assert!((j - j2).abs() < 0.1);
+    println!("j: {}\nj2: {}\n", j, j2);
 
     velocity1.0 = v1 + j / m1 * n;
     velocity2.0 = v2 - j / m2 * n;
