@@ -8,6 +8,8 @@ use super::{
     response,
 };
 
+const EPSILON: f32 = 0.01;
+
 // pub fn asteroid_fire_spaceship(
 //     meshes: Res<Assets<Mesh>>,
 //     mut cache: ResMut<Cache>,
@@ -127,11 +129,12 @@ pub fn with<C: Component>(
             &mut Health,
             &Mass,
             &MomentOfInertia,
-            &Transform,
+            &mut Transform,
             &mut Velocity,
         ),
         With<C>,
     >,
+    time: Res<Time>,
 ) {
     let mut combinations = query.iter_combinations_mut();
     while let Some(
@@ -142,7 +145,7 @@ pub fn with<C: Component>(
             mut health1,
             mass1,
             moment_of_inertia1,
-            transform1,
+            mut transform1,
             mut velocity1,
         ), (
             mut angular_velocity2,
@@ -151,7 +154,7 @@ pub fn with<C: Component>(
             mut health2,
             mass2,
             moment_of_inertia2,
-            transform2,
+            mut transform2,
             mut velocity2,
         )],
     ) = combinations.fetch_next()
@@ -163,29 +166,139 @@ pub fn with<C: Component>(
             &collider2,
             Some(&meshes),
         ) {
-            if !cache.contains(Collision(entity1, entity2)) {
-                response::compute(
-                    transform1,
-                    transform2,
-                    *mass1,
-                    *mass2,
-                    *moment_of_inertia1,
-                    *moment_of_inertia2,
-                    &mut velocity1,
-                    &mut velocity2,
-                    &mut angular_velocity1,
-                    &mut angular_velocity2,
-                    contact,
-                );
-                let dv = (velocity1.0 - velocity2.0).length();
-                let h1 = (mass2.0 / mass1.0 * dv / 10.0) as i32 + 1;
-                let h2 = (mass1.0 / mass2.0 * dv / 10.0) as i32 + 1;
-                // println!("health1: {}, h1: {}", health1.0, h1);
-                // println!("health2: {}, h2: {}", health2.0, h2);
-                health1.0 -= h1;
-                health2.0 -= h2;
+            let [mut time_a, mut time_b] = [0.0, time.delta_seconds()];
+            let mut contact_b = contact;
+            let [mut transform1_a, mut transform2_a] = [
+                rewind_with::<C>(*transform1, *velocity1, *angular_velocity1, time_b),
+                rewind_with::<C>(*transform2, *velocity2, *angular_velocity2, time_b),
+            ];
+            let [mut transform1_b, mut transform2_b] = [*transform1, *transform2];
+
+            // #[cfg(debug)]
+            // {
+            let [mut v1, mut v2] = [*velocity1, *velocity2];
+            let [mut w1, mut w2] = [*angular_velocity1, *angular_velocity2];
+            response::compute(
+                &transform1_b,
+                &transform2_b,
+                *mass1,
+                *mass2,
+                *moment_of_inertia1,
+                *moment_of_inertia2,
+                &mut v1,
+                &mut v2,
+                &mut w1,
+                &mut w2,
+                contact_b,
+            );
+            debug!(
+                "\nCollision detected at time tb\n\
+                translation 1b: {}, translation 2b: {}\n\
+		Standard response\n\
+		velocity 1b: {}, velocity 2b: {}\n\
+		Rewind\n\
+                translation 1a: {}, translation 2a: {}\n\
+                ta = {}, tb = {}, contact = {:?}",
+                transform1_b.translation,
+                transform2_b.translation,
+                v1.0,
+                v2.0,
+                transform1_a.translation,
+                transform2_a.translation,
+                time_a,
+                time_b,
+                contact
+            );
+            // }
+
+            // debug!(
+            //     "\nCollision detected\n\
+            // 	 translation 1: {}, velocity 1: {}\n\
+            // 	 translation 2: {}, velocity 2: {}\n\
+            // 	 ta = {}, tb = {}, contact = {:?}",
+            //     transform1.translation,
+            //     velocity1.0,
+            //     transform2.translation,
+            //     velocity2.0,
+            //     time_a,
+            //     time_b,
+            //     contact
+            // );
+            while time_b - time_a > EPSILON {
+                let time_ab = (time_a + time_b) / 2.0;
+                let dt = time_ab - time_a;
+                let [transform1_ab, transform2_ab] = [
+                    fastforward_with::<C>(transform1_a, *velocity1, *angular_velocity1, dt),
+                    fastforward_with::<C>(transform2_a, *velocity2, *angular_velocity2, dt),
+                ];
+                if let Some(contact) = detection::collision(
+                    transform1_ab,
+                    transform2_ab,
+                    &collider1,
+                    &collider2,
+                    Some(&meshes),
+                ) {
+                    contact_b = contact;
+                    [transform1_b, transform2_b] = [transform1_ab, transform2_ab];
+                    time_b = time_ab;
+                    debug!(
+                        "\nta = {}, tb = {}, contact = {:?}",
+                        time_a, time_b, contact_b
+                    );
+                } else {
+                    [transform1_a, transform2_a] = [transform1_ab, transform2_ab];
+                    time_a = time_ab;
+                    debug!(
+                        "\nta = {}, tb = {}, contact = {:?}",
+                        time_a, time_b, contact_b
+                    );
+                }
             }
-            cache.add(Collision(entity1, entity2));
+
+            // if !cache.contains(Collision(entity1, entity2)) {
+            response::compute(
+                &transform1_b,
+                &transform2_b,
+                *mass1,
+                *mass2,
+                *moment_of_inertia1,
+                *moment_of_inertia2,
+                &mut velocity1,
+                &mut velocity2,
+                &mut angular_velocity1,
+                &mut angular_velocity2,
+                contact_b,
+            );
+            [*transform1, *transform2] = [
+                fastforward_with::<C>(
+                    transform1_b,
+                    *velocity1,
+                    *angular_velocity1,
+                    time.delta_seconds() - time_b,
+                ),
+                fastforward_with::<C>(
+                    transform2_b,
+                    *velocity2,
+                    *angular_velocity2,
+                    time.delta_seconds() - time_b,
+                ),
+            ];
+            debug!(
+                "\nMore precise response\n\
+		 translation 1: {}, translation 2 :{}\n\
+		 velocity 1: {}, velocity 2: {}\n",
+                transform1.translation, transform2.translation, velocity1.0, velocity2.0,
+            );
+
+            let dv = (velocity1.0 - velocity2.0).length();
+            let h1 = (mass2.0 / mass1.0 * dv / 10.0) as i32 + 1;
+            let h2 = (mass1.0 / mass2.0 * dv / 10.0) as i32 + 1;
+            // println!("health1: {}, h1: {}", health1.0, h1);
+            // println!("health2: {}, h2: {}", health2.0, h2);
+            health1.0 -= h1;
+            health2.0 -= h2;
+            // }
+            // cache.add(Collision(entity1, entity2));
         }
     }
 }
@@ -345,5 +458,31 @@ pub fn among<C1: Component, C2: Component, C3: Component>(
             }
             cache.add(Collision(entity1, entity2));
         }
+    }
+}
+
+fn fastforward_with<C>(
+    transform: Transform,
+    velocity: Velocity,
+    angular_velocity: AngularVelocity,
+    time: f32,
+) -> Transform {
+    Transform {
+        translation: transform.translation + velocity.0 * time,
+        rotation: transform.rotation * Quat::from_axis_angle(Vec3::Z, angular_velocity.0 * time),
+        scale: transform.scale,
+    }
+}
+
+fn rewind_with<C>(
+    transform: Transform,
+    velocity: Velocity,
+    angular_velocity: AngularVelocity,
+    time: f32,
+) -> Transform {
+    Transform {
+        translation: transform.translation - velocity.0 * time,
+        rotation: transform.rotation * Quat::from_axis_angle(Vec3::Z, -angular_velocity.0 * time),
+        scale: transform.scale,
     }
 }

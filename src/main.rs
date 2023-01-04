@@ -99,9 +99,10 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .label("collision")
                 .after("movement")
-                .with_system(
-                    collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
-                )
+                // .with_system(
+                //     collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
+                // )
+                .with_system(collision::generic::with::<asteroid::Asteroid>)
                 // .with_system(collision::asteroid_fire_spaceship)
                 // .with_system(collision::with::<asteroid::Asteroid>)
                 // .with_system(collision::between::<asteroid::Asteroid, fire::Fire>)

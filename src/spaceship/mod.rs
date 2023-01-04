@@ -213,10 +213,10 @@ pub fn spawn(
     // spaceship.set_indices(Some(Indices::U32(indices)));
 
     let mesh_handle = meshes.add(mesh);
-    println!(
-        "spaceship\narea: {}\nmass: {}\nmoment of inertia: {}\n",
-        AREA, MASS, MOMENT_OF_INERTIA
-    );
+    // println!(
+    //     "spaceship\narea: {}\nmass: {}\nmoment of inertia: {}\n",
+    //     AREA, MASS, MOMENT_OF_INERTIA
+    // );
 
     commands
         .spawn(Spaceship)
@@ -434,16 +434,16 @@ pub fn movement(
 
             s_velocity.0 *= 1.0 - DRAG;
             s_angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
-            debug!("Spaceship velocity: {}", s_velocity.0);
+            // debug!("Spaceship velocity: {}", s_velocity.0);
         }
 
         s_transform.translation += s_velocity.0 * time.delta_seconds();
         s_transform.rotation *=
             Quat::from_axis_angle(Vec3::Z, s_angular_velocity.0 * time.delta_seconds());
 
-        println!(
-            "spaceship velocity: {}, angular velocity: {}",
-            s_velocity.0, s_angular_velocity.0
-        );
+        // println!(
+        //     "spaceship velocity: {}, angular velocity: {}",
+        //     s_velocity.0, s_angular_velocity.0
+        // );
     }
 }

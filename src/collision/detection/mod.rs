@@ -22,6 +22,7 @@ pub enum Topology {
     Triangles { mesh_handle: Mesh2dHandle },
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Contact {
     pub point: Vec2,
     pub normal: Vec2,
