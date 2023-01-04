@@ -106,7 +106,7 @@ pub fn rectangles_intersect(center1: Vec2, aabb1: Aabb, center2: Vec2, aabb2: Aa
 pub fn disk_intersects_line_segment(c: Vec2, r: f32, a: Vec2, b: Vec2) -> Option<Contact> {
     let m = point_of_line_segment_closest_to_point(c, a, b);
     let mc = c - m;
-    if mc.length() < r {
+    if mc.length() <= r {
         // println!("b");
         Some(Contact {
             point: m,
@@ -129,7 +129,7 @@ fn point_of_line_segment_closest_to_point(p: Vec2, a: Vec2, b: Vec2) -> Vec2 {
     // else m = h
     if ah.x.signum() != ab.x.signum() {
         a
-    } else if ah.x.abs() >= ab.x.abs() {
+    } else if ah.x.abs() > ab.x.abs() {
         b
     } else {
         a + ah

@@ -44,6 +44,12 @@ pub fn compute(
     let r1 = (contact.point - transform1.translation.truncate()).extend(0.0);
     let r2 = (contact.point - transform2.translation.truncate()).extend(0.0);
     let n = contact.normal.extend(0.0);
+    println!("point of contact: {}", contact.point);
+    println!("normal: {}", contact.normal);
+    println!("r1: {}", r1);
+    println!("r2: {}", r2);
+    println!("r1 ^ n: {}", r1.cross(n).z);
+    println!("r2 ^ n: {}", r2.cross(n).z);
     let j = -(1.0 + RESTITUTION)
         * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
         / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
