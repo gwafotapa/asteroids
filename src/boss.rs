@@ -123,7 +123,7 @@ const A15: Vec3 = Vec3 {
 //     A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15,
 // ];
 
-const ACCELERATION: f32 = 0.15;
+const ACCELERATION: f32 = 500.0;
 const ANGULAR_DRAG: f32 = 0.25;
 const DRAG: f32 = 0.05;
 const ATTACK_COLOR: Color = Color::RED;
@@ -132,7 +132,7 @@ const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const CORE_HEALTH: i32 = 50;
 const EDGE_HEALTH: i32 = 1;
-const FIRE_VELOCITY: f32 = 8.0;
+const FIRE_VELOCITY: f32 = 400.0;
 const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE as f32;
 const FIRE_RANGE: u32 = 100;
 const FIRE_VERTICES: usize = 32;
@@ -147,7 +147,7 @@ const FIRE_IMPACT_VERTICES: usize = 32;
 //     z: BOSS_Z,
 // };
 // const ROTATION_SPEED: f32 = 0.0;
-const ROTATION_SPEED: f32 = 0.01;
+const ROTATION_SPEED: f32 = 20.0;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
@@ -323,6 +323,7 @@ pub fn movement(
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Boss>)>,
     cache: Res<Cache>,
     query_boss_entity: Query<Entity, Or<(With<BossCore>, With<BossEdge>)>>,
+    time: Res<Time>,
 ) {
     if let Ok((mut angular_velocity, boss, mut b_transform, mut velocity)) =
         query_boss.get_single_mut()
@@ -341,24 +342,25 @@ pub fn movement(
                     let mut rng = rand::thread_rng();
                     let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
                     direction = Quat::from_axis_angle(Vec3::Z, angle) * direction;
-                    velocity.0 += ACCELERATION * direction;
-                    angular_velocity.0 += ROTATION_SPEED;
+                    velocity.0 += ACCELERATION * time.delta_seconds() * direction;
+                    angular_velocity.0 += ROTATION_SPEED * time.delta_seconds();
                 } else {
                     let direction = (s_transform.translation - b_transform.translation).normalize();
-                    velocity.0 += 2.0 * ACCELERATION * direction;
-                    angular_velocity.0 += 2.0 * ROTATION_SPEED;
+                    velocity.0 += 2.0 * ACCELERATION * time.delta_seconds() * direction;
+                    angular_velocity.0 += 2.0 * ROTATION_SPEED * time.delta_seconds();
                 }
             } else {
                 // velocity.0 += Vec3::ZERO;
-                angular_velocity.0 -= ROTATION_SPEED;
+                angular_velocity.0 -= ROTATION_SPEED * time.delta_seconds();
             }
 
             velocity.0 *= 1.0 - DRAG;
             angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
         }
 
-        b_transform.translation += velocity.0;
-        b_transform.rotation *= Quat::from_axis_angle(Vec3::Z, angular_velocity.0);
+        b_transform.translation += velocity.0 * time.delta_seconds();
+        b_transform.rotation *=
+            Quat::from_axis_angle(Vec3::Z, angular_velocity.0 * time.delta_seconds());
     }
 }
 

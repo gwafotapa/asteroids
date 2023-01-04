@@ -13,18 +13,24 @@ pub struct Wreckage;
 #[derive(Component)]
 pub struct WreckageDebris;
 
-pub fn update_debris(mut query: Query<(&mut Transform, &Velocity), With<WreckageDebris>>) {
+pub fn update_debris(
+    mut query: Query<(&mut Transform, &Velocity), With<WreckageDebris>>,
+    time: Res<Time>,
+) {
     for (mut transform, velocity) in &mut query {
         transform.scale -= 1.0 / WRECKAGE_HEALTH as f32;
-        transform.translation += velocity.0;
+        transform.translation += velocity.0 * time.delta_seconds();
     }
 }
 
-pub fn update(mut query: Query<(&mut Health, &mut Transform, Option<&Velocity>), With<Wreckage>>) {
+pub fn update(
+    mut query: Query<(&mut Health, &mut Transform, Option<&Velocity>), With<Wreckage>>,
+    time: Res<Time>,
+) {
     for (mut health, mut transform, maybe_velocity) in &mut query {
         health.0 -= 1;
         if let Some(velocity) = maybe_velocity {
-            transform.translation += velocity.0;
+            transform.translation += velocity.0 * time.delta_seconds();
         }
     }
 }
@@ -40,25 +46,26 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Wrec
 pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    query: Query<
+    mut query: Query<
         (
             &Handle<ColorMaterial>,
             &Collider,
             Entity,
             // Option<&Parent>,
             // &GlobalTransform,
-            &Health,
+            &mut Health,
             // Option<&Velocity>,
         ),
         With<C>,
     >,
 ) {
     // for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
-    for (color, collider, id, health) in &query {
+    for (color, collider, id, mut health) in &mut query {
         if health.0 > 0 {
             continue;
         }
 
+        health.0 = 0;
         let mut rng = rand::thread_rng();
         // let color = materials.get(color).unwrap().color;
         // let velocity = maybe_parent

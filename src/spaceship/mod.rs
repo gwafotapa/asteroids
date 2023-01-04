@@ -11,7 +11,7 @@ use crate::{
 
 pub mod flame;
 
-pub const HEALTH: i32 = 100;
+pub const HEALTH: i32 = 10000;
 const AREA: f32 = (S2.x - S4.x) * S4.y + (S6.x - S8.x) * S8.y + (S10.x - S11.x) * (S10.y - S9.y)
     - (S6.x + 13.0) * 12.0; // looking at assets/spaceship.ggb
 const MASS: f32 = AREA;
@@ -24,8 +24,8 @@ pub const POSITION: Vec3 = Vec3 {
 };
 pub const Z: f32 = 500.0;
 
-const ACCELERATION: f32 = 0.1;
-const ANGULAR_DRAG: f32 = 0.5;
+const ACCELERATION: f32 = 500.0;
+const ANGULAR_DRAG: f32 = 0.1;
 const ATTACK_COLOR: Color = Color::YELLOW;
 const ATTACK_SOURCE: Vec3 = S2;
 const BLAST_RADIUS: f32 = 8.0;
@@ -38,12 +38,12 @@ const FIRE_IMPACT_VERTICES: usize = 16;
 const FIRE_RADIUS: f32 = 3.0 / FIRE_RANGE as f32;
 const FIRE_RANGE: u32 = 20;
 const FIRE_VELOCITY: Vec3 = Vec3 {
-    x: 20.0,
+    x: 1200.0,
     y: 0.0,
     z: 0.0,
 };
 const FIRE_VERTICES: usize = 4;
-const ROTATION_SPEED: f32 = 0.03;
+const ROTATION_SPEED: f32 = 20.0;
 
 // Center of gravity of the spaceship
 // const SG: Vec3 = Vec3 {
@@ -404,6 +404,7 @@ pub fn movement(
         With<Spaceship>,
     >,
     query_bindings: Query<&KeyboardBindings>,
+    time: Res<Time>,
 ) {
     let bindings = query_bindings.single();
 
@@ -412,19 +413,23 @@ pub fn movement(
     {
         if !cache.contains_entity(spaceship) {
             if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
-                s_angular_velocity.0 += ROTATION_SPEED;
+                s_angular_velocity.0 += ROTATION_SPEED * time.delta_seconds();
                 // s_angular_velocity.0 =
                 // ROTATION_SPEED_MAX.min(s_angular_velocity.0 + ROTATION_SPEED);
             } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
-                s_angular_velocity.0 -= ROTATION_SPEED;
+                s_angular_velocity.0 -= ROTATION_SPEED * time.delta_seconds();
                 // s_angular_velocity.0 =
                 //     -ROTATION_SPEED_MAX.max(s_angular_velocity.0 - ROTATION_SPEED);
             }
 
             if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
-                s_velocity.0 += ACCELERATION * (s_transform.rotation * Vec3::X);
+                s_velocity.0 +=
+                    ACCELERATION * time.delta_seconds() * (s_transform.rotation * Vec3::X);
             } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
-                s_velocity.0 += 0.5 * ACCELERATION * (s_transform.rotation * Vec3::NEG_X);
+                s_velocity.0 += 0.5
+                    * ACCELERATION
+                    * time.delta_seconds()
+                    * (s_transform.rotation * Vec3::NEG_X);
             }
 
             s_velocity.0 *= 1.0 - DRAG;
@@ -432,7 +437,13 @@ pub fn movement(
             debug!("Spaceship velocity: {}", s_velocity.0);
         }
 
-        s_transform.translation += s_velocity.0;
-        s_transform.rotation *= Quat::from_axis_angle(Vec3::Z, s_angular_velocity.0);
+        s_transform.translation += s_velocity.0 * time.delta_seconds();
+        s_transform.rotation *=
+            Quat::from_axis_angle(Vec3::Z, s_angular_velocity.0 * time.delta_seconds());
+
+        println!(
+            "spaceship velocity: {}, angular velocity: {}",
+            s_velocity.0, s_angular_velocity.0
+        );
     }
 }

@@ -15,7 +15,8 @@ use crate::{
     WINDOW_WIDTH,
 };
 
-const VELOCITY_LENGTH_MAX: f32 = 5.0;
+const VELOCITY_MIN: f32 = 100.0;
+const VELOCITY_MAX: f32 = 500.0;
 const HEALTH_MAX: i32 = 60;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
@@ -38,7 +39,7 @@ pub fn spawn(
     // let mass = 0.3 * health as f32;
     let mass = area;
     let moment_of_inertia = 0.5 * mass * radius.powi(2);
-    let rho = rng.gen_range(1.0..VELOCITY_LENGTH_MAX);
+    let rho = rng.gen_range(VELOCITY_MIN..VELOCITY_MAX);
     let theta = rng.gen_range(0.0..2.0 * PI);
     let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);
     let angular_velocity = rng.gen_range(0.0..0.01);
@@ -135,6 +136,7 @@ pub fn update(
         With<Asteroid>,
     >,
     query_camera: Query<&Transform, (With<Camera>, Without<Asteroid>)>,
+    time: Res<Time>,
 ) {
     let Vec3 { x: xc, y: yc, z: _ } = query_camera.single().translation;
     for (a_angular_velocity, a_id, mut _a_health, mut a_transform, a_velocity) in
@@ -145,8 +147,9 @@ pub fn update(
             // a_health.0 = 0;
             commands.entity(a_id).despawn();
         } else {
-            a_transform.translation += a_velocity.0;
-            a_transform.rotation *= Quat::from_axis_angle(Vec3::Z, a_angular_velocity.0);
+            a_transform.translation += a_velocity.0 * time.delta_seconds();
+            a_transform.rotation *=
+                Quat::from_axis_angle(Vec3::Z, a_angular_velocity.0 * time.delta_seconds());
         }
     }
 }

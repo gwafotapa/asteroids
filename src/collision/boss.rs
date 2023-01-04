@@ -58,7 +58,7 @@ pub fn with_fire(
             {
                 f_health.0 = 0;
 
-                if bp_edge.is_some() || boss.edges == 1 {
+                if bp_edge.is_some() || boss.edges == 0 {
                     bp_health.0 -= 1;
                     let [fr, fg, fb, _] = materials.get(f_color).unwrap().color.as_rgba_f32();
                     let bp_color = materials.get_mut(bp_color).unwrap();

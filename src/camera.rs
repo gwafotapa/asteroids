@@ -13,7 +13,7 @@ pub const INITIAL_POSITION: Vec3 = Vec3 {
     y: WINDOW_HEIGHT / 2.0,
     z: CAMERA_Z,
 };
-const SPEED: f32 = 0.02;
+const SPEED: f32 = 2.0;
 const REAR_GAP: f32 = 200.0;
 
 #[derive(Component, Eq, PartialEq)]
@@ -54,13 +54,14 @@ pub fn update(
     query_spaceship: Query<(&Transform, &Velocity), (With<Spaceship>, Without<Camera>)>,
     query_bindings: Query<&KeyboardBindings>,
     // game_state: Res<CurrentState<GameState>>,
+    time: Res<Time>,
 ) {
     // let (mut c_positioning, mut c_transform, mut c_config) = query_camera.single_mut();
     // c_config.show_ui = game_state.0 == GameState::MainMenu || game_state.0 == GameState::Paused;
     if let Ok((s_transform, s_velocity)) = query_spaceship.get_single() {
         let (mut c_positioning, mut c_transform) = query_camera.single_mut();
 
-        c_transform.translation += s_velocity.0;
+        c_transform.translation += s_velocity.0 * time.delta_seconds();
 
         if keys.just_pressed(query_bindings.single().camera()) {
             *c_positioning = match *c_positioning {
@@ -102,14 +103,14 @@ pub fn update(
             }
             let c_destination = s_transform.translation + Vec3::new(x, y, CAMERA_Z - spaceship::Z);
             let c_path = c_destination - c_transform.translation;
-            c_transform.translation += SPEED * c_path;
+            c_transform.translation += SPEED * time.delta_seconds() * c_path;
         } else {
             let direction = Vec3 {
                 x: s_transform.translation.x - c_transform.translation.x,
                 y: s_transform.translation.y - c_transform.translation.y,
                 z: 0.0,
             };
-            c_transform.translation += SPEED * direction;
+            c_transform.translation += SPEED * time.delta_seconds() * direction;
         }
         // } else {
         //     let c_destination;
