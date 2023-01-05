@@ -8,10 +8,15 @@ use crate::{Health, Spaceship, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const WIDTH: f32 = 200.0;
 const HEIGHT: f32 = 10.0;
-const POSITION: Vec3 = Vec3 {
+const OUTLINE_POSITION: Vec3 = Vec3 {
     x: -WINDOW_WIDTH / 2.0,
     y: WINDOW_HEIGHT / 2.0,
-    z: 0.0,
+    z: 0.0, // above the background of stars
+};
+const CONTENTS_POSITION: Vec3 = Vec3 {
+    x: OUTLINE_POSITION.x,
+    y: OUTLINE_POSITION.y,
+    z: OUTLINE_POSITION.z - 1.0,
 };
 const COLOR_OUTLINE: Color = Color::WHITE;
 const COLOR_CONTENTS: Color = Color::BLUE;
@@ -41,7 +46,7 @@ pub fn spawn(
                 // .add(shape::Quad::new(Vec2::new(WIDTH, HEIGHT)).into())
                 .add(mesh)
                 .into(),
-            transform: Transform::from_translation(POSITION),
+            transform: Transform::from_translation(OUTLINE_POSITION),
             material: materials.add(COLOR_OUTLINE.into()),
             ..default()
         })
@@ -58,7 +63,7 @@ pub fn spawn(
                 // .add(shape::Quad::new(Vec2::new(WIDTH, HEIGHT)).into())
                 .add(mesh)
                 .into(),
-            transform: Transform::from_translation(POSITION),
+            transform: Transform::from_translation(CONTENTS_POSITION),
             material: materials.add(COLOR_CONTENTS.into()),
             ..default()
         })
