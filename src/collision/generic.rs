@@ -143,8 +143,8 @@ fn contact_binary_search_with<C: Component>(
     ) {
         let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
         let [mut transform1_a, mut transform2_a] = [
-            rewind_with::<C>(transform1, velocity1, angular_velocity1, time_c),
-            rewind_with::<C>(transform2, velocity2, angular_velocity2, time_c),
+            transform_at_time(transform1, -time_c, velocity1, angular_velocity1),
+            transform_at_time(transform2, -time_c, velocity2, angular_velocity2),
         ];
         let [mut transform1_c, mut transform2_c] = [transform1, transform2];
 
@@ -184,10 +184,9 @@ fn contact_binary_search_with<C: Component>(
 
         while time_c - time_a > EPSILON {
             let time_b = (time_a + time_c) / 2.0;
-            let dt = time_b - time_a;
             let [transform1_b, transform2_b] = [
-                fastforward_with::<C>(transform1_a, velocity1, angular_velocity1, dt),
-                fastforward_with::<C>(transform2_a, velocity2, angular_velocity2, dt),
+                transform_at_time(transform1_a, time_b - time_a, velocity1, angular_velocity1),
+                transform_at_time(transform2_a, time_b - time_a, velocity2, angular_velocity2),
             ];
             if let Some(contact_b) = detection::collision(
                 transform1_b,
@@ -291,17 +290,17 @@ pub fn with<C: Component>(
                 contact,
             );
             [*transform1, *transform2] = [
-                fastforward_with::<C>(
+                transform_at_time(
                     transform1_c,
+                    time.delta_seconds() - time_c,
                     *velocity1,
                     *angular_velocity1,
-                    time.delta_seconds() - time_c,
                 ),
-                fastforward_with::<C>(
+                transform_at_time(
                     transform2_c,
+                    time.delta_seconds() - time_c,
                     *velocity2,
                     *angular_velocity2,
-                    time.delta_seconds() - time_c,
                 ),
             ];
             debug!(
@@ -482,28 +481,15 @@ pub fn among<C1: Component, C2: Component, C3: Component>(
     }
 }
 
-fn fastforward_with<C>(
+fn transform_at_time(
     transform: Transform,
+    time: f32,
     velocity: Velocity,
     angular_velocity: AngularVelocity,
-    time: f32,
 ) -> Transform {
     Transform {
         translation: transform.translation + velocity.0 * time,
         rotation: transform.rotation * Quat::from_axis_angle(Vec3::Z, angular_velocity.0 * time),
-        scale: transform.scale,
-    }
-}
-
-fn rewind_with<C>(
-    transform: Transform,
-    velocity: Velocity,
-    angular_velocity: AngularVelocity,
-    time: f32,
-) -> Transform {
-    Transform {
-        translation: transform.translation - velocity.0 * time,
-        rotation: transform.rotation * Quat::from_axis_angle(Vec3::Z, -angular_velocity.0 * time),
         scale: transform.scale,
     }
 }
