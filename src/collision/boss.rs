@@ -16,7 +16,7 @@ use super::{
 };
 
 pub fn with_fire(
-    meshes: ResMut<Assets<Mesh>>,
+    meshes: Res<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_fire: Query<
         (
@@ -52,7 +52,7 @@ pub fn with_fire(
                 bp_global_transform,
                 f_collider,
                 bp_collider,
-                Some(&meshes),
+                Some(Res::clone(&meshes)),
             )
             .is_some()
             {
@@ -134,7 +134,7 @@ pub fn with_asteroid_or_spaceship(
                     bp_global_transform,
                     &as_collider,
                     &bp_collider,
-                    Some(&meshes),
+                    Some(Res::clone(&meshes)),
                 ) {
                     // TODO
                     // contact.normal = (as_transform.translation - b_transform.translation)

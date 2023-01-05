@@ -355,7 +355,7 @@ pub fn collision(
     t2: Transform,
     c1: &Collider,
     c2: &Collider,
-    meshes: Option<&Assets<Mesh>>,
+    meshes: Option<Res<Assets<Mesh>>>,
 ) -> Option<Contact> {
     if !rectangles_intersect(
         t1.translation.truncate(),
@@ -432,12 +432,14 @@ pub fn collision(
             },
         ) => {
             if let Some(VertexAttributeValues::Float32x3(vertices1)) = meshes
+                .as_ref()
                 .unwrap()
                 .get(&mesh_handle1.0)
                 .unwrap()
                 .attribute(Mesh::ATTRIBUTE_POSITION)
             {
                 if let Some(VertexAttributeValues::Float32x3(vertices2)) = meshes
+                    .as_ref()
                     .unwrap()
                     .get(&mesh_handle2.0)
                     .unwrap()

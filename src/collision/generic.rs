@@ -4,7 +4,7 @@ use crate::{AngularVelocity, Health, Mass, MomentOfInertia, Velocity};
 
 use super::{
     cache::{Cache, Collision},
-    detection::{self, Collider},
+    detection::{self, Collider, Contact},
     response,
 };
 
@@ -118,6 +118,107 @@ const EPSILON: f32 = 0.01;
 //     }
 // }
 
+fn contact_binary_search_with<C: Component>(
+    mass1: Mass,
+    mass2: Mass,
+    moment_of_inertia1: MomentOfInertia,
+    moment_of_inertia2: MomentOfInertia,
+    transform1: Transform,
+    transform2: Transform,
+    velocity1: Velocity,
+    velocity2: Velocity,
+    angular_velocity1: AngularVelocity,
+    angular_velocity2: AngularVelocity,
+    collider1: &Collider,
+    collider2: &Collider,
+    meshes: Res<Assets<Mesh>>,
+    time: Res<Time>,
+) -> Option<(Contact, f32, Transform, Transform)> {
+    if let Some(mut contact_c) = detection::collision(
+        transform1,
+        transform2,
+        collider1,
+        collider2,
+        Some(Res::clone(&meshes)),
+    ) {
+        let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
+        let [mut transform1_a, mut transform2_a] = [
+            rewind_with::<C>(transform1, velocity1, angular_velocity1, time_c),
+            rewind_with::<C>(transform2, velocity2, angular_velocity2, time_c),
+        ];
+        let [mut transform1_c, mut transform2_c] = [transform1, transform2];
+
+        let [mut v1, mut v2] = [velocity1, velocity2];
+        let [mut w1, mut w2] = [angular_velocity1, angular_velocity2];
+        response::compute(
+            &transform1_c,
+            &transform2_c,
+            mass1,
+            mass2,
+            moment_of_inertia1,
+            moment_of_inertia2,
+            &mut v1,
+            &mut v2,
+            &mut w1,
+            &mut w2,
+            contact_c,
+        );
+        debug!(
+            "\nCollision detected at time tc\n\
+                translation 1c: {}, translation 2c: {}\n\
+		Standard response\n\
+		velocity 1c: {}, velocity 2c: {}\n\
+		Rewind\n\
+                translation 1a: {}, translation 2a: {}\n\
+                ta = {}, tc = {}, contact = {:?}",
+            transform1_c.translation,
+            transform2_c.translation,
+            v1.0,
+            v2.0,
+            transform1_a.translation,
+            transform2_a.translation,
+            time_a,
+            time_c,
+            contact_c
+        );
+
+        while time_c - time_a > EPSILON {
+            let time_b = (time_a + time_c) / 2.0;
+            let dt = time_b - time_a;
+            let [transform1_b, transform2_b] = [
+                fastforward_with::<C>(transform1_a, velocity1, angular_velocity1, dt),
+                fastforward_with::<C>(transform2_a, velocity2, angular_velocity2, dt),
+            ];
+            if let Some(contact_b) = detection::collision(
+                transform1_b,
+                transform2_b,
+                collider1,
+                collider2,
+                Some(Res::clone(&meshes)),
+            ) {
+                contact_c = contact_b;
+                [transform1_c, transform2_c] = [transform1_b, transform2_b];
+                time_c = time_b;
+                debug!(
+                    "\nta = {}, tc = {}, contact = {:?}",
+                    time_a, time_c, contact_c
+                );
+            } else {
+                [transform1_a, transform2_a] = [transform1_b, transform2_b];
+                time_a = time_b;
+                debug!(
+                    "\nta = {}, tc = {}, contact = {:?}",
+                    time_a, time_c, contact_c
+                );
+            }
+        }
+
+        Some((contact_c, time_c, transform1_c, transform2_c))
+    } else {
+        None
+    }
+}
+
 pub fn with<C: Component>(
     meshes: Res<Assets<Mesh>>,
     mut cache: ResMut<Cache>,
@@ -159,106 +260,26 @@ pub fn with<C: Component>(
         )],
     ) = combinations.fetch_next()
     {
-        if let Some(contact) = detection::collision(
+        if let Some((contact, time_c, transform1_c, transform2_c)) = contact_binary_search_with::<C>(
+            *mass1,
+            *mass2,
+            *moment_of_inertia1,
+            *moment_of_inertia2,
             *transform1,
             *transform2,
-            &collider1,
-            &collider2,
-            Some(&meshes),
+            *velocity1,
+            *velocity2,
+            *angular_velocity1,
+            *angular_velocity2,
+            collider1,
+            collider2,
+            Res::clone(&meshes),
+            Res::clone(&time),
         ) {
-            let [mut time_a, mut time_b] = [0.0, time.delta_seconds()];
-            let mut contact_b = contact;
-            let [mut transform1_a, mut transform2_a] = [
-                rewind_with::<C>(*transform1, *velocity1, *angular_velocity1, time_b),
-                rewind_with::<C>(*transform2, *velocity2, *angular_velocity2, time_b),
-            ];
-            let [mut transform1_b, mut transform2_b] = [*transform1, *transform2];
-
-            // #[cfg(debug)]
-            // {
-            let [mut v1, mut v2] = [*velocity1, *velocity2];
-            let [mut w1, mut w2] = [*angular_velocity1, *angular_velocity2];
-            response::compute(
-                &transform1_b,
-                &transform2_b,
-                *mass1,
-                *mass2,
-                *moment_of_inertia1,
-                *moment_of_inertia2,
-                &mut v1,
-                &mut v2,
-                &mut w1,
-                &mut w2,
-                contact_b,
-            );
-            debug!(
-                "\nCollision detected at time tb\n\
-                translation 1b: {}, translation 2b: {}\n\
-		Standard response\n\
-		velocity 1b: {}, velocity 2b: {}\n\
-		Rewind\n\
-                translation 1a: {}, translation 2a: {}\n\
-                ta = {}, tb = {}, contact = {:?}",
-                transform1_b.translation,
-                transform2_b.translation,
-                v1.0,
-                v2.0,
-                transform1_a.translation,
-                transform2_a.translation,
-                time_a,
-                time_b,
-                contact
-            );
-            // }
-
-            // debug!(
-            //     "\nCollision detected\n\
-            // 	 translation 1: {}, velocity 1: {}\n\
-            // 	 translation 2: {}, velocity 2: {}\n\
-            // 	 ta = {}, tb = {}, contact = {:?}",
-            //     transform1.translation,
-            //     velocity1.0,
-            //     transform2.translation,
-            //     velocity2.0,
-            //     time_a,
-            //     time_b,
-            //     contact
-            // );
-            while time_b - time_a > EPSILON {
-                let time_ab = (time_a + time_b) / 2.0;
-                let dt = time_ab - time_a;
-                let [transform1_ab, transform2_ab] = [
-                    fastforward_with::<C>(transform1_a, *velocity1, *angular_velocity1, dt),
-                    fastforward_with::<C>(transform2_a, *velocity2, *angular_velocity2, dt),
-                ];
-                if let Some(contact) = detection::collision(
-                    transform1_ab,
-                    transform2_ab,
-                    &collider1,
-                    &collider2,
-                    Some(&meshes),
-                ) {
-                    contact_b = contact;
-                    [transform1_b, transform2_b] = [transform1_ab, transform2_ab];
-                    time_b = time_ab;
-                    debug!(
-                        "\nta = {}, tb = {}, contact = {:?}",
-                        time_a, time_b, contact_b
-                    );
-                } else {
-                    [transform1_a, transform2_a] = [transform1_ab, transform2_ab];
-                    time_a = time_ab;
-                    debug!(
-                        "\nta = {}, tb = {}, contact = {:?}",
-                        time_a, time_b, contact_b
-                    );
-                }
-            }
-
             // if !cache.contains(Collision(entity1, entity2)) {
             response::compute(
-                &transform1_b,
-                &transform2_b,
+                &transform1_c,
+                &transform2_c,
                 *mass1,
                 *mass2,
                 *moment_of_inertia1,
@@ -267,20 +288,20 @@ pub fn with<C: Component>(
                 &mut velocity2,
                 &mut angular_velocity1,
                 &mut angular_velocity2,
-                contact_b,
+                contact,
             );
             [*transform1, *transform2] = [
                 fastforward_with::<C>(
-                    transform1_b,
+                    transform1_c,
                     *velocity1,
                     *angular_velocity1,
-                    time.delta_seconds() - time_b,
+                    time.delta_seconds() - time_c,
                 ),
                 fastforward_with::<C>(
-                    transform2_b,
+                    transform2_c,
                     *velocity2,
                     *angular_velocity2,
-                    time.delta_seconds() - time_b,
+                    time.delta_seconds() - time_c,
                 ),
             ];
             debug!(
@@ -360,7 +381,7 @@ pub fn between<C1: Component, C2: Component>(
                 *c2_transform,
                 &c1_collider,
                 &c2_collider,
-                Some(&meshes),
+                Some(Res::clone(&meshes)),
             ) {
                 if !cache.contains(Collision(c1_entity, c2_entity)) {
                     response::compute(
@@ -432,7 +453,7 @@ pub fn among<C1: Component, C2: Component, C3: Component>(
             *transform2,
             &collider1,
             &collider2,
-            Some(&meshes),
+            Some(Res::clone(&meshes)),
         ) {
             if !cache.contains(Collision(entity1, entity2)) {
                 response::compute(
