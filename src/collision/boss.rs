@@ -154,7 +154,7 @@ pub fn with_asteroid_or_spaceship(
         for (
             mut as_angular_velocity,
             as_collider,
-            spaceship,
+            as_id,
             mut _as_health,
             as_mass,
             as_moment_of_inertia,
@@ -346,18 +346,15 @@ pub fn intersection_with_other_at(
                 contact_c = contact_b;
                 [b_transform_c, o_transform_c] = [b_transform_b, o_transform_b];
                 time_c = time_b;
-                debug!(
-                    "\nta = {}, tc = {}, contact = {:?}",
-                    time_a, time_c, contact_c
-                );
             } else {
                 [b_transform_a, o_transform_a] = [b_transform_b, o_transform_b];
                 time_a = time_b;
-                debug!(
-                    "\nta = {}, tc = {}, contact = {:?}",
-                    time_a, time_c, contact_c
-                );
             }
+
+            debug!(
+                "\nta = {}, tc = {}, contact = {:?}",
+                time_a, time_c, contact_c
+            );
         }
 
         Some((contact_c, time_c, b_transform_c, o_transform_c))
@@ -365,17 +362,3 @@ pub fn intersection_with_other_at(
         None
     }
 }
-
-// pub fn transform_at_time(
-//     b_transform: Transform,
-//     bp_transform: Transform,
-//     time: f32,
-//     b_velocity: Velocity,
-//     b_angular_velocity: AngularVelocity,
-// ) -> Transform {
-//     Transform {
-//         translation: transform.translation + velocity.0 * time,
-//         rotation: transform.rotation * Quat::from_axis_angle(Vec3::Z, angular_velocity.0 * time),
-//         scale: transform.scale,
-//     }
-// }

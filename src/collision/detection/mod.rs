@@ -5,7 +5,7 @@ use triangle::TriangleXY;
 
 pub mod triangle;
 
-pub const EPSILON: f32 = 0.01;
+pub const EPSILON: f32 = 0.001;
 
 #[derive(Clone, Component)]
 pub struct Collider {
@@ -507,12 +507,12 @@ pub fn intersection_at(
         );
         debug!(
             "\nCollision detected at time tc\n\
-                translation 1c: {}, translation 2c: {}\n\
-		Standard response\n\
-		velocity 1c: {}, velocity 2c: {}\n\
-		Rewind\n\
-                translation 1a: {}, translation 2a: {}\n\
-                ta = {}, tc = {}, contact = {:?}",
+             translation 1c: {}, translation 2c: {}\n\
+	     Standard response\n\
+	     velocity 1c: {}, velocity 2c: {}\n\
+	     Rewind\n\
+             translation 1a: {}, translation 2a: {}\n\
+             ta = {}, tc = {}, contact = {:?}",
             transform1_c.translation,
             transform2_c.translation,
             v1.0,
@@ -540,18 +540,15 @@ pub fn intersection_at(
                 contact_c = contact_b;
                 [transform1_c, transform2_c] = [transform1_b, transform2_b];
                 time_c = time_b;
-                debug!(
-                    "\nta = {}, tc = {}, contact = {:?}",
-                    time_a, time_c, contact_c
-                );
             } else {
                 [transform1_a, transform2_a] = [transform1_b, transform2_b];
                 time_a = time_b;
-                debug!(
-                    "\nta = {}, tc = {}, contact = {:?}",
-                    time_a, time_c, contact_c
-                );
             }
+
+            debug!(
+                "\nta = {}, tc = {}, contact = {:?}",
+                time_a, time_c, contact_c
+            );
         }
 
         Some((contact_c, time_c, transform1_c, transform2_c))
