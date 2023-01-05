@@ -58,9 +58,6 @@ pub fn with_fire(
         query_boss.single();
     for (bp_edge, bp_collider, bp_color, mut bp_health, bp_transform) in query_boss_part.iter_mut()
     {
-        let bp_global_transform =
-            Transform::from_translation(b_transform.transform_point(bp_transform.translation))
-                .with_rotation(b_transform.rotation * bp_transform.rotation);
         for (
             f_angular_velocity,
             f_collider,
@@ -72,23 +69,26 @@ pub fn with_fire(
             f_velocity,
         ) in query_fire.iter_mut()
         {
-            if let Some((contact, time_c, transform1_c, transform2_c)) = detection::intersection_at(
-                *f_mass,
-                *b_mass,
-                *f_moment_of_inertia,
-                *b_moment_of_inertia,
-                *f_transform,
-                bp_global_transform,
-                *f_velocity,
-                *b_velocity,
-                *f_angular_velocity,
-                *b_angular_velocity,
-                f_collider,
-                bp_collider,
-                Res::clone(&meshes),
-                Res::clone(&time),
-            ) {
-                *f_transform = transform1_c;
+            if let Some((_contact, _time_c, _b_transform_c, o_transform_c)) =
+                intersection_with_other_at(
+                    *b_mass,
+                    *f_mass,
+                    *b_moment_of_inertia,
+                    *f_moment_of_inertia,
+                    *b_transform,
+                    *bp_transform,
+                    *f_transform,
+                    *b_velocity,
+                    *f_velocity,
+                    *b_angular_velocity,
+                    *f_angular_velocity,
+                    bp_collider,
+                    f_collider,
+                    Res::clone(&meshes),
+                    Res::clone(&time),
+                )
+            {
+                *f_transform = o_transform_c;
                 f_health.0 = 0;
 
                 if bp_edge.is_some() || boss.edges == 0 {
@@ -163,24 +163,21 @@ pub fn with_asteroid_or_spaceship(
         ) in query_asteroid_spaceship.iter_mut()
         {
             for (bp_collider, bp_transform) in query_boss_part.iter_mut() {
-                let bp_global_transform = Transform::from_translation(
-                    b_transform.transform_point(bp_transform.translation),
-                )
-                .with_rotation(b_transform.rotation * bp_transform.rotation);
-                if let Some((contact, time_c, as_transform_c, bp_transform_c)) =
-                    detection::intersection_at(
-                        *as_mass,
+                if let Some((contact, time_c, b_transform_c, as_transform_c)) =
+                    intersection_with_other_at(
                         *b_mass,
-                        *as_moment_of_inertia,
+                        *as_mass,
                         *b_moment_of_inertia,
+                        *as_moment_of_inertia,
+                        *b_transform,
+                        *bp_transform,
                         *as_transform,
-                        bp_global_transform,
-                        *as_velocity,
                         *b_velocity,
-                        *as_angular_velocity,
+                        *as_velocity,
                         *b_angular_velocity,
-                        as_collider,
+                        *as_angular_velocity,
                         bp_collider,
+                        as_collider,
                         Res::clone(&meshes),
                         Res::clone(&time),
                     )
@@ -206,16 +203,16 @@ pub fn with_asteroid_or_spaceship(
                     // println!("spaceship -- w1: {}", as_angular_velocity.0);
                     // println!("boss      -- w2: {}", b_angular_velocity.0);
                     response::compute(
-                        &mut as_transform,
-                        &mut b_transform,
-                        *as_mass,
+                        &transform::global_of(*bp_transform, b_transform_c),
+                        &as_transform_c,
                         *b_mass,
-                        *as_moment_of_inertia,
+                        *as_mass,
                         *b_moment_of_inertia,
-                        &mut as_velocity,
+                        *as_moment_of_inertia,
                         &mut b_velocity,
-                        &mut as_angular_velocity,
+                        &mut as_velocity,
                         &mut b_angular_velocity,
+                        &mut as_angular_velocity,
                         contact,
                     );
                     [*as_transform, *b_transform] = [
@@ -227,19 +224,19 @@ pub fn with_asteroid_or_spaceship(
                         ),
                         transform::at(
                             time.delta_seconds() - time_c,
-                            bp_transform_c,
+                            b_transform_c,
                             *b_velocity,
                             *b_angular_velocity,
                         ),
                     ];
                     debug!(
                         "\nMore precise response\n\
-			 translation 1: {}, translation 2 :{}\n\
-			 velocity 1: {}, velocity 2: {}\n",
-                        as_transform.translation,
+			 boss translation: {}, other translation:{}\n\
+			 boss velocity: {}, other velocity: {}\n",
                         b_transform.translation,
-                        as_velocity.0,
+                        as_transform.translation,
                         b_velocity.0,
+                        as_velocity.0,
                     );
 
                     // println!("spaceship -- w'1: {}", as_angular_velocity.0);
@@ -255,127 +252,119 @@ pub fn with_asteroid_or_spaceship(
     }
 }
 
-// pub fn intersection_with_other_at(
-//     b_mass: Mass,
-//     o_mass: Mass,
-//     b_moment_of_inertia: MomentOfInertia,
-//     o_moment_of_inertia: MomentOfInertia,
-//     b_transform: Transform,
-//     bp_transform: Transform,
-//     o_transform: Transform,
-//     b_velocity: Velocity,
-//     o_velocity: Velocity,
-//     b_angular_velocity: AngularVelocity,
-//     o_angular_velocity: AngularVelocity,
-//     bp_collider: &Collider,
-//     o_collider: &Collider,
-//     meshes: Res<Assets<Mesh>>,
-//     time: Res<Time>,
-// ) -> Option<(Contact, f32, Transform, Transform)> {
-//     let bp_global_transform =
-//         Transform::from_translation(b_transform.transform_point(bp_transform.translation))
-//             .with_rotation(b_transform.rotation * bp_transform.rotation);
-//     if let Some(mut contact_c) = detection::intersection(
-//         bp_global_transform,
-//         o_transform,
-//         bp_collider,
-//         o_collider,
-//         Some(Res::clone(&meshes)),
-//     ) {
-//         let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
-//         let [mut b_transform_a, mut o_transform_a] = [
-//             transform::at(-time_c, b_transform, b_velocity, b_angular_velocity),
-//             transform::at(-time_c, o_transform, o_velocity, o_angular_velocity),
-//         ];
-//         let mut bp_global_transform_a =
-//             Transform::from_translation(b_transform_a.transform_point(bp_transform.translation))
-//                 .with_rotation(b_transform_a.rotation * bp_transform.rotation);
-//         let [mut b_transform_c, mut o_transform_c] = [b_transform, o_transform];
+pub fn intersection_with_other_at(
+    b_mass: Mass,
+    o_mass: Mass,
+    b_moment_of_inertia: MomentOfInertia,
+    o_moment_of_inertia: MomentOfInertia,
+    b_transform: Transform,
+    bp_transform: Transform,
+    o_transform: Transform,
+    b_velocity: Velocity,
+    o_velocity: Velocity,
+    b_angular_velocity: AngularVelocity,
+    o_angular_velocity: AngularVelocity,
+    bp_collider: &Collider,
+    o_collider: &Collider,
+    meshes: Res<Assets<Mesh>>,
+    time: Res<Time>,
+) -> Option<(Contact, f32, Transform, Transform)> {
+    if let Some(mut contact_c) = detection::intersection(
+        transform::global_of(bp_transform, b_transform),
+        o_transform,
+        bp_collider,
+        o_collider,
+        Some(Res::clone(&meshes)),
+    ) {
+        let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
+        let [mut b_transform_a, mut o_transform_a] = [
+            transform::at(-time_c, b_transform, b_velocity, b_angular_velocity),
+            transform::at(-time_c, o_transform, o_velocity, o_angular_velocity),
+        ];
+        // let mut bp_global_transform_a =
+        //     transform::global_of(bp_transform, b_transform_a);
+        let [mut b_transform_c, mut o_transform_c] = [b_transform, o_transform];
 
-//         let [mut v1, mut v2] = [b_velocity, o_velocity];
-//         let [mut w1, mut w2] = [b_angular_velocity, o_angular_velocity];
-//         super::response::compute(
-//             &transform1_c,
-//             &transform2_c,
-//             b_mass,
-//             o_mass,
-//             b_moment_of_inertia,
-//             o_moment_of_inertia,
-//             &mut v1,
-//             &mut v2,
-//             &mut w1,
-//             &mut w2,
-//             contact_c,
-//         );
-//         debug!(
-//             "\nCollision detected at time tc\n\
-//              translation 1c: {}, translation 2c: {}\n\
-// 	     Standard response\n\
-// 	     velocity 1c: {}, velocity 2c: {}\n\
-// 	     Rewind\n\
-//              translation 1a: {}, translation 2a: {}\n\
-//              ta = {}, tc = {}, contact = {:?}",
-//             bp_global_transform_c.translation,
-//             o_transform_c.translation,
-//             v1.0,
-//             v2.0,
-//             bp_global_transform_a.translation,
-//             o_transform_a.translation,
-//             time_a,
-//             time_c,
-//             contact_c
-//         );
+        let [mut v1, mut v2] = [b_velocity, o_velocity];
+        let [mut w1, mut w2] = [b_angular_velocity, o_angular_velocity];
+        super::response::compute(
+            &transform::global_of(bp_transform, b_transform),
+            &o_transform,
+            b_mass,
+            o_mass,
+            b_moment_of_inertia,
+            o_moment_of_inertia,
+            &mut v1,
+            &mut v2,
+            &mut w1,
+            &mut w2,
+            contact_c,
+        );
+        debug!(
+            "\nCollision detected at time tc\n\
+             boss translation_c: {}, other translation_c: {}\n\
+	     Standard response\n\
+	     boss velocity: {}, other velocity: {}\n\
+	     Rewind\n\
+             boss translation_a: {}, other translation_a: {}\n\
+             ta = {}, tc = {}, contact = {:?}",
+            transform::global_of(bp_transform, b_transform_c).translation,
+            o_transform_c.translation,
+            v1.0,
+            v2.0,
+            transform::global_of(bp_transform, b_transform_a).translation,
+            o_transform_a.translation,
+            time_a,
+            time_c,
+            contact_c
+        );
 
-//         while time_c - time_a > detection::EPSILON {
-//             let time_b = (time_a + time_c) / 2.0;
-//             let [b_transform_b, o_transform_b] = [
-//                 transform::at(
-//                     time_b - time_a,
-//                     b_transform_a,
-//                     b_velocity,
-//                     b_angular_velocity,
-//                 ),
-//                 transform::at(
-//                     time_b - time_a,
-//                     o_transform_a,
-//                     o_velocity,
-//                     o_angular_velocity,
-//                 ),
-//             ];
-//             let bp_global_transform_b = Transform::from_translation(
-//                 b_transform_b.transform_point(bp_transform.translation),
-//             )
-//             .with_rotation(b_transform_b.rotation * bp_transform.rotation);
+        while time_c - time_a > detection::EPSILON {
+            let time_b = (time_a + time_c) / 2.0;
+            let [b_transform_b, o_transform_b] = [
+                transform::at(
+                    time_b - time_a,
+                    b_transform_a,
+                    b_velocity,
+                    b_angular_velocity,
+                ),
+                transform::at(
+                    time_b - time_a,
+                    o_transform_a,
+                    o_velocity,
+                    o_angular_velocity,
+                ),
+            ];
 
-//             if let Some(contact_b) = detection::intersection(
-//                 bp_transform_b,
-//                 o_transform_b,
-//                 bp_collider,
-//                 o_collider,
-//                 Some(Res::clone(&meshes)),
-//             ) {
-//                 contact_c = contact_b;
-//                 [b_transform_c, o_transform_c] = [b_transform_b, o_transform_b];
-//                 time_c = time_b;
-//                 debug!(
-//                     "\nta = {}, tc = {}, contact = {:?}",
-//                     time_a, time_c, contact_c
-//                 );
-//             } else {
-//                 [b_transform_a, o_transform_a] = [b_transform_b, o_transform_b];
-//                 time_a = time_b;
-//                 debug!(
-//                     "\nta = {}, tc = {}, contact = {:?}",
-//                     time_a, time_c, contact_c
-//                 );
-//             }
-//         }
+            if let Some(contact_b) = detection::intersection(
+                transform::global_of(bp_transform, b_transform_b),
+                o_transform_b,
+                bp_collider,
+                o_collider,
+                Some(Res::clone(&meshes)),
+            ) {
+                contact_c = contact_b;
+                [b_transform_c, o_transform_c] = [b_transform_b, o_transform_b];
+                time_c = time_b;
+                debug!(
+                    "\nta = {}, tc = {}, contact = {:?}",
+                    time_a, time_c, contact_c
+                );
+            } else {
+                [b_transform_a, o_transform_a] = [b_transform_b, o_transform_b];
+                time_a = time_b;
+                debug!(
+                    "\nta = {}, tc = {}, contact = {:?}",
+                    time_a, time_c, contact_c
+                );
+            }
+        }
 
-//         Some((contact_c, time_c, transform1_c, transform2_c))
-//     } else {
-//         None
-//     }
-// }
+        Some((contact_c, time_c, b_transform_c, o_transform_c))
+    } else {
+        None
+    }
+}
 
 // pub fn transform_at_time(
 //     b_transform: Transform,
