@@ -28,8 +28,8 @@ pub struct Boss {
     pub edges: usize,
 }
 
-// #[derive(Component)]
-// pub struct BossPart;
+#[derive(Component)]
+pub struct BossPart;
 
 #[derive(Component)]
 pub struct BossCore;
@@ -131,7 +131,7 @@ const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
 const CORE_HEALTH: i32 = 50;
-const EDGE_HEALTH: i32 = 1;
+const EDGE_HEALTH: i32 = 10;
 const FIRE_VELOCITY: f32 = 400.0;
 const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE as f32;
 const FIRE_RANGE: u32 = 100;
@@ -245,6 +245,7 @@ pub fn spawn(
     let boss_core = commands
         // .spawn(Boss)
         .spawn(BossCore)
+        .insert(BossPart)
         .insert(Health(CORE_HEALTH))
         .insert(Collider {
             aabb: Aabb {
@@ -285,6 +286,7 @@ pub fn spawn(
         let boss_edge = commands
             // .spawn(Boss)
             .spawn(BossEdge)
+            .insert(BossPart)
             .insert(Health(EDGE_HEALTH))
             .insert(Collider {
                 aabb: Aabb {
