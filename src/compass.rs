@@ -50,7 +50,7 @@ pub fn spawn(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
     query_camera: Query<&Transform, With<Camera>>,
-    query_boss: Query<&Transform, With<Boss>>,
+    query_boss: Query<&Transform, (With<Boss>, Without<Part>)>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
 ) {
     let camera = query_camera.single();

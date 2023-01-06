@@ -7,7 +7,7 @@ use crate::{
     collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Enemy, Fire, FireEvent},
     spaceship::{self, Spaceship},
-    AngularVelocity, Health, Mass, MomentOfInertia, Velocity, PLANE_Z,
+    AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z,
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
@@ -211,8 +211,8 @@ pub fn spawn(
     let boss = commands
         .spawn(Boss { edges: EDGES })
         .insert(Mass(MASS))
-        .insert(Velocity(Vec3::ZERO))
         .insert(MomentOfInertia(MOMENT_OF_INERTIA))
+        .insert(Velocity(Vec3::ZERO))
         .insert(AngularVelocity(0.0))
         .insert(SpatialBundle {
             transform: Transform::from_translation(translation),
@@ -244,8 +244,7 @@ pub fn spawn(
 
     let boss_core = commands
         // .spawn(Boss)
-        .spawn(BossCore)
-        .insert(BossPart)
+        .spawn((Boss { edges: EDGES }, Part))
         .insert(Health(CORE_HEALTH))
         .insert(Collider {
             aabb: Aabb {
@@ -284,9 +283,7 @@ pub fn spawn(
         let mesh_handle = meshes.add(mesh);
 
         let boss_edge = commands
-            // .spawn(Boss)
-            .spawn(BossEdge)
-            .insert(BossPart)
+            .spawn((Boss { edges: EDGES }, Part))
             .insert(Health(EDGE_HEALTH))
             .insert(Collider {
                 aabb: Aabb {
@@ -322,16 +319,16 @@ pub fn spawn(
 
 pub fn movement(
     mut query_boss: Query<(&mut AngularVelocity, &Boss, &mut Transform, &mut Velocity)>,
-    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Boss>)>,
+    query_boss_part: Query<Entity, (With<Boss>, With<Part>)>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>, Without<Boss>)>,
     cache: Res<Cache>,
-    query_boss_entity: Query<Entity, Or<(With<BossCore>, With<BossEdge>)>>,
     time: Res<Time>,
 ) {
     if let Ok((mut angular_velocity, boss, mut b_transform, mut velocity)) =
         query_boss.get_single_mut()
     {
         'no_collision: {
-            for id in &query_boss_entity {
+            for id in &query_boss_part {
                 if cache.contains_entity(id) {
                     break 'no_collision;
                 }
@@ -371,9 +368,9 @@ pub fn attack(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query_boss: Query<&Transform, With<Boss>>,
-    query_boss_edge: Query<(&Attack, Entity, &Transform), With<BossEdge>>,
-    query_spaceship: Query<&Transform, With<Spaceship>>,
+    query_boss: Query<&Transform, (With<Boss>, Without<Part>)>,
+    query_boss_edge: Query<(&Attack, Entity, &Transform), With<Boss>>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
 ) {
     if let Ok(b_transform) = query_boss.get_single() {
         if let Ok(s_transform) = query_spaceship.get_single() {
