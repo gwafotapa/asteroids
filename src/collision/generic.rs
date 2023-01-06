@@ -123,7 +123,7 @@ pub fn with<C: Component + Damageable>(
     mut query: Query<(
         &mut AngularVelocity,
         &C,
-        &Collider,
+        &mut Collider,
         Entity,
         &mut Health,
         &Mass,
@@ -138,7 +138,7 @@ pub fn with<C: Component + Damageable>(
         [(
             mut angular_velocity1,
             component1,
-            collider1,
+            mut collider1,
             entity1,
             mut health1,
             mass1,
@@ -148,7 +148,7 @@ pub fn with<C: Component + Damageable>(
         ), (
             mut angular_velocity2,
             component2,
-            collider2,
+            mut collider2,
             entity2,
             mut health2,
             mass2,
@@ -169,8 +169,8 @@ pub fn with<C: Component + Damageable>(
             *velocity2,
             *angular_velocity1,
             *angular_velocity2,
-            collider1,
-            collider2,
+            &collider1,
+            &collider2,
             Res::clone(&meshes),
             Res::clone(&time),
         ) {
@@ -214,6 +214,7 @@ pub fn with<C: Component + Damageable>(
             // println!("health2: {}, h2: {}", health2.0, h2);
             component1.damage(
                 &mut health1,
+                &mut collider1,
                 Damages {
                     location: contact.point.extend(0.0),
                     extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
@@ -221,6 +222,7 @@ pub fn with<C: Component + Damageable>(
             );
             component2.damage(
                 &mut health2,
+                &mut collider2,
                 Damages {
                     location: contact.point.extend(0.0),
                     extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
@@ -238,7 +240,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     mut query_c1: Query<(
         &mut AngularVelocity,
         &C1,
-        &Collider,
+        &mut Collider,
         Entity,
         &mut Health,
         &Mass,
@@ -250,7 +252,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
         (
             &mut AngularVelocity,
             &C2,
-            &Collider,
+            &mut Collider,
             Entity,
             &mut Health,
             &Mass,
@@ -265,7 +267,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     for (
         mut angular_velocity1,
         component1,
-        collider1,
+        mut collider1,
         entity1,
         mut health1,
         mass1,
@@ -277,7 +279,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
         for (
             mut angular_velocity2,
             component2,
-            collider2,
+            mut collider2,
             entity2,
             mut health2,
             mass2,
@@ -297,8 +299,8 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                 *velocity2,
                 *angular_velocity1,
                 *angular_velocity2,
-                collider1,
-                collider2,
+                &collider1,
+                &collider2,
                 Res::clone(&meshes),
                 Res::clone(&time),
             ) {
@@ -334,6 +336,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                 let dv = (velocity1.0 - velocity2.0).length();
                 component1.damage(
                     &mut health1,
+                    &mut collider1,
                     Damages {
                         location: contact.point.extend(0.0),
                         extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
@@ -341,6 +344,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                 );
                 component2.damage(
                     &mut health2,
+                    &mut collider2,
                     Damages {
                         location: contact.point.extend(0.0),
                         extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
@@ -363,7 +367,7 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable, C3: Compone
             Option<&C1>,
             Option<&C2>,
             Option<&C3>,
-            &Collider,
+            &mut Collider,
             Entity,
             &mut Health,
             &Mass,
@@ -382,7 +386,7 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable, C3: Compone
             component11,
             component12,
             component13,
-            collider1,
+            mut collider1,
             entity1,
             mut health1,
             mass1,
@@ -394,7 +398,7 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable, C3: Compone
             component21,
             component22,
             component23,
-            collider2,
+            mut collider2,
             entity2,
             mut health2,
             mass2,
@@ -415,8 +419,8 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable, C3: Compone
             *velocity2,
             *angular_velocity1,
             *angular_velocity2,
-            collider1,
-            collider2,
+            &collider1,
+            &collider2,
             Res::clone(&meshes),
             Res::clone(&time),
         ) {
@@ -465,18 +469,18 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable, C3: Compone
                 extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
             };
             if let Some(component) = component11 {
-                component.damage(&mut health1, damages1);
+                component.damage(&mut health1, &mut collider1, damages1);
             } else if let Some(component) = component12 {
-                component.damage(&mut health1, damages1);
+                component.damage(&mut health1, &mut collider1, damages1);
             } else if let Some(component) = component13 {
-                component.damage(&mut health1, damages1);
+                component.damage(&mut health1, &mut collider1, damages1);
             }
             if let Some(component) = component11 {
-                component.damage(&mut health2, damages2);
+                component.damage(&mut health2, &mut collider2, damages2);
             } else if let Some(component) = component12 {
-                component.damage(&mut health2, damages2);
+                component.damage(&mut health2, &mut collider2, damages2);
             } else if let Some(component) = component13 {
-                component.damage(&mut health2, damages2);
+                component.damage(&mut health2, &mut collider2, damages2);
             }
 
             // println!("health1: {}, h1: {}", health1.0, h1);

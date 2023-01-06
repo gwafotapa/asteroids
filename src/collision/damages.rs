@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::Health;
+use crate::{collision::Collider, Health};
 
 pub struct Damages {
     pub location: Vec3,
@@ -8,7 +8,7 @@ pub struct Damages {
 }
 
 pub trait Damageable {
-    fn damage(&self, health: &mut Health, damages: Damages) {
+    fn damage(&self, health: &mut Health, collider: &mut Collider, damages: Damages) {
         health.0 -= damages.extent as i32;
     }
 }

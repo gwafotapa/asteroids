@@ -21,7 +21,7 @@ pub fn with<C: Component + Damageable>(
         &mut Transform,
         &mut Velocity,
     )>,
-    mut query_c_part: Query<(&Collider, &mut Health, &Transform), (With<C>, With<Parent>)>,
+    mut query_c_part: Query<(&mut Collider, &mut Health, &Transform), (With<C>, With<Parent>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -49,7 +49,7 @@ pub fn with<C: Component + Damageable>(
         if let Some((children1, children2)) = maybe_children1.zip(maybe_children2) {
             for child1 in children1 {
                 for child2 in children2 {
-                    let [(collider1p, mut health1p, transform1p), (collider2p, mut health2p, transform2p)] =
+                    let [(mut collider1p, mut health1p, transform1p), (mut collider2p, mut health2p, transform2p)] =
                         query_c_part.get_many_mut([*child1, *child2]).unwrap();
                     if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
                         *mass1,
@@ -64,8 +64,8 @@ pub fn with<C: Component + Damageable>(
                         *angular_velocity2,
                         *transform1p,
                         *transform2p,
-                        collider1p,
-                        collider2p,
+                        &collider1p,
+                        &collider2p,
                         Res::clone(&meshes),
                         Res::clone(&time),
                     ) {
@@ -112,6 +112,7 @@ pub fn with<C: Component + Damageable>(
                         // println!("health2: {}, h2: {}", health2.0, h2);
                         component1.damage(
                             &mut health1p,
+                            &mut collider1p,
                             Damages {
                                 location: contact.point.extend(0.0),
                                 extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
@@ -119,6 +120,7 @@ pub fn with<C: Component + Damageable>(
                         );
                         component2.damage(
                             &mut health2p,
+                            &mut collider2p,
                             Damages {
                                 location: contact.point.extend(0.0),
                                 extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
