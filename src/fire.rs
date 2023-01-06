@@ -17,23 +17,24 @@ pub struct Enemy;
 impl Damageable for Fire {}
 
 pub struct FireEvent {
-    fire: Fire,
-    radius: f32,
-    vertices: usize,
-    color: Color,
-    range: f32,
-    translation: Vec3,
-    velocity: Velocity,
+    pub fire: Fire,
+    pub enemy: bool,
+    pub radius: f32,
+    pub vertices: usize,
+    pub color: Color,
+    pub range: f32,
+    pub translation: Vec3,
+    pub velocity: Velocity,
 }
 
 pub fn spawn(
+    mut fire_event: EventReader<FireEvent>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut fire_event: EventReader<FireEvent>,
 ) {
     for ev in fire_event.iter() {
-        commands
+        let fire = commands
             .spawn(Fire {
                 impact_radius: ev.fire.impact_radius,
                 impact_vertices: ev.fire.impact_vertices,
@@ -58,7 +59,12 @@ pub fn spawn(
                     .with_scale(Vec3::new(ev.range, ev.range, 0.0)),
                 material: materials.add(ev.color.into()),
                 ..Default::default()
-            });
+            })
+            .id();
+
+        if ev.enemy {
+            commands.entity(fire).insert(Enemy);
+        }
     }
 }
 

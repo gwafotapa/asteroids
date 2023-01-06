@@ -26,6 +26,7 @@ fn main() {
         .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
         // .add_stage_after(WRECK, DESPAWN, SystemStage::parallel())
         .add_loopless_state(GameState::MainMenu)
+        .add_event::<fire::FireEvent>()
         // .add_startup_system(camera::spawn)
         .add_startup_system(camera::spawn)
         .add_startup_system(keyboard::spawn_bindings)
@@ -146,6 +147,7 @@ fn main() {
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
+        .add_system(fire::spawn.after("attack"))
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)

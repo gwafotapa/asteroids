@@ -5,7 +5,7 @@ use std::f32::consts::{PI, SQRT_2};
 use crate::{
     blast::Blast,
     collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
-    fire::{Enemy, Fire},
+    fire::{Enemy, Fire, FireEvent},
     spaceship::{self, Spaceship},
     AngularVelocity, Health, Mass, MomentOfInertia, Velocity, PLANE_Z,
 };
@@ -367,6 +367,7 @@ pub fn movement(
 }
 
 pub fn attack(
+    mut fire_event: EventWriter<FireEvent>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -409,37 +410,22 @@ pub fn attack(
 
                     commands.entity(bp_entity).add_child(blast);
 
-                    commands
-                        .spawn(Fire {
+                    fire_event.send(FireEvent {
+                        fire: Fire {
                             impact_radius: FIRE_IMPACT_RADIUS,
                             impact_vertices: FIRE_IMPACT_VERTICES,
-                        })
-                        .insert(Enemy)
-                        .insert(Health(FIRE_HEALTH))
-                        .insert(Mass(1.0))
-                        .insert(MomentOfInertia(1.0))
-                        .insert(Velocity(
+                        },
+                        enemy: true,
+                        radius: FIRE_RADIUS,
+                        vertices: FIRE_VERTICES,
+                        color: ATTACK_COLOR,
+                        range: FIRE_RANGE as f32,
+                        translation: attack_absolute_translation,
+                        velocity: Velocity(
                             (s_transform.translation - attack_absolute_translation).normalize()
                                 * FIRE_VELOCITY,
-                        ))
-                        .insert(AngularVelocity(1.0))
-                        // .insert(Topology::Point)
-                        .insert(Collider {
-                            aabb: Aabb { hw: 0.0, hh: 0.0 },
-                            topology: Topology::Point,
-                        })
-                        .insert(ColorMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: FIRE_RADIUS,
-                                    vertices: FIRE_VERTICES,
-                                }))
-                                .into(),
-                            transform: Transform::from_translation(attack_absolute_translation)
-                                .with_scale(Vec3::new(FIRE_RANGE as f32, FIRE_RANGE as f32, 0.0)),
-                            material: materials.add(ATTACK_COLOR.into()),
-                            ..default()
-                        });
+                        ),
+                    });
                 }
             }
         }

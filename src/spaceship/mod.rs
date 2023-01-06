@@ -6,7 +6,7 @@ use crate::{
     collision::{
         cache::Cache, damages::Damageable, detection::triangle::Triangle, Aabb, Collider, Topology,
     },
-    fire::Fire,
+    fire::{Fire, FireEvent},
     keyboard::KeyboardBindings,
     AngularVelocity, Health, Mass, MomentOfInertia, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -260,11 +260,12 @@ pub fn spawn(
 }
 
 pub fn attack(
-    keys: Res<Input<KeyCode>>,
-    query_spaceship: Query<(Entity, &Transform), With<Spaceship>>,
+    mut fire_event: EventWriter<FireEvent>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    keys: Res<Input<KeyCode>>,
+    query_spaceship: Query<(Entity, &Transform), With<Spaceship>>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     if !keys.just_pressed(query_bindings.single().fire()) {
@@ -290,34 +291,19 @@ pub fn attack(
 
         commands.entity(spaceship).add_child(blast);
 
-        commands
-            .spawn(Fire {
+        fire_event.send(FireEvent {
+            fire: Fire {
                 impact_radius: FIRE_IMPACT_RADIUS,
                 impact_vertices: FIRE_IMPACT_VERTICES,
-            })
-            .insert(Health(FIRE_HEALTH))
-            .insert(Mass(1.0))
-            .insert(MomentOfInertia(1.0))
-            .insert(Velocity(transform.rotation * FIRE_VELOCITY))
-            .insert(AngularVelocity(0.0))
-            .insert(Collider {
-                aabb: Aabb { hw: 0.0, hh: 0.0 },
-                topology: Topology::Point,
-            })
-            .insert(ColorMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius: FIRE_RADIUS,
-                        vertices: FIRE_VERTICES,
-                    }))
-                    .into(),
-                transform: Transform::from_translation(
-                    transform.translation + transform.rotation * ATTACK_SOURCE,
-                )
-                .with_scale(Vec3::new(FIRE_RANGE as f32, FIRE_RANGE as f32, 0.0)),
-                material: materials.add(ATTACK_COLOR.into()),
-                ..default()
-            });
+            },
+            enemy: false,
+            radius: FIRE_RADIUS,
+            vertices: FIRE_VERTICES,
+            color: ATTACK_COLOR,
+            range: FIRE_RANGE as f32,
+            translation: transform.translation + transform.rotation * ATTACK_SOURCE,
+            velocity: Velocity(transform.rotation * FIRE_VELOCITY),
+        });
     }
 }
 
