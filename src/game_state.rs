@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::keyboard::KeyboardBindings;
+use crate::{keyboard::KeyboardBindings, Part};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum GameState {
@@ -22,7 +22,7 @@ pub fn gamesetup_to_turnuplight(mut commands: Commands) {
 pub fn ingame_to_paused(
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
-    query_spaceship: Query<With<crate::spaceship::Spaceship>>,
+    query_spaceship: Query<(With<crate::spaceship::Spaceship>, Without<Part>)>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     if query_spaceship.get_single().is_ok()

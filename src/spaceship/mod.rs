@@ -8,7 +8,7 @@ use crate::{
     },
     fire::{Fire, FireEvent},
     keyboard::KeyboardBindings,
-    AngularVelocity, Health, Mass, MomentOfInertia, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
+    AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 pub mod flame;
@@ -19,7 +19,7 @@ const AREA: f32 = (S2.x - S4.x) * S4.y + (S6.x - S8.x) * S8.y + (S10.x - S11.x) 
 const MASS: f32 = AREA;
 // const MASS: f32 = 1.0;
 const MOMENT_OF_INERTIA: f32 = 0.5 * MASS * AREA / PI;
-pub const POSITION: Vec3 = Vec3 {
+pub const TRANSLATION: Vec3 = Vec3 {
     x: WINDOW_WIDTH / 2.0,
     y: WINDOW_HEIGHT / 2.0,
     z: Z,
@@ -223,18 +223,21 @@ pub fn spawn(
     //     AREA, MASS, MOMENT_OF_INERTIA
     // );
 
-    commands
+    let spaceship = commands
         .spawn(Spaceship)
-        .insert(Health(HEALTH))
         .insert(Mass(MASS))
-        .insert(Velocity(Vec3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        }))
         .insert(MomentOfInertia(MOMENT_OF_INERTIA))
+        .insert(Velocity(Vec3::ZERO))
         .insert(AngularVelocity(0.0))
-        // .insert(AABB)
+        .insert(SpatialBundle {
+            transform: Transform::from_translation(TRANSLATION),
+            ..Default::default()
+        })
+        .id();
+
+    let spaceship_part = commands
+        .spawn((Spaceship, Part))
+        .insert(Health(HEALTH))
         .insert(Collider {
             aabb: AABB,
             topology: Topology::Triangles {
@@ -252,11 +255,13 @@ pub fn spawn(
         .insert(ColorMesh2dBundle {
             // mesh: Mesh2dHandle(meshes.add(spaceship)),
             mesh: mesh_handle.into(),
-            transform: Transform::from_translation(POSITION),
             // material: materials.add(Color::rgb(0.25, 0., 1.).into()),
             material: materials.add(COLOR.into()),
-            ..default()
-        });
+            ..Default::default()
+        })
+        .id();
+
+    commands.entity(spaceship).add_child(spaceship_part);
 }
 
 pub fn attack(
@@ -265,7 +270,7 @@ pub fn attack(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    query_spaceship: Query<(Entity, &Transform), With<Spaceship>>,
+    query_spaceship: Query<(Entity, &Transform), (With<Spaceship>, Without<Part>)>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     if !keys.just_pressed(query_bindings.single().fire()) {
@@ -392,7 +397,7 @@ pub fn movement(
     cache: Res<Cache>,
     mut query_spaceship: Query<
         (&mut AngularVelocity, Entity, &mut Transform, &mut Velocity),
-        With<Spaceship>,
+        (With<Spaceship>, Without<Part>),
     >,
     query_bindings: Query<&KeyboardBindings>,
     time: Res<Time>,

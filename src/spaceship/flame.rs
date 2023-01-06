@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 
 use super::{Health, Spaceship, S10, S13, S14, S7, S9};
-use crate::keyboard::KeyboardBindings;
+use crate::{keyboard::KeyboardBindings, Part};
 
 const COLOR: Color = Color::YELLOW;
 
@@ -12,10 +12,10 @@ pub struct FlameRear;
 pub struct FlameFront;
 
 pub fn rear_spawn(
-    query_spaceship: Query<Entity, With<Spaceship>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    query_spaceship: Query<Entity, (With<Spaceship>, Without<Part>)>,
 ) {
     let mut flame = Mesh::new(PrimitiveTopology::TriangleList);
     let v_pos = vec![[0.0, 0.0, 0.0], [0.0, -6.0, 0.0], [0.0, 6.0, 0.0]];
@@ -48,10 +48,10 @@ pub fn rear_spawn(
 }
 
 pub fn front_spawn(
-    query_spaceship: Query<Entity, With<Spaceship>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    query_spaceship: Query<Entity, (With<Spaceship>, Without<Part>)>,
 ) {
     let flame_front_left = commands
         .spawn(FlameFront)

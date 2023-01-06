@@ -140,7 +140,7 @@ const FIRE_HEALTH: i32 = 100;
 const FIRE_IMPACT_RADIUS: f32 = 15.0;
 const FIRE_IMPACT_VERTICES: usize = 32;
 
-// const INITIAL_POSITION: Vec3 = Vec3 {
+// const INITIAL_TRANSLATION: Vec3 = Vec3 {
 //     // x: WINDOW_WIDTH / 2.0 + OUTER_RADIUS,
 //     x: WINDOW_WIDTH / 2.0,
 //     y: 0.0,
@@ -204,8 +204,8 @@ pub fn spawn(
     // Compute boss starting position
     let mut rng = rand::thread_rng();
     let theta = rng.gen_range(0.0..2.0 * PI);
-    let x = DISTANCE_TO_BOSS * theta.cos() + spaceship::POSITION.x;
-    let y = DISTANCE_TO_BOSS * theta.sin() + spaceship::POSITION.y;
+    let x = DISTANCE_TO_BOSS * theta.cos() + spaceship::TRANSLATION.x;
+    let y = DISTANCE_TO_BOSS * theta.sin() + spaceship::TRANSLATION.y;
     let translation = Vec3::new(x, y, BOSS_Z);
 
     let boss = commands

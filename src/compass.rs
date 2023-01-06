@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, text::Text2dBounds};
 // use rand::Rng;
 
-use crate::{boss::Boss, spaceship::Spaceship, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{boss::Boss, spaceship::Spaceship, Part, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 // Box at the top right of the screen containing the text of the compass
 const BOX_WIDTH: f32 = 140.0;
@@ -51,7 +51,7 @@ pub fn spawn(
     asset_server: Res<AssetServer>,
     query_camera: Query<&Transform, With<Camera>>,
     query_boss: Query<&Transform, With<Boss>>,
-    query_spaceship: Query<&Transform, With<Spaceship>>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
 ) {
     let camera = query_camera.single();
     let boss = query_boss.single();

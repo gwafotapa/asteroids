@@ -68,8 +68,7 @@ pub fn spawn(
         .id();
 
     let asteroid_part = commands
-        .spawn(Asteroid { radius })
-        .insert(Part)
+        .spawn((Asteroid { radius }, Part))
         .insert(Health(health))
         .insert(Collider {
             aabb: Aabb {
