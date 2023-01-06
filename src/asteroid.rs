@@ -57,9 +57,9 @@ pub fn spawn(
     let asteroid = commands
         .spawn(Asteroid { radius })
         .insert(Mass(mass))
+        .insert(MomentOfInertia(moment_of_inertia))
         // .insert(Velocity(Vec3::ZERO))
         .insert(Velocity(velocity))
-        .insert(MomentOfInertia(moment_of_inertia))
         .insert(AngularVelocity(angular_velocity))
         .insert(SpatialBundle {
             transform: Transform::from_xyz(x, y, ASTEROID_Z),

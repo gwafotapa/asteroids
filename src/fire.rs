@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     collision::{damages::Damageable, impact::Impact, Aabb},
-    AngularVelocity, Collider, Health, Mass, MomentOfInertia, Topology, Velocity,
+    AngularVelocity, Collider, Health, Mass, MomentOfInertia, Part, Topology, Velocity,
 };
 
 #[derive(Component)]
@@ -39,11 +39,28 @@ pub fn spawn(
                 impact_radius: ev.fire.impact_radius,
                 impact_vertices: ev.fire.impact_vertices,
             })
-            .insert(Health(1))
             .insert(Mass(1.0))
             .insert(MomentOfInertia(1.0))
             .insert(ev.velocity)
             .insert(AngularVelocity(0.0))
+            .insert(SpatialBundle {
+                transform: Transform::from_translation(ev.translation)
+                    .with_scale(Vec3::new(ev.range, ev.range, 0.0)),
+                ..Default::default()
+            })
+            .id();
+
+        if ev.enemy {
+            commands.entity(fire).insert(Enemy);
+        }
+
+        let fire_part = commands
+            .spawn(Fire {
+                impact_radius: ev.fire.impact_radius,
+                impact_vertices: ev.fire.impact_vertices,
+            })
+            .insert(Part)
+            .insert(Health(1))
             .insert(Collider {
                 aabb: Aabb { hw: 0.0, hh: 0.0 },
                 topology: Topology::Point,
@@ -55,16 +72,12 @@ pub fn spawn(
                         vertices: ev.vertices,
                     }))
                     .into(),
-                transform: Transform::from_translation(ev.translation)
-                    .with_scale(Vec3::new(ev.range, ev.range, 0.0)),
                 material: materials.add(ev.color.into()),
                 ..Default::default()
             })
             .id();
 
-        if ev.enemy {
-            commands.entity(fire).insert(Enemy);
-        }
+        commands.entity(fire).add_child(fire_part);
     }
 }
 
@@ -105,10 +118,15 @@ pub fn impact(
     }
 }
 
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health, &Transform), With<Fire>>) {
-    for (entity, health, transform) in query.iter() {
+pub fn despawn(
+    mut commands: Commands,
+    query_fire: Query<(&Children, Entity, &Transform), With<Fire>>,
+    query_fire_part: Query<&Health, With<Fire>>,
+) {
+    for (children, fire, transform) in query_fire.iter() {
+        let health = query_fire_part.get(children[0]).unwrap();
         if health.0 <= 0 || transform.scale == Vec3::ZERO {
-            commands.entity(entity).despawn();
+            commands.entity(fire).despawn_recursive();
         }
     }
 }
