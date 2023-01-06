@@ -276,6 +276,140 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     }
 }
 
+pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
+    mut cache: ResMut<Cache>,
+    mut query: Query<(
+        &mut AngularVelocity,
+        Option<&C1>,
+        Option<&C2>,
+        Option<&Children>,
+        &Mass,
+        &MomentOfInertia,
+        &mut Transform,
+        &mut Velocity,
+    )>,
+    mut query_part: Query<
+        (&mut Collider, &mut Health, &Transform),
+        (Or<(With<C1>, With<C2>)>, With<Parent>),
+    >,
+    meshes: Res<Assets<Mesh>>,
+    time: Res<Time>,
+) {
+    let mut combinations = query.iter_combinations_mut();
+    while let Some(
+        [(
+            mut angular_velocity1,
+            maybe_component11,
+            maybe_component12,
+            maybe_children1,
+            mass1,
+            moment_of_inertia1,
+            mut transform1,
+            mut velocity1,
+        ), (
+            mut angular_velocity2,
+            maybe_component21,
+            maybe_component22,
+            maybe_children2,
+            mass2,
+            moment_of_inertia2,
+            mut transform2,
+            mut velocity2,
+        )],
+    ) = combinations.fetch_next()
+    {
+        if let Some((children1, children2)) = maybe_children1.zip(maybe_children2) {
+            for child1 in children1 {
+                for child2 in children2 {
+                    let [(mut collider1p, mut health1p, transform1p), (mut collider2p, mut health2p, transform2p)] =
+                        query_part.get_many_mut([*child1, *child2]).unwrap();
+                    if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
+                        *mass1,
+                        *mass2,
+                        *moment_of_inertia1,
+                        *moment_of_inertia2,
+                        *transform1,
+                        *transform2,
+                        *velocity1,
+                        *velocity2,
+                        *angular_velocity1,
+                        *angular_velocity2,
+                        *transform1p,
+                        *transform2p,
+                        &collider1p,
+                        &collider2p,
+                        Res::clone(&meshes),
+                        Res::clone(&time),
+                    ) {
+                        // if !cache.contains(Collision(spaceship, b_id)) {
+                        response::compute(
+                            &transform1_c,
+                            &transform2_c,
+                            *mass1,
+                            *mass2,
+                            *moment_of_inertia1,
+                            *moment_of_inertia2,
+                            &mut velocity1,
+                            &mut velocity2,
+                            &mut angular_velocity1,
+                            &mut angular_velocity2,
+                            contact,
+                        );
+                        [*transform1, *transform2] = [
+                            transform::at(
+                                time.delta_seconds() - time_c,
+                                transform1_c,
+                                *velocity1,
+                                *angular_velocity1,
+                            ),
+                            transform::at(
+                                time.delta_seconds() - time_c,
+                                transform2_c,
+                                *velocity2,
+                                *angular_velocity2,
+                            ),
+                        ];
+                        debug!(
+                            "\nMore precise response\n\
+			     translation1: {}, translation2: {}\n\
+			     velocity1: {}, velocity2: {}\n",
+                            transform1.translation,
+                            transform2.translation,
+                            velocity1.0,
+                            velocity2.0,
+                        );
+
+                        let dv = (velocity1.0 - velocity2.0).length();
+                        // println!("health1: {}, h1: {}", health1.0, h1);
+                        // println!("health2: {}, h2: {}", health2.0, h2);
+                        let damages1 = Damages {
+                            location: contact.point.extend(0.0),
+                            extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
+                        };
+                        let damages2 = Damages {
+                            location: contact.point.extend(0.0),
+                            extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
+                        };
+                        if let Some(component) = maybe_component11 {
+                            component.damage(&mut health1p, &mut collider1p, damages1);
+                        } else if let Some(component) = maybe_component12 {
+                            component.damage(&mut health1p, &mut collider1p, damages1);
+                        }
+                        if let Some(component) = maybe_component21 {
+                            component.damage(&mut health2p, &mut collider2p, damages2);
+                        } else if let Some(component) = maybe_component22 {
+                            component.damage(&mut health2p, &mut collider2p, damages2);
+                        }
+
+                        // cache.add(Collision(spaceship, b_id));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn intersection_at(
     mass1: Mass,
     mass2: Mass,
