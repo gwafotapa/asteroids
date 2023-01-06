@@ -203,7 +203,7 @@ pub fn with_asteroid_or_spaceship(
                     // println!("spaceship -- w1: {}", as_angular_velocity.0);
                     // println!("boss      -- w2: {}", b_angular_velocity.0);
                     response::compute(
-                        &transform::global_of(*bp_transform, b_transform_c),
+                        &b_transform_c,
                         &as_transform_c,
                         *b_mass,
                         *as_mass,

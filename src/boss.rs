@@ -146,8 +146,8 @@ const FIRE_IMPACT_VERTICES: usize = 32;
 //     y: 0.0,
 //     z: BOSS_Z,
 // };
-const ROTATION_SPEED: f32 = 0.0;
-// const ROTATION_SPEED: f32 = 20.0;
+// const ROTATION_SPEED: f32 = 0.0;
+const ROTATION_SPEED: f32 = 20.0;
 
 #[derive(Component)]
 pub struct Attack(Vec3);
