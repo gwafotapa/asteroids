@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    collision::{damages::Damageable, impact::Impact},
-    AngularVelocity, Health, Velocity,
+    collision::{damages::Damageable, impact::Impact, Aabb},
+    AngularVelocity, Collider, Health, Mass, MomentOfInertia, Topology, Velocity,
 };
 
 #[derive(Component)]
@@ -15,6 +15,52 @@ pub struct Fire {
 pub struct Enemy;
 
 impl Damageable for Fire {}
+
+pub struct FireEvent {
+    fire: Fire,
+    radius: f32,
+    vertices: usize,
+    color: Color,
+    range: f32,
+    translation: Vec3,
+    velocity: Velocity,
+}
+
+pub fn spawn(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut fire_event: EventReader<FireEvent>,
+) {
+    for ev in fire_event.iter() {
+        commands
+            .spawn(Fire {
+                impact_radius: ev.fire.impact_radius,
+                impact_vertices: ev.fire.impact_vertices,
+            })
+            .insert(Health(1))
+            .insert(Mass(1.0))
+            .insert(MomentOfInertia(1.0))
+            .insert(ev.velocity)
+            .insert(AngularVelocity(0.0))
+            .insert(Collider {
+                aabb: Aabb { hw: 0.0, hh: 0.0 },
+                topology: Topology::Point,
+            })
+            .insert(ColorMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: ev.radius,
+                        vertices: ev.vertices,
+                    }))
+                    .into(),
+                transform: Transform::from_translation(ev.translation)
+                    .with_scale(Vec3::new(ev.range, ev.range, 0.0)),
+                material: materials.add(ev.color.into()),
+                ..Default::default()
+            });
+    }
+}
 
 pub fn movement(
     mut query: Query<(&mut Transform, &Velocity, &AngularVelocity), With<Fire>>,
