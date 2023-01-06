@@ -3,7 +3,9 @@ use std::f32::consts::PI;
 
 use crate::{
     blast::Blast,
-    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{
+        cache::Cache, damages::Damageable, detection::triangle::Triangle, Aabb, Collider, Topology,
+    },
     fire::Fire,
     keyboard::KeyboardBindings,
     AngularVelocity, Health, Mass, MomentOfInertia, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
@@ -152,37 +154,40 @@ const AABB: Aabb = Aabb { hw: S2.x, hh: S4.y };
 #[derive(Component)]
 pub struct Spaceship;
 
-impl Spaceship {
-    //     pub fn accelerate(velocity: &mut Velocity) {
+impl Damageable for Spaceship {}
 
-    //         velocity.0 +=
-    //     }
+// impl Spaceship {
+//     pub fn accelerate(velocity: &mut Velocity) {
 
-    //     pub fn decelerate_x(velocity: &mut Velocity) {
-    //         if velocity.0.x > 0.0 {
-    //             velocity.0.x -= ACCELERATION / 2.0;
-    //         } else if velocity.0.x < 0.0 {
-    //             velocity.0.x += ACCELERATION / 2.0;
-    //         }
-    //     }
+//         velocity.0 +=
+//     }
 
-    //     pub fn decelerate_y(velocity: &mut Velocity) {
-    //         if velocity.0.y > 0.0 {
-    //             velocity.0.y -= ACCELERATION / 2.0;
-    //         } else if velocity.0.y < 0.0 {
-    //             velocity.0.y += ACCELERATION / 2.0;
-    //         }
-    //     }
-    pub fn accelerate(transform: &Transform, velocity: &mut Velocity) {
-        let direction = transform.rotation * Vec3::X;
-        velocity.0 += ACCELERATION * direction;
-    }
+//     pub fn decelerate_x(velocity: &mut Velocity) {
+//         if velocity.0.x > 0.0 {
+//             velocity.0.x -= ACCELERATION / 2.0;
+//         } else if velocity.0.x < 0.0 {
+//             velocity.0.x += ACCELERATION / 2.0;
+//         }
+//     }
 
-    pub fn decelerate(transform: &Transform, velocity: &mut Velocity) {
-        let direction = transform.rotation * Vec3::NEG_X;
-        velocity.0 += 0.5 * ACCELERATION * direction;
-    }
-}
+//     pub fn decelerate_y(velocity: &mut Velocity) {
+//         if velocity.0.y > 0.0 {
+//             velocity.0.y -= ACCELERATION / 2.0;
+//         } else if velocity.0.y < 0.0 {
+//             velocity.0.y += ACCELERATION / 2.0;
+//         }
+//     }
+
+//     pub fn accelerate(transform: &Transform, velocity: &mut Velocity) {
+//         let direction = transform.rotation * Vec3::X;
+//         velocity.0 += ACCELERATION * direction;
+//     }
+
+//     pub fn decelerate(transform: &Transform, velocity: &mut Velocity) {
+//         let direction = transform.rotation * Vec3::NEG_X;
+//         velocity.0 += 0.5 * ACCELERATION * direction;
+//     }
+// }
 
 pub fn spawn(
     mut commands: Commands,

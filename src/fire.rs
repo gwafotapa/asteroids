@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{collision::impact::Impact, AngularVelocity, Health, Velocity};
+use crate::{
+    collision::{damages::Damageable, impact::Impact},
+    AngularVelocity, Health, Velocity,
+};
 
 #[derive(Component)]
 pub struct Fire {
@@ -10,6 +13,8 @@ pub struct Fire {
 
 #[derive(Component)]
 pub struct Enemy;
+
+impl Damageable for Fire {}
 
 pub fn movement(
     mut query: Query<(&mut Transform, &Velocity, &AngularVelocity), With<Fire>>,

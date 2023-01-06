@@ -3,7 +3,7 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::{
-    collision::{Aabb, Collider, Topology},
+    collision::{damages::Damageable, Aabb, Collider, Topology},
     AngularVelocity,
     // map::ASTEROIDS_MAX_PER_SECTOR,
     Health,
@@ -233,3 +233,5 @@ pub fn update(
 //         }
 //     }
 // }
+
+impl Damageable for Asteroid {}
