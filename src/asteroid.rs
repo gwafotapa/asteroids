@@ -9,6 +9,7 @@ use crate::{
     Health,
     Mass,
     MomentOfInertia,
+    Part,
     Velocity,
     PLANE_Z,
     WINDOW_HEIGHT,
@@ -53,14 +54,23 @@ pub fn spawn(
     //     area, mass, moment_of_inertia
     // );
 
-    commands
+    let asteroid = commands
         .spawn(Asteroid { radius })
-        .insert(Health(health))
         .insert(Mass(mass))
         // .insert(Velocity(Vec3::ZERO))
         .insert(Velocity(velocity))
         .insert(MomentOfInertia(moment_of_inertia))
         .insert(AngularVelocity(angular_velocity))
+        .insert(SpatialBundle {
+            transform: Transform::from_xyz(x, y, ASTEROID_Z),
+            ..Default::default()
+        })
+        .id();
+
+    let asteroid_part = commands
+        .spawn(Asteroid { radius })
+        .insert(Part)
+        .insert(Health(health))
         .insert(Collider {
             aabb: Aabb {
                 hw: radius,
@@ -75,10 +85,12 @@ pub fn spawn(
                     vertices: 16,
                 }))
                 .into(),
-            transform: Transform::from_xyz(x, y, ASTEROID_Z),
             material: materials.add(ColorMaterial::from(COLOR)),
-            ..default()
-        });
+            ..Default::default()
+        })
+        .id();
+
+    commands.entity(asteroid).add_child(asteroid_part);
 }
 
 // pub fn asteroids(
@@ -126,25 +138,16 @@ pub fn spawn(
 pub fn update(
     mut commands: Commands,
     mut query_asteroid: Query<
-        (
-            &AngularVelocity,
-            Entity,
-            &mut Health,
-            &mut Transform,
-            &Velocity,
-        ),
+        (&AngularVelocity, Entity, &mut Transform, &Velocity),
         With<Asteroid>,
     >,
     query_camera: Query<&Transform, (With<Camera>, Without<Asteroid>)>,
     time: Res<Time>,
 ) {
     let Vec3 { x: xc, y: yc, z: _ } = query_camera.single().translation;
-    for (a_angular_velocity, a_id, mut _a_health, mut a_transform, a_velocity) in
-        query_asteroid.iter_mut()
-    {
+    for (a_angular_velocity, a_id, mut a_transform, a_velocity) in query_asteroid.iter_mut() {
         let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
         if (xa - xc).abs() > 2.0 * WINDOW_WIDTH || (ya - yc).abs() > 2.0 * WINDOW_HEIGHT {
-            // a_health.0 = 0;
             commands.entity(a_id).despawn();
         } else {
             a_transform.translation += a_velocity.0 * time.delta_seconds();
