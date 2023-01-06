@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 // use iyes_loopless::prelude::*;
 
-use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Velocity};
+use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity};
 
 use super::{
     cache::{Cache, Collision},
@@ -21,7 +21,7 @@ pub fn with<C: Component + Damageable>(
         &mut Transform,
         &mut Velocity,
     )>,
-    mut query_c_part: Query<(&mut Collider, &mut Health, &Transform), (With<C>, With<Parent>)>,
+    mut query_c_part: Query<(&mut Collider, &mut Health, &Transform), (With<C>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -146,7 +146,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
         &mut Transform,
         &mut Velocity,
     )>,
-    mut query_c1_part: Query<(&mut Collider, &mut Health, &Transform), (With<C1>, With<Parent>)>,
+    mut query_c1_part: Query<(&mut Collider, &mut Health, &Transform), (With<C1>, With<Part>)>,
     mut query_c2: Query<(
         &mut AngularVelocity,
         &C2,
@@ -156,7 +156,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
         &mut Transform,
         &mut Velocity,
     )>,
-    mut query_c2_part: Query<(&mut Collider, &mut Health, &Transform), (With<C2>, With<Parent>)>,
+    mut query_c2_part: Query<(&mut Collider, &mut Health, &Transform), (With<C2>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -293,7 +293,7 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
     >,
     mut query_part: Query<
         (&mut Collider, &mut Health, &Transform),
-        (Or<(With<C1>, With<C2>)>, With<Parent>),
+        (Or<(With<C1>, With<C2>)>, With<Part>),
     >,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
