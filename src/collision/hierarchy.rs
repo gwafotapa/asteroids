@@ -278,16 +278,19 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
 
 pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
     mut cache: ResMut<Cache>,
-    mut query: Query<(
-        &mut AngularVelocity,
-        Option<&C1>,
-        Option<&C2>,
-        Option<&Children>,
-        &Mass,
-        &MomentOfInertia,
-        &mut Transform,
-        &mut Velocity,
-    )>,
+    mut query: Query<
+        (
+            &mut AngularVelocity,
+            Option<&C1>,
+            Option<&C2>,
+            Option<&Children>,
+            &Mass,
+            &MomentOfInertia,
+            &mut Transform,
+            &mut Velocity,
+        ),
+        Or<(With<C1>, With<C2>)>,
+    >,
     mut query_part: Query<
         (&mut Collider, &mut Health, &Transform),
         (Or<(With<C1>, With<C2>)>, With<Parent>),
