@@ -96,9 +96,11 @@ pub fn movement(
 pub fn impact(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&Handle<ColorMaterial>, &Fire, &Health, &Transform)>,
+    query: Query<(&Children, &Fire, &Transform), Without<Part>>,
+    query_part: Query<(&Handle<ColorMaterial>, &Health), With<Fire>>,
 ) {
-    for (color, fire, health, transform) in query.iter_mut() {
+    for (children, fire, transform) in query.iter() {
+        let (color, health) = query_part.get(children[0]).unwrap();
         if health.0 <= 0 {
             commands
                 .spawn(Impact)
