@@ -12,15 +12,18 @@ use super::{
 
 pub fn with<C: Component + Damageable>(
     mut cache: ResMut<Cache>,
-    mut query_c: Query<(
-        &mut AngularVelocity,
-        &C,
-        Option<&Children>,
-        &Mass,
-        &MomentOfInertia,
-        &mut Transform,
-        &mut Velocity,
-    )>,
+    mut query_c: Query<
+        (
+            &mut AngularVelocity,
+            &C,
+            Option<&Children>,
+            &Mass,
+            &MomentOfInertia,
+            &mut Transform,
+            &mut Velocity,
+        ),
+        Without<Part>,
+    >,
     mut query_c_part: Query<(&mut Collider, &mut Health, &Transform), (With<C>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
@@ -137,25 +140,31 @@ pub fn with<C: Component + Damageable>(
 
 pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     mut cache: ResMut<Cache>,
-    mut query_c1: Query<(
-        &mut AngularVelocity,
-        &C1,
-        Option<&Children>,
-        &Mass,
-        &MomentOfInertia,
-        &mut Transform,
-        &mut Velocity,
-    )>,
+    mut query_c1: Query<
+        (
+            &mut AngularVelocity,
+            &C1,
+            Option<&Children>,
+            &Mass,
+            &MomentOfInertia,
+            &mut Transform,
+            &mut Velocity,
+        ),
+        Without<Part>,
+    >,
     mut query_c1_part: Query<(&mut Collider, &mut Health, &Transform), (With<C1>, With<Part>)>,
-    mut query_c2: Query<(
-        &mut AngularVelocity,
-        &C2,
-        Option<&Children>,
-        &Mass,
-        &MomentOfInertia,
-        &mut Transform,
-        &mut Velocity,
-    )>,
+    mut query_c2: Query<
+        (
+            &mut AngularVelocity,
+            &C2,
+            Option<&Children>,
+            &Mass,
+            &MomentOfInertia,
+            &mut Transform,
+            &mut Velocity,
+        ),
+        Without<Part>,
+    >,
     mut query_c2_part: Query<(&mut Collider, &mut Health, &Transform), (With<C2>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
@@ -289,7 +298,7 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
             &mut Transform,
             &mut Velocity,
         ),
-        Or<(With<C1>, With<C2>)>,
+        (Or<(With<C1>, With<C2>)>, Without<Part>),
     >,
     mut query_part: Query<
         (&mut Collider, &mut Health, &Transform),
