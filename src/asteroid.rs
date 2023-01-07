@@ -147,7 +147,7 @@ pub fn update(
     for (a_angular_velocity, a_id, mut a_transform, a_velocity) in query_asteroid.iter_mut() {
         let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
         if (xa - xc).abs() > 2.0 * WINDOW_WIDTH || (ya - yc).abs() > 2.0 * WINDOW_HEIGHT {
-            commands.entity(a_id).despawn();
+            commands.entity(a_id).despawn_recursive();
         } else {
             a_transform.translation += a_velocity.0 * time.delta_seconds();
             a_transform.rotation *=

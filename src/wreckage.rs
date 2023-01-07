@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle
 use rand::Rng;
 use std::f32::consts::PI;
 
-use crate::{Collider, Health, Topology, TriangleXY, Velocity};
+use crate::{Collider, Health, Part, Topology, TriangleXY, Velocity};
 
 const WRECKAGE_HEALTH: i32 = 100;
 const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 16.0;
@@ -46,21 +46,14 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Wrec
 pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<
-        (
-            &Handle<ColorMaterial>,
-            &Collider,
-            Entity,
-            // Option<&Parent>,
-            // &GlobalTransform,
-            &mut Health,
-            // Option<&Velocity>,
-        ),
-        With<C>,
+    // mut query: Query<Entity, (With<C>, Without<Part>)>,
+    mut query_part: Query<
+        (&Handle<ColorMaterial>, &Collider, Entity, &mut Health),
+        (With<C>, With<Part>),
     >,
 ) {
     // for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
-    for (color, collider, id, mut health) in &mut query {
+    for (color, collider, part, mut health) in &mut query_part {
         if health.0 > 0 {
             continue;
         }
@@ -73,10 +66,13 @@ pub fn wreck_with<C: Component>(
         //         query.get_component::<Velocity>(**parent).ok()
         //     })
         //     .map_or(Vec3::ZERO, |v| v.0);
-
-        commands.entity(id).insert(Wreckage);
-        commands.entity(id).remove::<C>();
-        commands.entity(id).remove::<Mesh2dHandle>();
+        // let parent = query.get(**parent).unwrap();
+        commands.entity(part).insert(Wreckage);
+        commands.entity(part).remove::<C>();
+        commands.entity(part).remove::<Mesh2dHandle>();
+        // commands.entity(child).insert(Wreckage);
+        // commands.entity(child).remove::<C>();
+        // commands.entity(child).remove::<Collider>();
 
         // let wreck = commands
         //     .spawn(Wreckage)
@@ -126,7 +122,7 @@ pub fn wreck_with<C: Component>(
                                 })
                                 .id();
 
-                            commands.entity(id).add_child(debris);
+                            commands.entity(part).add_child(debris);
                         }
                     }
                 }
@@ -160,7 +156,7 @@ pub fn wreck_with<C: Component>(
                         })
                         .id();
 
-                    commands.entity(id).add_child(debris);
+                    commands.entity(part).add_child(debris);
                 }
             }
             Topology::Point => panic!("Found point topology for explosion."),
