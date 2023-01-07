@@ -100,7 +100,10 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .label("collision")
                 .after("movement")
-                // .with_system(collision::hierarchy::among::<asteroid::Asteroid, asteroid::Asteroid>)
+                .with_system(
+                    collision::hierarchy::among::<asteroid::Asteroid, spaceship::Spaceship>,
+                )
+                .with_system(collision::hierarchy::among::<boss::Boss, spaceship::Spaceship>)
                 .with_system(collision::hierarchy::with::<asteroid::Asteroid>)
                 // .with_system(
                 //     collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
@@ -173,8 +176,7 @@ fn main() {
                 // .with_system(wreckage::wreck_with::<boss::Boss>)
                 .with_system(wreckage::wreck_with::<spaceship::Spaceship>)
                 .with_system(wreckage::wreck_with::<asteroid::Asteroid>)
-                .with_system(wreckage::wreck_with::<boss::BossCore>)
-                .with_system(wreckage::wreck_with::<boss::BossEdge>)
+                .with_system(wreckage::wreck_with::<boss::Boss>)
                 .with_system(fire::impact)
                 // .with_system(asteroid::before_despawn)
                 // .with_system(spaceship::wreck)

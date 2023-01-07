@@ -4,7 +4,12 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     blast::Blast,
-    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{
+        cache::Cache,
+        damages::{Damageable, Damages},
+        detection::triangle::Triangle,
+        Aabb, Collider, Topology,
+    },
     fire::{Enemy, Fire, FireEvent},
     spaceship::{self, Spaceship},
     AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z,
@@ -490,6 +495,7 @@ pub fn cut_off_edge(
     }
 }
 
+impl Damageable for Boss {}
 // pub fn wreck(
 //     mut commands: Commands,
 //     mut meshes: ResMut<Assets<Mesh>>,
