@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle
 use rand::Rng;
 use std::f32::consts::PI;
 
-use crate::{Collider, Health, Part, Topology, TriangleXY, Velocity};
+use crate::{transform, AngularVelocity, Collider, Health, Part, Topology, TriangleXY, Velocity};
 
 const WRECKAGE_HEALTH: i32 = 100;
 const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 16.0;
@@ -24,14 +24,12 @@ pub fn update_debris(
 }
 
 pub fn update(
-    mut query: Query<(&mut Health, &mut Transform, Option<&Velocity>), With<Wreckage>>,
+    mut query: Query<(&mut Health, &mut Transform, &Velocity), With<Wreckage>>,
     time: Res<Time>,
 ) {
-    for (mut health, mut transform, maybe_velocity) in &mut query {
+    for (mut health, mut transform, velocity) in &mut query {
         health.0 -= 1;
-        if let Some(velocity) = maybe_velocity {
-            transform.translation += velocity.0 * time.delta_seconds();
-        }
+        transform.translation += velocity.0 * time.delta_seconds();
     }
 }
 
@@ -46,19 +44,25 @@ pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Wrec
 pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    // mut query: Query<Entity, (With<C>, Without<Part>)>,
+    query: Query<(&AngularVelocity, Entity, &Transform, &Velocity), (With<C>, Without<Part>)>,
     mut query_part: Query<
-        (&Handle<ColorMaterial>, &Collider, Entity, &mut Health),
+        (
+            &Handle<ColorMaterial>,
+            &Collider,
+            Entity,
+            &mut Health,
+            &Parent,
+            &mut Transform,
+        ),
         (With<C>, With<Part>),
     >,
 ) {
     // for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
-    for (color, collider, part, mut health) in &mut query_part {
+    for (color, collider, part, mut health, parent, mut transform) in &mut query_part {
         if health.0 > 0 {
             continue;
         }
 
-        health.0 = 0;
         let mut rng = rand::thread_rng();
         // let color = materials.get(color).unwrap().color;
         // let velocity = maybe_parent
@@ -66,10 +70,17 @@ pub fn wreck_with<C: Component>(
         //         query.get_component::<Velocity>(**parent).ok()
         //     })
         //     .map_or(Vec3::ZERO, |v| v.0);
-        // let parent = query.get(**parent).unwrap();
-        commands.entity(part).insert(Wreckage);
+        let (p_angular_velocity, parent, p_transform, p_velocity) = query.get(**parent).unwrap();
+        let velocity = p_velocity.0 + p_angular_velocity.0 * Vec3::Z.cross(transform.translation);
+        *transform = transform::global_of(*transform, *p_transform);
+        health.0 = 0;
+        commands.entity(parent).remove_children(&[part]);
+        commands.entity(part).remove::<Parent>();
         commands.entity(part).remove::<C>();
         commands.entity(part).remove::<Mesh2dHandle>();
+        commands.entity(part).insert(Wreckage);
+        commands.entity(part).insert(Velocity(velocity));
+
         // commands.entity(child).insert(Wreckage);
         // commands.entity(child).remove::<C>();
         // commands.entity(child).remove::<Collider>();
