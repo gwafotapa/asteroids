@@ -45,20 +45,20 @@ pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     query: Query<(&AngularVelocity, Entity, &Transform, &Velocity), (With<C>, Without<Part>)>,
-    mut query_part: Query<
+    query_part: Query<
         (
             &Handle<ColorMaterial>,
             &Collider,
             Entity,
-            &mut Health,
+            &Health,
             &Parent,
-            &mut Transform,
+            &Transform,
         ),
         (With<C>, With<Part>),
     >,
 ) {
     // for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
-    for (color, collider, part, mut health, parent, mut transform) in &mut query_part {
+    for (color, collider, part, health, parent, transform) in &query_part {
         if health.0 > 0 {
             continue;
         }
@@ -71,15 +71,20 @@ pub fn wreck_with<C: Component>(
         //     })
         //     .map_or(Vec3::ZERO, |v| v.0);
         let (p_angular_velocity, parent, p_transform, p_velocity) = query.get(**parent).unwrap();
-        let velocity = p_velocity.0 + p_angular_velocity.0 * Vec3::Z.cross(transform.translation);
-        *transform = transform::global_of(*transform, *p_transform);
-        health.0 = 0;
+
         commands.entity(parent).remove_children(&[part]);
-        commands.entity(part).remove::<Parent>();
-        commands.entity(part).remove::<C>();
-        commands.entity(part).remove::<Mesh2dHandle>();
-        commands.entity(part).insert(Wreckage);
-        commands.entity(part).insert(Velocity(velocity));
+        commands.entity(part).despawn();
+        let wreckage = commands
+            .spawn(Wreckage)
+            .insert(Health(0))
+            .insert(Velocity(
+                p_velocity.0 + p_angular_velocity.0 * Vec3::Z.cross(transform.translation),
+            ))
+            .insert(SpatialBundle {
+                transform: transform::global_of(*transform, *p_transform),
+                ..Default::default()
+            })
+            .id();
 
         // commands.entity(child).insert(Wreckage);
         // commands.entity(child).remove::<C>();
@@ -133,7 +138,7 @@ pub fn wreck_with<C: Component>(
                                 })
                                 .id();
 
-                            commands.entity(part).add_child(debris);
+                            commands.entity(wreckage).add_child(debris);
                         }
                     }
                 }
@@ -167,7 +172,7 @@ pub fn wreck_with<C: Component>(
                         })
                         .id();
 
-                    commands.entity(part).add_child(debris);
+                    commands.entity(wreckage).add_child(debris);
                 }
             }
             Topology::Point => panic!("Found point topology for explosion."),
