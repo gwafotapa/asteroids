@@ -42,6 +42,12 @@ pub struct BossCore;
 #[derive(Component)]
 pub struct BossEdge;
 
+#[derive(Component)]
+pub struct Indestructible;
+
+#[derive(Component)]
+pub struct Damaged(pub Color);
+
 // const A0: Vec3 = Vec3 {
 //     x: -OUTER_RADIUS,
 //     y: 0.0,
@@ -251,6 +257,7 @@ pub fn spawn(
         // .spawn(Boss)
         .spawn((Boss { edges: EDGES }, Part))
         .insert(Health(CORE_HEALTH))
+        .insert(Indestructible)
         .insert(Collider {
             aabb: Aabb {
                 hw: 108.3, // sqrt(100^2 + (100sqrt(2) - 100)^2)
@@ -291,6 +298,7 @@ pub fn spawn(
             .spawn((Boss { edges: EDGES }, Part))
             .insert(BossEdge)
             .insert(Health(EDGE_HEALTH))
+            .insert(Damaged(Color::GRAY))
             .insert(Collider {
                 aabb: Aabb {
                     hw: OUTER_RADIUS - INNER_RADIUS,
@@ -483,15 +491,24 @@ pub fn attack(
 // }
 
 pub fn cut_off_edge(
+    mut commands: Commands,
     mut query_boss: Query<&mut Boss, Without<Part>>,
+    query_boss_core: Query<Entity, With<BossCore>>,
     query_boss_edge: Query<&Health, With<BossEdge>>,
 ) {
+    let edges = &mut query_boss.single_mut().edges;
     for health in query_boss_edge.iter() {
         if health.0 > 0 {
             continue;
         }
 
-        query_boss.single_mut().edges -= 1;
+        *edges -= 1;
+    }
+
+    if let Ok(core) = query_boss_core.get_single() {
+        if *edges == 0 {
+            commands.entity(core).remove::<Indestructible>();
+        }
     }
 }
 

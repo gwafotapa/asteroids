@@ -5,7 +5,7 @@ use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Part, Vel
 
 use super::{
     cache::{Cache, Collision},
-    damages::{Damageable, Damages},
+    damages::{DamageEvent, Damageable, Damages},
     detection::{self, Collider, Contact},
     response,
 };
@@ -24,7 +24,11 @@ pub fn with<C: Component + Damageable>(
         ),
         Without<Part>,
     >,
-    mut query_c_part: Query<(&mut Collider, &mut Health, &Transform), (With<C>, With<Part>)>,
+    mut query_c_part: Query<
+        (&mut Collider, Entity, &mut Health, &Transform),
+        (With<C>, With<Part>),
+    >,
+    mut damage_event: EventWriter<DamageEvent>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -53,7 +57,7 @@ pub fn with<C: Component + Damageable>(
             for child1 in children1 {
                 for child2 in children2 {
                     if let Ok(
-                        [(mut collider1p, mut health1p, transform1p), (mut collider2p, mut health2p, transform2p)],
+                        [(mut collider1p, entity1, mut health1p, transform1p), (mut collider2p, entity2, mut health2p, transform2p)],
                     ) = query_c_part.get_many_mut([*child1, *child2])
                     {
                         if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
@@ -115,22 +119,17 @@ pub fn with<C: Component + Damageable>(
                             let dv = (velocity1.0 - velocity2.0).length();
                             // println!("health1: {}, h1: {}", health1.0, h1);
                             // println!("health2: {}, h2: {}", health2.0, h2);
-                            component1.damage(
-                                &mut health1p,
-                                &mut collider1p,
-                                Damages {
-                                    location: contact.point.extend(0.0),
-                                    extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
-                                },
-                            );
-                            component2.damage(
-                                &mut health2p,
-                                &mut collider2p,
-                                Damages {
-                                    location: contact.point.extend(0.0),
-                                    extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
-                                },
-                            );
+                            let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
+                            let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
+                            damage_event.send(DamageEvent {
+                                entity: entity1,
+                                extent: damage1,
+                            });
+                            damage_event.send(DamageEvent {
+                                entity: entity2,
+                                extent: damage2,
+                            });
+
                             // cache.add(Collision(spaceship, b_id));
                             continue 'outer;
                         }
@@ -155,7 +154,10 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
         ),
         Without<Part>,
     >,
-    mut query_c1_part: Query<(&mut Collider, &mut Health, &Transform), (With<C1>, With<Part>)>,
+    mut query_c1_part: Query<
+        (&mut Collider, Entity, &mut Health, &Transform),
+        (With<C1>, With<Part>),
+    >,
     mut query_c2: Query<
         (
             &mut AngularVelocity,
@@ -168,11 +170,15 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
         ),
         Without<Part>,
     >,
-    mut query_c2_part: Query<(&mut Collider, &mut Health, &Transform), (With<C2>, With<Part>)>,
+    mut query_c2_part: Query<
+        (&mut Collider, Entity, &mut Health, &Transform),
+        (With<C2>, With<Part>),
+    >,
+    mut damage_event: EventWriter<DamageEvent>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
-    for (
+    'outer: for (
         mut angular_velocity1,
         component1,
         maybe_children1,
@@ -184,7 +190,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     {
         if let Some(children1) = maybe_children1 {
             for child1 in children1 {
-                if let Ok((mut collider1p, mut health1p, transform1p)) =
+                if let Ok((mut collider1p, entity1, mut health1p, transform1p)) =
                     query_c1_part.get_mut(*child1)
                 {
                     for (
@@ -199,7 +205,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                     {
                         if let Some(children2) = maybe_children2 {
                             for child2 in children2 {
-                                if let Ok((mut collider2p, mut health2p, transform2p)) =
+                                if let Ok((mut collider2p, entity2, mut health2p, transform2p)) =
                                     query_c2_part.get_mut(*child2)
                                 {
                                     if let Some((contact, time_c, transform1_c, transform2_c)) =
@@ -263,24 +269,18 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                                         let dv = (velocity1.0 - velocity2.0).length();
                                         // println!("health1: {}, h1: {}", health1.0, h1);
                                         // println!("health2: {}, h2: {}", health2.0, h2);
-                                        component1.damage(
-                                            &mut health1p,
-                                            &mut collider1p,
-                                            Damages {
-                                                location: contact.point.extend(0.0),
-                                                extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
-                                            },
-                                        );
-                                        component2.damage(
-                                            &mut health2p,
-                                            &mut collider2p,
-                                            Damages {
-                                                location: contact.point.extend(0.0),
-                                                extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
-                                            },
-                                        );
+                                        let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
+                                        let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
+                                        damage_event.send(DamageEvent {
+                                            entity: entity1,
+                                            extent: damage1,
+                                        });
+                                        damage_event.send(DamageEvent {
+                                            entity: entity2,
+                                            extent: damage2,
+                                        });
                                         // cache.add(Collision(spaceship, b_id));
-                                        return;
+                                        continue 'outer;
                                     }
                                 }
                             }
@@ -308,14 +308,15 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
         (Or<(With<C1>, With<C2>)>, Without<Part>),
     >,
     mut query_part: Query<
-        (&mut Collider, &mut Health, &Transform),
+        (&mut Collider, Entity, &mut Health, &Transform),
         (Or<(With<C1>, With<C2>)>, With<Part>),
     >,
+    mut damage_event: EventWriter<DamageEvent>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
     let mut combinations = query.iter_combinations_mut();
-    while let Some(
+    'outer: while let Some(
         [(
             mut angular_velocity1,
             maybe_component11,
@@ -338,10 +339,10 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
     ) = combinations.fetch_next()
     {
         if let Some((children1, children2)) = maybe_children1.zip(maybe_children2) {
-            for child1 in children1 {
+            'outer: for child1 in children1 {
                 for child2 in children2 {
                     if let Ok(
-                        [(mut collider1p, mut health1p, transform1p), (mut collider2p, mut health2p, transform2p)],
+                        [(mut collider1p, entity1, mut health1p, transform1p), (mut collider2p, mut entity2, health2p, transform2p)],
                     ) = query_part.get_many_mut([*child1, *child2])
                     {
                         if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
@@ -403,27 +404,19 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
                             let dv = (velocity1.0 - velocity2.0).length();
                             // println!("health1: {}, h1: {}", health1.0, h1);
                             // println!("health2: {}, h2: {}", health2.0, h2);
-                            let damages1 = Damages {
-                                location: contact.point.extend(0.0),
-                                extent: (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1,
-                            };
-                            let damages2 = Damages {
-                                location: contact.point.extend(0.0),
-                                extent: (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1,
-                            };
-                            if let Some(component) = maybe_component11 {
-                                component.damage(&mut health1p, &mut collider1p, damages1);
-                            } else if let Some(component) = maybe_component12 {
-                                component.damage(&mut health1p, &mut collider1p, damages1);
-                            }
-                            if let Some(component) = maybe_component21 {
-                                component.damage(&mut health2p, &mut collider2p, damages2);
-                            } else if let Some(component) = maybe_component22 {
-                                component.damage(&mut health2p, &mut collider2p, damages2);
-                            }
+                            let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
+                            let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
+                            damage_event.send(DamageEvent {
+                                entity: entity1,
+                                extent: damage1,
+                            });
+                            damage_event.send(DamageEvent {
+                                entity: entity2,
+                                extent: damage2,
+                            });
 
                             // cache.add(Collision(spaceship, b_id));
-                            return;
+                            continue 'outer;
                         }
                     }
                 }
