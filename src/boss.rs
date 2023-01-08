@@ -391,7 +391,7 @@ pub fn attack(
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
-                if rng.gen_range(0..100) == 0 {
+                if rng.gen_range(0..10) == 0 {
                     let attack_absolute_translation =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
@@ -400,7 +400,8 @@ pub fn attack(
                     // Compute coordinates of vector from boss to attack source
                     let bc = attack_absolute_translation - b_transform.translation;
                     // Scalar product sign determines whether or not attack has line of sight
-                    if bs.truncate().dot(bc.truncate()) < 0.0 {
+                    // if bs.truncate().dot(bc.truncate()) < 0.0 {
+                    if bs.truncate().angle_between(bc.truncate()).abs() > PI / 6.0 {
                         continue;
                     }
 
