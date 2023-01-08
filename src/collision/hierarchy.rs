@@ -1,21 +1,21 @@
 use bevy::prelude::*;
 // use iyes_loopless::prelude::*;
 
-use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity};
+use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Part, Velocity};
 
 use super::{
-    cache::{Cache, Collision},
-    damages::{DamageEvent, Damageable, Damages},
+    // cache::{Cache, Collision},
+    damages::{DamageEvent, Damageable},
     detection::{self, Collider, Contact},
     response,
 };
 
 pub fn with<C: Component + Damageable>(
-    mut cache: ResMut<Cache>,
+    // mut cache: ResMut<Cache>,
+    mut damage_event: EventWriter<DamageEvent>,
     mut query_c: Query<
         (
             &mut AngularVelocity,
-            &C,
             Option<&Children>,
             &Mass,
             &MomentOfInertia,
@@ -24,11 +24,7 @@ pub fn with<C: Component + Damageable>(
         ),
         Without<Part>,
     >,
-    mut query_c_part: Query<
-        (&mut Collider, Entity, &mut Health, &Transform),
-        (With<C>, With<Part>),
-    >,
-    mut damage_event: EventWriter<DamageEvent>,
+    query_c_part: Query<(&Collider, Entity, &Transform), (With<C>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -36,7 +32,6 @@ pub fn with<C: Component + Damageable>(
     'outer: while let Some(
         [(
             mut angular_velocity1,
-            component1,
             maybe_children1,
             mass1,
             moment_of_inertia1,
@@ -44,7 +39,6 @@ pub fn with<C: Component + Damageable>(
             mut velocity1,
         ), (
             mut angular_velocity2,
-            component2,
             maybe_children2,
             mass2,
             moment_of_inertia2,
@@ -57,8 +51,8 @@ pub fn with<C: Component + Damageable>(
             for child1 in children1 {
                 for child2 in children2 {
                     if let Ok(
-                        [(mut collider1p, entity1, mut health1p, transform1p), (mut collider2p, entity2, mut health2p, transform2p)],
-                    ) = query_c_part.get_many_mut([*child1, *child2])
+                        [(collider1p, entity1, transform1p), (collider2p, entity2, transform2p)],
+                    ) = query_c_part.get_many([*child1, *child2])
                     {
                         if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
                             *mass1,
@@ -141,46 +135,37 @@ pub fn with<C: Component + Damageable>(
 }
 
 pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
-    mut cache: ResMut<Cache>,
+    // mut cache: ResMut<Cache>,
+    mut damage_event: EventWriter<DamageEvent>,
     mut query_c1: Query<
         (
             &mut AngularVelocity,
-            &C1,
             Option<&Children>,
             &Mass,
             &MomentOfInertia,
             &mut Transform,
             &mut Velocity,
         ),
-        Without<Part>,
-    >,
-    mut query_c1_part: Query<
-        (&mut Collider, Entity, &mut Health, &Transform),
-        (With<C1>, With<Part>),
+        (With<C1>, Without<Part>),
     >,
     mut query_c2: Query<
         (
             &mut AngularVelocity,
-            &C2,
             Option<&Children>,
             &Mass,
             &MomentOfInertia,
             &mut Transform,
             &mut Velocity,
         ),
-        (Without<Part>, Without<C1>),
+        (With<C2>, Without<Part>, Without<C1>),
     >,
-    mut query_c2_part: Query<
-        (&mut Collider, Entity, &mut Health, &Transform),
-        (With<C2>, With<Part>, Without<C1>),
-    >,
-    mut damage_event: EventWriter<DamageEvent>,
+    query_c1_part: Query<(&Collider, Entity, &Transform), (With<C1>, With<Part>)>,
+    query_c2_part: Query<(&Collider, Entity, &Transform), (With<C2>, With<Part>, Without<C1>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
     'outer: for (
         mut angular_velocity1,
-        component1,
         maybe_children1,
         mass1,
         moment_of_inertia1,
@@ -190,12 +175,9 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     {
         if let Some(children1) = maybe_children1 {
             for child1 in children1 {
-                if let Ok((mut collider1p, entity1, mut health1p, transform1p)) =
-                    query_c1_part.get_mut(*child1)
-                {
+                if let Ok((collider1p, entity1, transform1p)) = query_c1_part.get(*child1) {
                     for (
                         mut angular_velocity2,
-                        component2,
                         maybe_children2,
                         mass2,
                         moment_of_inertia2,
@@ -205,8 +187,8 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                     {
                         if let Some(children2) = maybe_children2 {
                             for child2 in children2 {
-                                if let Ok((mut collider2p, entity2, mut health2p, transform2p)) =
-                                    query_c2_part.get_mut(*child2)
+                                if let Ok((collider2p, entity2, transform2p)) =
+                                    query_c2_part.get(*child2)
                                 {
                                     if let Some((contact, time_c, transform1_c, transform2_c)) =
                                         intersection_at(
@@ -293,12 +275,11 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
 }
 
 pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
-    mut cache: ResMut<Cache>,
+    // mut cache: ResMut<Cache>,
+    mut damage_event: EventWriter<DamageEvent>,
     mut query: Query<
         (
             &mut AngularVelocity,
-            Option<&C1>,
-            Option<&C2>,
             Option<&Children>,
             &Mass,
             &MomentOfInertia,
@@ -307,11 +288,7 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
         ),
         (Or<(With<C1>, With<C2>)>, Without<Part>),
     >,
-    mut query_part: Query<
-        (&mut Collider, Entity, &mut Health, &Transform),
-        (Or<(With<C1>, With<C2>)>, With<Part>),
-    >,
-    mut damage_event: EventWriter<DamageEvent>,
+    query_part: Query<(&Collider, Entity, &Transform), (Or<(With<C1>, With<C2>)>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -319,8 +296,6 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
     'outer: while let Some(
         [(
             mut angular_velocity1,
-            maybe_component11,
-            maybe_component12,
             maybe_children1,
             mass1,
             moment_of_inertia1,
@@ -328,8 +303,6 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
             mut velocity1,
         ), (
             mut angular_velocity2,
-            maybe_component21,
-            maybe_component22,
             maybe_children2,
             mass2,
             moment_of_inertia2,
@@ -339,11 +312,11 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
     ) = combinations.fetch_next()
     {
         if let Some((children1, children2)) = maybe_children1.zip(maybe_children2) {
-            'outer: for child1 in children1 {
+            for child1 in children1 {
                 for child2 in children2 {
                     if let Ok(
-                        [(mut collider1p, entity1, mut health1p, transform1p), (mut collider2p, mut entity2, health2p, transform2p)],
-                    ) = query_part.get_many_mut([*child1, *child2])
+                        [(collider1p, entity1, transform1p), (collider2p, entity2, transform2p)],
+                    ) = query_part.get_many([*child1, *child2])
                     {
                         if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
                             *mass1,

@@ -147,7 +147,6 @@ const FIRE_VELOCITY: f32 = 400.0;
 const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE as f32;
 const FIRE_RANGE: u32 = 100;
 const FIRE_VERTICES: usize = 32;
-const FIRE_HEALTH: i32 = 100;
 const FIRE_IMPACT_RADIUS: f32 = 15.0;
 const FIRE_IMPACT_VERTICES: usize = 32;
 

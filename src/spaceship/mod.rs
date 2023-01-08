@@ -34,7 +34,6 @@ const BLAST_RADIUS: f32 = 8.0;
 const BLAST_VERTICES: usize = 8;
 const COLOR: Color = Color::BLUE;
 const DRAG: f32 = 0.01;
-const FIRE_HEALTH: i32 = 1;
 const FIRE_IMPACT_RADIUS: f32 = 12.0;
 const FIRE_IMPACT_VERTICES: usize = 16;
 const FIRE_RADIUS: f32 = 3.0 / FIRE_RANGE as f32;
