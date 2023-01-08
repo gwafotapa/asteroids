@@ -202,7 +202,7 @@ fn main() {
                 .with_system(despawn_with::<collision::impact::Impact>)
                 // .with_system(despawn_recursive_with::<spaceship::Spaceship>)
                 .with_system(spaceship::flame::despawn)
-                .with_system(wreckage::despawn)
+                .with_system(despawn_recursive_with::<wreckage::Wreckage>)
                 // .with_system(despawn)
                 .into(),
         )

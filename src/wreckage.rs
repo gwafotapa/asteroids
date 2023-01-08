@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 
 use crate::{transform, AngularVelocity, Collider, Health, Part, Topology, TriangleXY, Velocity};
 
-const WRECKAGE_HEALTH: i32 = 100;
+const HEALTH: i32 = 100;
 const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 16.0;
 
 #[derive(Component)]
@@ -18,7 +18,7 @@ pub fn update_debris(
     time: Res<Time>,
 ) {
     for (mut transform, velocity) in &mut query {
-        transform.scale -= 1.0 / WRECKAGE_HEALTH as f32;
+        transform.scale -= 1.0 / HEALTH as f32;
         transform.translation += velocity.0 * time.delta_seconds();
     }
 }
@@ -30,14 +30,6 @@ pub fn update(
     for (mut health, mut transform, velocity) in &mut query {
         health.0 -= 1;
         transform.translation += velocity.0 * time.delta_seconds();
-    }
-}
-
-pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Wreckage>>) {
-    for (id, health) in &query {
-        if health.0 <= -WRECKAGE_HEALTH {
-            commands.entity(id).despawn_recursive();
-        }
     }
 }
 
@@ -76,7 +68,7 @@ pub fn wreck_with<C: Component>(
         commands.entity(part).despawn();
         let wreckage = commands
             .spawn(Wreckage)
-            .insert(Health(0))
+            .insert(Health(HEALTH))
             .insert(Velocity(
                 p_velocity.0
                     + p_angular_velocity.0
