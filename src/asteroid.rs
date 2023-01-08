@@ -23,9 +23,7 @@ const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
 
 #[derive(Clone, Component, Copy)]
-pub struct Asteroid {
-    pub radius: f32,
-}
+pub struct Asteroid;
 
 pub fn spawn(
     commands: &mut Commands,
@@ -55,7 +53,7 @@ pub fn spawn(
     // );
 
     let asteroid = commands
-        .spawn(Asteroid { radius })
+        .spawn(Asteroid)
         .insert(Mass(mass))
         .insert(MomentOfInertia(moment_of_inertia))
         // .insert(Velocity(Vec3::ZERO))
@@ -68,7 +66,7 @@ pub fn spawn(
         .id();
 
     let asteroid_part = commands
-        .spawn((Asteroid { radius }, Part))
+        .spawn((Asteroid, Part))
         .insert(Health(health))
         .insert(Collider {
             aabb: Aabb {
