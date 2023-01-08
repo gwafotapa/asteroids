@@ -101,15 +101,13 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .label("collision")
                 .after("movement")
-                .with_system(collision::hierarchy::with::<asteroid::Asteroid>)
-                .with_system(collision::hierarchy::among::<asteroid::Asteroid, boss::Boss>)
-                .with_system(
-                    collision::hierarchy::among::<asteroid::Asteroid, spaceship::Spaceship>,
-                )
-                .with_system(collision::hierarchy::among::<boss::Boss, spaceship::Spaceship>)
-                .with_system(collision::hierarchy::between::<boss::Boss, fire::Fire>)
-                .with_system(collision::hierarchy::between::<spaceship::Spaceship, fire::Fire>)
-                .with_system(collision::hierarchy::between::<asteroid::Asteroid, fire::Fire>) // .with_system(
+                .with_system(collision::generic::with::<asteroid::Asteroid>)
+                .with_system(collision::generic::among::<asteroid::Asteroid, boss::Boss>)
+                .with_system(collision::generic::among::<asteroid::Asteroid, spaceship::Spaceship>)
+                .with_system(collision::generic::among::<boss::Boss, spaceship::Spaceship>)
+                .with_system(collision::generic::between::<boss::Boss, fire::Fire>)
+                .with_system(collision::generic::between::<spaceship::Spaceship, fire::Fire>)
+                .with_system(collision::generic::between::<asteroid::Asteroid, fire::Fire>) // .with_system(
                 //     collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
                 // )
                 // .with_system(collision::generic::with::<asteroid::Asteroid>)
