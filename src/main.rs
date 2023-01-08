@@ -107,6 +107,7 @@ fn main() {
                     collision::hierarchy::among::<asteroid::Asteroid, spaceship::Spaceship>,
                 )
                 .with_system(collision::hierarchy::among::<boss::Boss, spaceship::Spaceship>)
+                .with_system(collision::hierarchy::between::<boss::Boss, fire::Fire>)
                 // .with_system(
                 //     collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
                 // )

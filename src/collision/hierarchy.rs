@@ -168,11 +168,11 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
             &mut Transform,
             &mut Velocity,
         ),
-        Without<Part>,
+        (Without<Part>, Without<C1>),
     >,
     mut query_c2_part: Query<
         (&mut Collider, Entity, &mut Health, &Transform),
-        (With<C2>, With<Part>),
+        (With<C2>, With<Part>, Without<C1>),
     >,
     mut damage_event: EventWriter<DamageEvent>,
     meshes: Res<Assets<Mesh>>,
