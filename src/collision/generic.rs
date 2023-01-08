@@ -83,17 +83,17 @@ use super::{
 //             //     contact.normal, angular_velocity1.0, angular_velocity2.0
 //             // );
 //             if !cache.contains(Collision(entity1, entity2)) {
-//                 response::compute(
+//                 response::compute_velocities(
+//                     &mut velocity1,
+//                     &mut velocity2,
+//                     &mut angular_velocity1,
+//                     &mut angular_velocity2,
 //                     transform1,
 //                     transform2,
 //                     *mass1,
 //                     *mass2,
 //                     *moment_of_inertia1,
 //                     *moment_of_inertia2,
-//                     &mut velocity1,
-//                     &mut velocity2,
-//                     &mut angular_velocity1,
-//                     &mut angular_velocity2,
 //                     contact,
 //                 );
 //                 let dv = (velocity1.0 - velocity2.0).length();
@@ -175,17 +175,17 @@ pub fn with<C: Component + Damageable>(
             Res::clone(&time),
         ) {
             // if !cache.contains(Collision(entity1, entity2)) {
-            response::compute(
+            response::compute_velocities(
+                &mut velocity1,
+                &mut velocity2,
+                &mut angular_velocity1,
+                &mut angular_velocity2,
                 &transform1_c,
                 &transform2_c,
                 *mass1,
                 *mass2,
                 *moment_of_inertia1,
                 *moment_of_inertia2,
-                &mut velocity1,
-                &mut velocity2,
-                &mut angular_velocity1,
-                &mut angular_velocity2,
                 contact,
             );
             [*transform1, *transform2] = [
@@ -305,17 +305,17 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
                 Res::clone(&time),
             ) {
                 // if !cache.contains(Collision(c1_entity, c2_entity)) {
-                response::compute(
+                response::compute_velocities(
+                    &mut velocity1,
+                    &mut velocity2,
+                    &mut angular_velocity1,
+                    &mut angular_velocity2,
                     &transform1_c,
                     &transform2_c,
                     *mass1,
                     *mass2,
                     *moment_of_inertia1,
                     *moment_of_inertia2,
-                    &mut velocity1,
-                    &mut velocity2,
-                    &mut angular_velocity1,
-                    &mut angular_velocity2,
                     contact,
                 );
                 [*transform1, *transform2] = [
@@ -425,17 +425,17 @@ pub fn among<C1: Component + Damageable, C2: Component + Damageable, C3: Compone
             Res::clone(&time),
         ) {
             // if !cache.contains(Collision(entity1, entity2)) {
-            response::compute(
+            response::compute_velocities(
+                &mut velocity1,
+                &mut velocity2,
+                &mut angular_velocity1,
+                &mut angular_velocity2,
                 &transform1_c,
                 &transform2_c,
                 *mass1,
                 *mass2,
                 *moment_of_inertia1,
                 *moment_of_inertia2,
-                &mut velocity1,
-                &mut velocity2,
-                &mut angular_velocity1,
-                &mut angular_velocity2,
                 contact,
             );
             [*transform1, *transform2] = [

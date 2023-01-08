@@ -7,7 +7,11 @@ use crate::{collision::detection::Contact, AngularVelocity, Mass, MomentOfInerti
 
 const RESTITUTION: f32 = 1.0;
 
-pub fn compute(
+pub fn compute_velocities(
+    mut velocity1: &mut Velocity,
+    mut velocity2: &mut Velocity,
+    angular_velocity1: &mut AngularVelocity,
+    angular_velocity2: &mut AngularVelocity,
     transform1: &Transform,
     transform2: &Transform,
     // transform1: &mut Transform,
@@ -16,10 +20,6 @@ pub fn compute(
     mass2: Mass,
     moment_of_inertia1: MomentOfInertia,
     moment_of_inertia2: MomentOfInertia,
-    mut velocity1: &mut Velocity,
-    mut velocity2: &mut Velocity,
-    angular_velocity1: &mut AngularVelocity,
-    angular_velocity2: &mut AngularVelocity,
     contact: Contact,
 ) {
     // Go back in time to separate colliding bodies

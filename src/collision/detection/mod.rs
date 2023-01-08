@@ -492,17 +492,17 @@ pub fn intersection_at(
 
         let [mut v1, mut v2] = [velocity1, velocity2];
         let [mut w1, mut w2] = [angular_velocity1, angular_velocity2];
-        super::response::compute(
+        super::response::compute_velocities(
+            &mut v1,
+            &mut v2,
+            &mut w1,
+            &mut w2,
             &transform1_c,
             &transform2_c,
             mass1,
             mass2,
             moment_of_inertia1,
             moment_of_inertia2,
-            &mut v1,
-            &mut v2,
-            &mut w1,
-            &mut w2,
             contact_c,
         );
         debug!(

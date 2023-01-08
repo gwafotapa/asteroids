@@ -202,17 +202,17 @@ pub fn with_asteroid_or_spaceship(
                     // if !cache.contains(Collision(spaceship, b_id)) {
                     // println!("spaceship -- w1: {}", as_angular_velocity.0);
                     // println!("boss      -- w2: {}", b_angular_velocity.0);
-                    response::compute(
+                    response::compute_velocities(
+                        &mut b_velocity,
+                        &mut as_velocity,
+                        &mut b_angular_velocity,
+                        &mut as_angular_velocity,
                         &b_transform_c,
                         &as_transform_c,
                         *b_mass,
                         *as_mass,
                         *b_moment_of_inertia,
                         *as_moment_of_inertia,
-                        &mut b_velocity,
-                        &mut as_velocity,
-                        &mut b_angular_velocity,
-                        &mut as_angular_velocity,
                         contact,
                     );
                     [*as_transform, *b_transform] = [
@@ -287,17 +287,17 @@ pub fn intersection_with_other_at(
 
         let [mut v1, mut v2] = [b_velocity, o_velocity];
         let [mut w1, mut w2] = [b_angular_velocity, o_angular_velocity];
-        super::response::compute(
+        super::response::compute_velocities(
+            &mut v1,
+            &mut v2,
+            &mut w1,
+            &mut w2,
             &transform::global_of(bp_transform, b_transform),
             &o_transform,
             b_mass,
             o_mass,
             b_moment_of_inertia,
             o_moment_of_inertia,
-            &mut v1,
-            &mut v2,
-            &mut w1,
-            &mut w2,
             contact_c,
         );
         debug!(
