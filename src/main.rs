@@ -77,6 +77,7 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 // .with_system(count_entities)
+                .with_system(count_asteroids_without_mesh)
                 .into(),
         )
         .add_system_set(
@@ -201,7 +202,7 @@ fn main() {
                 // .with_system(despawn_with::<boss::BossEdge>)
                 .with_system(despawn_with::<collision::impact::Impact>)
                 // .with_system(despawn_recursive_with::<spaceship::Spaceship>)
-                .with_system(spaceship::flame::despawn)
+                // .with_system(spaceship::flame::despawn)
                 .with_system(despawn_recursive_with::<wreckage::Wreckage>)
                 // .with_system(despawn)
                 .into(),

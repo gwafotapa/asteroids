@@ -107,3 +107,9 @@ pub fn despawn_recursive_with<C: Component>(
 pub fn count_entities(query: Query<Entity>) {
     println!("{}", query.iter().count());
 }
+
+pub fn count_asteroids_without_mesh(
+    query: Query<&asteroid::Asteroid, (Without<Children>, Without<Part>)>,
+) {
+    println!("{}", query.iter().count());
+}

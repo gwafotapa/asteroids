@@ -187,17 +187,17 @@ pub fn front_update(
     }
 }
 
-pub fn despawn(
-    mut commands: Commands,
-    query_flame: Query<Entity, Or<(With<FlameRear>, With<FlameFront>)>>,
-    query_spaceship: Query<(Entity, &Health), With<Spaceship>>,
-) {
-    if let Ok((spaceship, health)) = query_spaceship.get_single() {
-        if health.0 <= 0 {
-            for flame in query_flame.iter() {
-                commands.entity(spaceship).remove_children(&[flame]);
-                commands.entity(flame).despawn();
-            }
-        }
-    }
-}
+// pub fn despawn(
+//     mut commands: Commands,
+//     query_flame: Query<Entity, Or<(With<FlameRear>, With<FlameFront>)>>,
+//     query_spaceship: Query<(Entity, &Health), With<Spaceship>>,
+// ) {
+//     if let Ok((spaceship, health)) = query_spaceship.get_single() {
+//         if health.0 <= 0 {
+//             for flame in query_flame.iter() {
+//                 commands.entity(spaceship).remove_children(&[flame]);
+//                 commands.entity(flame).despawn();
+//             }
+//         }
+//     }
+// }

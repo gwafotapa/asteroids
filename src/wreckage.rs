@@ -36,7 +36,10 @@ pub fn update(
 pub fn wreck_with<C: Component>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    query: Query<(&AngularVelocity, Entity, &Transform, &Velocity), (With<C>, Without<Part>)>,
+    query: Query<
+        (&AngularVelocity, &Children, Entity, &Transform, &Velocity),
+        (With<C>, Without<Part>),
+    >,
     query_part: Query<
         (
             &Handle<ColorMaterial>,
@@ -62,10 +65,21 @@ pub fn wreck_with<C: Component>(
         //         query.get_component::<Velocity>(**parent).ok()
         //     })
         //     .map_or(Vec3::ZERO, |v| v.0);
-        let (p_angular_velocity, parent, p_transform, p_velocity) = query.get(**parent).unwrap();
+        let (p_angular_velocity, children, parent, p_transform, p_velocity) =
+            query.get(**parent).unwrap();
 
-        commands.entity(parent).remove_children(&[part]);
-        commands.entity(part).despawn();
+        if children
+            .iter()
+            .filter(|child| query_part.get(**child).is_ok())
+            .count()
+            > 1
+        {
+            commands.entity(parent).remove_children(&[part]);
+            commands.entity(part).despawn();
+        } else {
+            commands.entity(parent).despawn_recursive();
+        }
+
         let wreckage = commands
             .spawn(Wreckage)
             .insert(Health(HEALTH))
