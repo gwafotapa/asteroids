@@ -78,7 +78,9 @@ pub fn wreck_with<C: Component>(
             .spawn(Wreckage)
             .insert(Health(0))
             .insert(Velocity(
-                p_velocity.0 + p_angular_velocity.0 * Vec3::Z.cross(transform.translation),
+                p_velocity.0
+                    + p_angular_velocity.0
+                        * Vec3::Z.cross(p_transform.rotation.mul_vec3(transform.translation)),
             ))
             .insert(SpatialBundle {
                 transform: transform::global_of(*transform, *p_transform),
