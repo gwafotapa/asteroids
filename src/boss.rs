@@ -24,9 +24,7 @@ const MOMENT_OF_INERTIA: f32 =
 // pub struct Boss;
 
 #[derive(Component)]
-pub struct Boss {
-    pub edges: usize,
-}
+pub struct Boss;
 
 #[derive(Component)]
 pub struct BossPart;
@@ -214,7 +212,7 @@ pub fn spawn(
     let translation = Vec3::new(x, y, BOSS_Z);
 
     let boss = commands
-        .spawn(Boss { edges: EDGES })
+        .spawn(Boss)
         .insert(Mass(MASS))
         .insert(MomentOfInertia(MOMENT_OF_INERTIA))
         .insert(Velocity(Vec3::ZERO))
@@ -249,7 +247,7 @@ pub fn spawn(
 
     let boss_core = commands
         // .spawn(Boss)
-        .spawn((Boss { edges: EDGES }, Part))
+        .spawn((Boss, Part))
         .insert(BossCore)
         .insert(Health(CORE_HEALTH))
         .insert(Indestructible)
@@ -290,7 +288,7 @@ pub fn spawn(
         let mesh_handle = meshes.add(mesh);
 
         let boss_edge = commands
-            .spawn((Boss { edges: EDGES }, Part))
+            .spawn((Boss, Part))
             .insert(BossEdge)
             .insert(Health(EDGE_HEALTH))
             .insert(Damaged(Color::GRAY))
@@ -327,24 +325,21 @@ pub fn spawn(
 }
 
 pub fn movement(
-    mut query_boss: Query<(&mut AngularVelocity, &Boss, &mut Transform, &mut Velocity)>,
-    query_boss_part: Query<Entity, (With<Boss>, With<Part>)>,
+    mut query_boss: Query<
+        (&mut AngularVelocity, Entity, &mut Transform, &mut Velocity),
+        With<Boss>,
+    >,
+    query_boss_edge: Query<With<BossEdge>>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>, Without<Boss>)>,
     cache: Res<Cache>,
     time: Res<Time>,
 ) {
-    if let Ok((mut angular_velocity, boss, mut b_transform, mut velocity)) =
+    if let Ok((mut angular_velocity, id, mut b_transform, mut velocity)) =
         query_boss.get_single_mut()
     {
-        'no_collision: {
-            for id in &query_boss_part {
-                if cache.contains_entity(id) {
-                    break 'no_collision;
-                }
-            }
-
+        if !cache.contains_entity(id) {
             if let Ok(s_transform) = query_spaceship.get_single() {
-                if boss.edges > 0 {
+                if !query_boss_edge.is_empty() {
                     let mut direction =
                         (s_transform.translation - b_transform.translation).normalize();
                     let mut rng = rand::thread_rng();
@@ -441,21 +436,11 @@ pub fn attack(
 
 pub fn cut_off_edge(
     mut commands: Commands,
-    mut query_boss: Query<&mut Boss, Without<Part>>,
-    query_boss_core: Query<Entity, With<BossCore>>,
-    query_boss_edge: Query<&Health, With<BossEdge>>,
+    query_core: Query<Entity, With<BossCore>>,
+    query_edge: Query<With<BossEdge>>,
 ) {
-    let edges = &mut query_boss.single_mut().edges;
-    for health in query_boss_edge.iter() {
-        if health.0 > 0 {
-            continue;
-        }
-
-        *edges -= 1;
-    }
-
-    if let Ok(core) = query_boss_core.get_single() {
-        if *edges == 0 {
+    if let Ok(core) = query_core.get_single() {
+        if query_edge.is_empty() {
             commands.entity(core).remove::<Indestructible>();
         }
     }
