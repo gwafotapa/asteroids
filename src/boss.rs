@@ -3,7 +3,7 @@ use rand::Rng;
 use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
-    blast::Blast,
+    blast::BlastEvent,
     collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Fire, FireEvent},
     spaceship::{self, Spaceship},
@@ -368,10 +368,8 @@ pub fn movement(
 }
 
 pub fn attack(
+    mut blast_event: EventWriter<BlastEvent>,
     mut fire_event: EventWriter<FireEvent>,
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss: Query<&Transform, (With<Boss>, Without<Part>)>,
     query_boss_edge: Query<(&Attack, &Transform), With<Boss>>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
@@ -394,23 +392,12 @@ pub fn attack(
                         continue;
                     }
 
-                    commands
-                        .spawn(Blast)
-                        .insert(Health(1))
-                        .insert(ColorMesh2dBundle {
-                            mesh: meshes
-                                .add(Mesh::from(shape::Circle {
-                                    radius: BLAST_RADIUS,
-                                    vertices: BLAST_VERTICES,
-                                }))
-                                .into(),
-                            // transform: Transform::from_translation(bp_attack.0),
-                            transform: Transform::from_translation(
-                                attack_absolute_translation + Vec3::new(0.0, 0.0, 1.0),
-                            ),
-                            material: materials.add(ATTACK_COLOR.into()),
-                            ..default()
-                        });
+                    blast_event.send(BlastEvent {
+                        radius: BLAST_RADIUS,
+                        vertices: BLAST_VERTICES,
+                        color: ATTACK_COLOR,
+                        translation: attack_absolute_translation,
+                    });
 
                     fire_event.send(FireEvent {
                         fire: Fire {

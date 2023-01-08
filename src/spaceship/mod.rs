@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 use std::f32::consts::PI;
 
 use crate::{
-    blast::Blast,
+    blast::BlastEvent,
     collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Fire, FireEvent},
     keyboard::KeyboardBindings,
@@ -260,10 +260,8 @@ pub fn spawn(
 }
 
 pub fn attack(
+    mut blast_event: EventWriter<BlastEvent>,
     mut fire_event: EventWriter<FireEvent>,
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
     query_bindings: Query<&KeyboardBindings>,
@@ -273,24 +271,12 @@ pub fn attack(
     }
 
     if let Ok(transform) = query_spaceship.get_single() {
-        commands
-            .spawn(Blast)
-            .insert(Health(1))
-            .insert(ColorMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius: BLAST_RADIUS,
-                        vertices: BLAST_VERTICES,
-                    }))
-                    .into(),
-                transform: Transform::from_translation(
-                    transform.translation
-                        + transform.rotation * ATTACK_SOURCE
-                        + Vec3::new(0.0, 0.0, 1.0),
-                ),
-                material: materials.add(ATTACK_COLOR.into()),
-                ..default()
-            });
+        blast_event.send(BlastEvent {
+            radius: BLAST_RADIUS,
+            vertices: BLAST_VERTICES,
+            color: ATTACK_COLOR,
+            translation: transform.translation + transform.rotation * ATTACK_SOURCE,
+        });
 
         fire_event.send(FireEvent {
             fire: Fire {

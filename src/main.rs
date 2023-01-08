@@ -27,6 +27,7 @@ fn main() {
         // .add_stage_after(WRECK, DESPAWN, SystemStage::parallel())
         .add_loopless_state(GameState::MainMenu)
         .add_event::<collision::damages::DamageEvent>()
+        .add_event::<blast::BlastEvent>()
         .add_event::<fire::FireEvent>()
         // .add_startup_system(camera::spawn)
         .add_startup_system(camera::spawn)
@@ -154,6 +155,7 @@ fn main() {
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
+        .add_system(blast::spawn.after("attack"))
         .add_system(fire::spawn.after("attack"))
         .add_system(collision::damages::apply.after("collision"))
         .add_system_set(
