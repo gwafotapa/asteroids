@@ -2,12 +2,13 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{asteroid, WINDOW_HEIGHT, WINDOW_WIDTH};
+use star::StarEvent;
 
 const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
 const STARS_PER_SECTOR: usize = 50;
 const SECTOR_Z: f32 = 0.0;
 
-mod star;
+pub mod star;
 
 #[derive(Clone, Component, Debug)]
 pub struct Sector {
@@ -19,11 +20,7 @@ pub struct Sector {
 #[derive(Debug, Resource)]
 pub struct CurrentSectorId(Entity);
 
-pub fn spawn(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+pub fn spawn(mut star_event: EventWriter<StarEvent>, mut commands: Commands) {
     let mut sectors: Vec<(Entity, Sector)> = Vec::with_capacity(9);
 
     for i in [-1, 0, 1] {
@@ -50,8 +47,7 @@ pub fn spawn(
             ));
 
             for _ in 0..STARS_PER_SECTOR {
-                let star_id = star::spawn(&mut commands, &mut meshes, &mut materials);
-                commands.entity(sector_id).add_child(star_id);
+                star_event.send(StarEvent { sector: sector_id });
             }
         }
     }
@@ -88,6 +84,7 @@ pub fn spawn(
 }
 
 pub fn update(
+    mut star_event: EventWriter<StarEvent>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -160,8 +157,9 @@ pub fn update(
 
             // Populate this new sector with stars
             for _ in 0..STARS_PER_SECTOR {
-                let star = star::spawn(&mut commands, &mut meshes, &mut materials);
-                commands.entity(new_sector_id).add_child(star);
+                star_event.send(StarEvent {
+                    sector: new_sector_id,
+                });
             }
 
             // Populate this new sector with asteroids
