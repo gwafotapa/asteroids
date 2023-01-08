@@ -30,7 +30,7 @@ fn main() {
         .add_event::<collision::damages::DamageEvent>()
         .add_event::<collision::impact::ImpactEvent>()
         .add_event::<fire::FireEvent>()
-        .add_event::<map::star::StarEvent>()
+        .add_event::<map::star::StarsEvent>()
         // .add_startup_system(camera::spawn)
         .add_startup_system(camera::spawn)
         .add_startup_system(keyboard::spawn_bindings)

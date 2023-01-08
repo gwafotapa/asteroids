@@ -1,47 +1,53 @@
 use bevy::prelude::*;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
+use rand_pcg::Pcg32;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{map::Sector, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;
 const VERTICES: usize = 4;
 const COLOR: Color = Color::WHITE;
+const STARS_PER_SECTOR: usize = 50;
 
 #[derive(Component)]
 pub struct Star;
 
-pub struct StarEvent {
+pub struct StarsEvent {
     pub sector: Entity,
 }
 
 pub fn spawn(
-    mut star_event: EventReader<StarEvent>,
+    mut stars_event: EventReader<StarsEvent>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<&Sector>,
 ) {
-    let mut rng = rand::thread_rng();
-    for ev in star_event.iter() {
-        let star = commands
-            .spawn(Star)
-            .insert(ColorMesh2dBundle {
-                mesh: meshes
-                    .add(Mesh::from(shape::Circle {
-                        radius: RADIUS,
-                        vertices: VERTICES,
-                    }))
-                    .into(),
-                transform: Transform::from_xyz(
-                    rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
-                    rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
-                    BACKGROUND,
-                ),
-                material: materials.add(COLOR.into()),
-                ..default()
-            })
-            .id();
+    for ev in stars_event.iter() {
+        let sector = query.get(ev.sector).unwrap();
+        let mut rng = Pcg32::seed_from_u64(sector.seed);
+        for _ in 0..STARS_PER_SECTOR {
+            let star = commands
+                .spawn(Star)
+                .insert(ColorMesh2dBundle {
+                    mesh: meshes
+                        .add(Mesh::from(shape::Circle {
+                            radius: RADIUS,
+                            vertices: VERTICES,
+                        }))
+                        .into(),
+                    transform: Transform::from_xyz(
+                        rng.gen_range(-WINDOW_WIDTH / 2.0..WINDOW_WIDTH / 2.0),
+                        rng.gen_range(-WINDOW_HEIGHT / 2.0..WINDOW_HEIGHT / 2.0),
+                        BACKGROUND,
+                    ),
+                    material: materials.add(COLOR.into()),
+                    ..default()
+                })
+                .id();
 
-        commands.entity(ev.sector).add_child(star);
+            commands.entity(ev.sector).add_child(star);
+        }
     }
 }

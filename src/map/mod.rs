@@ -2,10 +2,9 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::{asteroid, WINDOW_HEIGHT, WINDOW_WIDTH};
-use star::StarEvent;
+use star::StarsEvent;
 
 const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
-const STARS_PER_SECTOR: usize = 50;
 const SECTOR_Z: f32 = 0.0;
 
 pub mod star;
@@ -15,12 +14,14 @@ pub struct Sector {
     i: isize,
     j: isize,
     neighboors: Vec<Entity>,
+    seed: u64,
 }
 
 #[derive(Debug, Resource)]
 pub struct CurrentSectorId(Entity);
 
-pub fn spawn(mut star_event: EventWriter<StarEvent>, mut commands: Commands) {
+pub fn spawn(mut stars_event: EventWriter<StarsEvent>, mut commands: Commands) {
+    let mut rng = rand::thread_rng();
     let mut sectors: Vec<(Entity, Sector)> = Vec::with_capacity(9);
 
     for i in [-1, 0, 1] {
@@ -43,12 +44,13 @@ pub fn spawn(mut star_event: EventWriter<StarEvent>, mut commands: Commands) {
                     i,
                     j,
                     neighboors: Vec::new(),
+                    seed: rng.gen::<u64>(),
                 },
             ));
 
-            for _ in 0..STARS_PER_SECTOR {
-                star_event.send(StarEvent { sector: sector_id });
-            }
+            // for _ in 0..STARS_PER_SECTOR {
+            stars_event.send(StarsEvent { sector: sector_id });
+            // }
         }
     }
 
@@ -84,7 +86,7 @@ pub fn spawn(mut star_event: EventWriter<StarEvent>, mut commands: Commands) {
 }
 
 pub fn update(
-    mut star_event: EventWriter<StarEvent>,
+    mut stars_event: EventWriter<StarsEvent>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -152,15 +154,16 @@ pub fn update(
                     i,
                     j,
                     neighboors: Vec::new(),
+                    seed: rng.gen::<u64>(),
                 },
             ));
 
             // Populate this new sector with stars
-            for _ in 0..STARS_PER_SECTOR {
-                star_event.send(StarEvent {
-                    sector: new_sector_id,
-                });
-            }
+            // for _ in 0..STARS_PER_SECTOR {
+            stars_event.send(StarsEvent {
+                sector: new_sector_id,
+            });
+            // }
 
             // Populate this new sector with asteroids
             // let population = rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1);
