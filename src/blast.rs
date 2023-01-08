@@ -6,16 +6,18 @@ use crate::Health;
 pub struct Blast;
 
 pub fn update(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Health, Option<&Parent>), With<Blast>>,
+    // mut commands: Commands,
+    // mut query: Query<(Entity, &mut Health, Option<&Parent>), With<Blast>>,
+    mut query: Query<&mut Health, With<Blast>>,
 ) {
-    for (blast, mut health, parent) in query.iter_mut() {
+    // for (blast, mut health, parent) in query.iter_mut() {
+    for mut health in query.iter_mut() {
         health.0 -= 1;
-        if health.0 <= 0 {
-            if let Some(parent) = parent {
-                commands.entity(parent.get()).remove_children(&[blast]);
-            }
-        }
+        // if health.0 <= 0 {
+        //     if let Some(parent) = parent {
+        //         commands.entity(parent.get()).remove_children(&[blast]);
+        //     }
+        // }
     }
 }
 

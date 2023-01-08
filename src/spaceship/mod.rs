@@ -288,13 +288,17 @@ pub fn attack(
                         vertices: BLAST_VERTICES,
                     }))
                     .into(),
-                transform: Transform::from_translation(ATTACK_SOURCE + Vec3::new(0.0, 0.0, 1.0)),
+                transform: Transform::from_translation(
+                    transform.translation
+                        + transform.rotation * ATTACK_SOURCE
+                        + Vec3::new(0.0, 0.0, 1.0),
+                ),
                 material: materials.add(ATTACK_COLOR.into()),
                 ..default()
             })
             .id();
 
-        commands.entity(spaceship).add_child(blast);
+        // commands.entity(spaceship).add_child(blast);
 
         fire_event.send(FireEvent {
             fire: Fire {

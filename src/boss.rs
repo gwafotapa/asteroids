@@ -413,13 +413,16 @@ pub fn attack(
                                     vertices: BLAST_VERTICES,
                                 }))
                                 .into(),
-                            transform: Transform::from_translation(bp_attack.0),
+                            // transform: Transform::from_translation(bp_attack.0),
+                            transform: Transform::from_translation(
+                                attack_absolute_translation + Vec3::new(0.0, 0.0, 1.0),
+                            ),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
                         })
                         .id();
 
-                    commands.entity(bp_entity).add_child(blast);
+                    // commands.entity(bp_entity).add_child(blast);
 
                     fire_event.send(FireEvent {
                         fire: Fire {
