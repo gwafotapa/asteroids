@@ -471,16 +471,18 @@ pub fn intersection_at(
     velocity2: Velocity,
     angular_velocity1: AngularVelocity,
     angular_velocity2: AngularVelocity,
-    collider1: &Collider,
-    collider2: &Collider,
+    transform1p: Transform,
+    transform2p: Transform,
+    collider1p: &Collider,
+    collider2p: &Collider,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) -> Option<(Contact, f32, Transform, Transform)> {
     if let Some(mut contact_c) = intersection(
-        transform1,
-        transform2,
-        collider1,
-        collider2,
+        transform::global_of(transform1p, transform1),
+        transform::global_of(transform2p, transform2),
+        collider1p,
+        collider2p,
         Some(Res::clone(&meshes)),
     ) {
         let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
@@ -507,11 +509,11 @@ pub fn intersection_at(
         );
         debug!(
             "\nCollision detected at time tc\n\
-             translation 1c: {}, translation 2c: {}\n\
+             translation1: {}, translation2: {}\n\
 	     Standard response\n\
-	     velocity 1c: {}, velocity 2c: {}\n\
+	     velocity1: {}, velocity2: {}\n\
 	     Rewind\n\
-             translation 1a: {}, translation 2a: {}\n\
+             translation1_a: {}, translation2_a: {}\n\
              ta = {}, tc = {}, contact = {:?}",
             transform1_c.translation,
             transform2_c.translation,
@@ -530,11 +532,12 @@ pub fn intersection_at(
                 transform::at(time_b - time_a, transform1_a, velocity1, angular_velocity1),
                 transform::at(time_b - time_a, transform2_a, velocity2, angular_velocity2),
             ];
+
             if let Some(contact_b) = intersection(
-                transform1_b,
-                transform2_b,
-                collider1,
-                collider2,
+                transform::global_of(transform1p, transform1_b),
+                transform::global_of(transform2p, transform2_b),
+                collider1p,
+                collider2p,
                 Some(Res::clone(&meshes)),
             ) {
                 contact_c = contact_b;

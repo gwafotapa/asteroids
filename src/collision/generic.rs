@@ -6,7 +6,7 @@ use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Part, Velocity};
 use super::{
     // cache::{Cache, Collision},
     damages::DamageEvent,
-    detection::{self, Collider, Contact},
+    detection::{self, Collider},
     response,
 };
 
@@ -54,24 +54,26 @@ pub fn with<C: Component>(
                         [(collider1p, entity1, transform1p), (collider2p, entity2, transform2p)],
                     ) = query_c_part.get_many([*child1, *child2])
                     {
-                        if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
-                            *mass1,
-                            *mass2,
-                            *moment_of_inertia1,
-                            *moment_of_inertia2,
-                            *transform1,
-                            *transform2,
-                            *velocity1,
-                            *velocity2,
-                            *angular_velocity1,
-                            *angular_velocity2,
-                            *transform1p,
-                            *transform2p,
-                            &collider1p,
-                            &collider2p,
-                            Res::clone(&meshes),
-                            Res::clone(&time),
-                        ) {
+                        if let Some((contact, time_c, transform1_c, transform2_c)) =
+                            detection::intersection_at(
+                                *mass1,
+                                *mass2,
+                                *moment_of_inertia1,
+                                *moment_of_inertia2,
+                                *transform1,
+                                *transform2,
+                                *velocity1,
+                                *velocity2,
+                                *angular_velocity1,
+                                *angular_velocity2,
+                                *transform1p,
+                                *transform2p,
+                                &collider1p,
+                                &collider2p,
+                                Res::clone(&meshes),
+                                Res::clone(&time),
+                            )
+                        {
                             // if !cache.contains(Collision(spaceship, b_id)) {
                             response::compute_velocities(
                                 &mut velocity1,
@@ -191,7 +193,7 @@ pub fn between<C1: Component, C2: Component>(
                                     query_c2_part.get(*child2)
                                 {
                                     if let Some((contact, time_c, transform1_c, transform2_c)) =
-                                        intersection_at(
+                                        detection::intersection_at(
                                             *mass1,
                                             *mass2,
                                             *moment_of_inertia1,
@@ -318,24 +320,26 @@ pub fn among<C1: Component, C2: Component>(
                         [(collider1p, entity1, transform1p), (collider2p, entity2, transform2p)],
                     ) = query_part.get_many([*child1, *child2])
                     {
-                        if let Some((contact, time_c, transform1_c, transform2_c)) = intersection_at(
-                            *mass1,
-                            *mass2,
-                            *moment_of_inertia1,
-                            *moment_of_inertia2,
-                            *transform1,
-                            *transform2,
-                            *velocity1,
-                            *velocity2,
-                            *angular_velocity1,
-                            *angular_velocity2,
-                            *transform1p,
-                            *transform2p,
-                            &collider1p,
-                            &collider2p,
-                            Res::clone(&meshes),
-                            Res::clone(&time),
-                        ) {
+                        if let Some((contact, time_c, transform1_c, transform2_c)) =
+                            detection::intersection_at(
+                                *mass1,
+                                *mass2,
+                                *moment_of_inertia1,
+                                *moment_of_inertia2,
+                                *transform1,
+                                *transform2,
+                                *velocity1,
+                                *velocity2,
+                                *angular_velocity1,
+                                *angular_velocity2,
+                                *transform1p,
+                                *transform2p,
+                                &collider1p,
+                                &collider2p,
+                                Res::clone(&meshes),
+                                Res::clone(&time),
+                            )
+                        {
                             // if !cache.contains(Collision(spaceship, b_id)) {
                             response::compute_velocities(
                                 &mut velocity1,
@@ -395,105 +399,5 @@ pub fn among<C1: Component, C2: Component>(
                 }
             }
         }
-    }
-}
-
-pub fn intersection_at(
-    mass1: Mass,
-    mass2: Mass,
-    moment_of_inertia1: MomentOfInertia,
-    moment_of_inertia2: MomentOfInertia,
-    transform1: Transform,
-    transform2: Transform,
-    velocity1: Velocity,
-    velocity2: Velocity,
-    angular_velocity1: AngularVelocity,
-    angular_velocity2: AngularVelocity,
-    transform1p: Transform,
-    transform2p: Transform,
-    collider1p: &Collider,
-    collider2p: &Collider,
-    meshes: Res<Assets<Mesh>>,
-    time: Res<Time>,
-) -> Option<(Contact, f32, Transform, Transform)> {
-    if let Some(mut contact_c) = detection::intersection(
-        transform::global_of(transform1p, transform1),
-        transform::global_of(transform2p, transform2),
-        collider1p,
-        collider2p,
-        Some(Res::clone(&meshes)),
-    ) {
-        let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
-        let [mut transform1_a, mut transform2_a] = [
-            transform::at(-time_c, transform1, velocity1, angular_velocity1),
-            transform::at(-time_c, transform2, velocity2, angular_velocity2),
-        ];
-        let [mut transform1_c, mut transform2_c] = [transform1, transform2];
-
-        let [mut v1, mut v2] = [velocity1, velocity2];
-        let [mut w1, mut w2] = [angular_velocity1, angular_velocity2];
-        super::response::compute_velocities(
-            &mut v1,
-            &mut v2,
-            &mut w1,
-            &mut w2,
-            &transform1_c,
-            &transform2_c,
-            mass1,
-            mass2,
-            moment_of_inertia1,
-            moment_of_inertia2,
-            contact_c,
-        );
-        debug!(
-            "\nCollision detected at time tc\n\
-             translation1: {}, translation2: {}\n\
-	     Standard response\n\
-	     velocity1: {}, velocity2: {}\n\
-	     Rewind\n\
-             translation1_a: {}, translation2_a: {}\n\
-             ta = {}, tc = {}, contact = {:?}",
-            transform1_c.translation,
-            transform2_c.translation,
-            v1.0,
-            v2.0,
-            transform1_a.translation,
-            transform2_a.translation,
-            time_a,
-            time_c,
-            contact_c
-        );
-
-        while time_c - time_a > detection::EPSILON {
-            let time_b = (time_a + time_c) / 2.0;
-            let [transform1_b, transform2_b] = [
-                transform::at(time_b - time_a, transform1_a, velocity1, angular_velocity1),
-                transform::at(time_b - time_a, transform2_a, velocity2, angular_velocity2),
-            ];
-
-            if let Some(contact_b) = detection::intersection(
-                transform::global_of(transform1p, transform1_b),
-                transform::global_of(transform2p, transform2_b),
-                collider1p,
-                collider2p,
-                Some(Res::clone(&meshes)),
-            ) {
-                contact_c = contact_b;
-                [transform1_c, transform2_c] = [transform1_b, transform2_b];
-                time_c = time_b;
-            } else {
-                [transform1_a, transform2_a] = [transform1_b, transform2_b];
-                time_a = time_b;
-            }
-
-            debug!(
-                "\nta = {}, tc = {}, contact = {:?}",
-                time_a, time_c, contact_c
-            );
-        }
-
-        Some((contact_c, time_c, transform1_c, transform2_c))
-    } else {
-        None
     }
 }
