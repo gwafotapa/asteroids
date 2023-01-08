@@ -3,9 +3,7 @@ use std::f32::consts::PI;
 
 use crate::{
     blast::Blast,
-    collision::{
-        cache::Cache, damages::Damageable, detection::triangle::Triangle, Aabb, Collider, Topology,
-    },
+    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Fire, FireEvent},
     keyboard::KeyboardBindings,
     AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
@@ -153,8 +151,6 @@ const AABB: Aabb = Aabb { hw: S2.x, hh: S4.y };
 #[derive(Component)]
 pub struct Spaceship;
 
-impl Damageable for Spaceship {}
-
 // impl Spaceship {
 //     pub fn accelerate(velocity: &mut Velocity) {
 
@@ -269,15 +265,15 @@ pub fn attack(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     keys: Res<Input<KeyCode>>,
-    query_spaceship: Query<(Entity, &Transform), (With<Spaceship>, Without<Part>)>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     if !keys.just_pressed(query_bindings.single().fire()) {
         return;
     }
 
-    if let Ok((spaceship, transform)) = query_spaceship.get_single() {
-        let blast = commands
+    if let Ok(transform) = query_spaceship.get_single() {
+        commands
             .spawn(Blast)
             .insert(Health(1))
             .insert(ColorMesh2dBundle {
@@ -294,10 +290,7 @@ pub fn attack(
                 ),
                 material: materials.add(ATTACK_COLOR.into()),
                 ..default()
-            })
-            .id();
-
-        // commands.entity(spaceship).add_child(blast);
+            });
 
         fire_event.send(FireEvent {
             fire: Fire {

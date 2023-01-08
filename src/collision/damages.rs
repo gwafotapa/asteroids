@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     boss::{Damaged, Indestructible},
-    collision::Collider,
+    // collision::Collider,
     Health,
 };
 
@@ -11,11 +11,11 @@ pub struct Damages {
     pub extent: u32,
 }
 
-pub trait Damageable {
-    fn damage(&self, health: &mut Health, collider: &mut Collider, damages: Damages) {
-        health.0 -= damages.extent as i32;
-    }
-}
+// pub trait Damageable {
+//     fn damage(&self, health: &mut Health, collider: &mut Collider, damages: Damages) {
+//         health.0 -= damages.extent as i32;
+//     }
+// }
 
 pub struct DamageEvent {
     pub entity: Entity,

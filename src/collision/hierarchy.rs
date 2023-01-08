@@ -5,12 +5,12 @@ use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Part, Velocity};
 
 use super::{
     // cache::{Cache, Collision},
-    damages::{DamageEvent, Damageable},
+    damages::DamageEvent,
     detection::{self, Collider, Contact},
     response,
 };
 
-pub fn with<C: Component + Damageable>(
+pub fn with<C: Component>(
     // mut cache: ResMut<Cache>,
     mut damage_event: EventWriter<DamageEvent>,
     mut query_c: Query<
@@ -134,7 +134,7 @@ pub fn with<C: Component + Damageable>(
     }
 }
 
-pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
+pub fn between<C1: Component, C2: Component>(
     // mut cache: ResMut<Cache>,
     mut damage_event: EventWriter<DamageEvent>,
     mut query_c1: Query<
@@ -274,7 +274,7 @@ pub fn between<C1: Component + Damageable, C2: Component + Damageable>(
     }
 }
 
-pub fn among<C1: Component + Damageable, C2: Component + Damageable>(
+pub fn among<C1: Component, C2: Component>(
     // mut cache: ResMut<Cache>,
     mut damage_event: EventWriter<DamageEvent>,
     mut query: Query<

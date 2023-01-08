@@ -4,13 +4,8 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     blast::Blast,
-    collision::{
-        cache::Cache,
-        damages::{Damageable, Damages},
-        detection::triangle::Triangle,
-        Aabb, Collider, Topology,
-    },
-    fire::{Enemy, Fire, FireEvent},
+    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
+    fire::{Fire, FireEvent},
     spaceship::{self, Spaceship},
     AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z,
 };
@@ -383,12 +378,12 @@ pub fn attack(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query_boss: Query<&Transform, (With<Boss>, Without<Part>)>,
-    query_boss_edge: Query<(&Attack, Entity, &Transform), With<Boss>>,
+    query_boss_edge: Query<(&Attack, &Transform), With<Boss>>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
 ) {
     if let Ok(b_transform) = query_boss.get_single() {
         if let Ok(s_transform) = query_spaceship.get_single() {
-            for (bp_attack, bp_entity, bp_transform) in query_boss_edge.iter() {
+            for (bp_attack, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
                 if rng.gen_range(0..10) == 0 {
                     let attack_absolute_translation =
@@ -404,7 +399,7 @@ pub fn attack(
                         continue;
                     }
 
-                    let blast = commands
+                    commands
                         .spawn(Blast)
                         .insert(Health(1))
                         .insert(ColorMesh2dBundle {
@@ -420,10 +415,7 @@ pub fn attack(
                             ),
                             material: materials.add(ATTACK_COLOR.into()),
                             ..default()
-                        })
-                        .id();
-
-                    // commands.entity(bp_entity).add_child(blast);
+                        });
 
                     fire_event.send(FireEvent {
                         fire: Fire {
@@ -447,53 +439,6 @@ pub fn attack(
     }
 }
 
-// pub fn before_despawn(
-//     mut commands: Commands,
-//     mut query_boss_part: Query<
-//         (
-//             // Option<&BossEdge>,
-// 	    &BossEdge,
-//             Option<&Children>,
-//             Entity,
-//             // &GlobalTransform,
-//             &mut Transform,
-//             &Health,
-//         ),
-//         // Or<(With<BossCore>, With<BossEdge>)>,
-//     >,
-//     // mut query_blast_impact: Query<&mut Transform, Or<(With<Blast>, With<Impact>)>>,
-//     mut query_boss_core: Query<(&mut BossCore, Entity, &Transform, &Velocity)>,
-// ) {
-//     if let Ok((mut core, core_id, core_transform, core_velocity)) = query_boss_core.get_single_mut()
-//     {
-//         for (maybe_edge, maybe_children, id, mut transform, health) in query_boss_part.iter_mut() {
-//             if health.0 > 0 {
-//                 continue;
-//             }
-
-//             if maybe_edge.is_some() {
-//                 core.edges -= 1;
-//                 commands.entity(core_id).remove_children(&[id]);
-//                 commands.entity(id).insert(*core_velocity);
-//                 transform.translation = core_transform.transform_point(transform.translation);
-//             }
-
-//             // if let Some(children) = maybe_children {
-//             //     for child in children {
-//             //         if let Ok(mut child_transform) =
-//             //             query_blast_impact.get_component_mut::<Transform>(*child)
-//             //         {
-//             //             commands.entity(id).remove_children(&[*child]);
-//             //             commands.entity(*child).remove::<Parent>();
-//             //             child_transform.translation =
-//             //                 transform.transform_point(child_transform.translation);
-//             //         }
-//             //     }
-//             // }
-//         }
-//     }
-// }
-
 pub fn cut_off_edge(
     mut commands: Commands,
     mut query_boss: Query<&mut Boss, Without<Part>>,
@@ -515,73 +460,3 @@ pub fn cut_off_edge(
         }
     }
 }
-
-impl Damageable for Boss {}
-// pub fn wreck(
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     query_boss_part: Query<
-//         (
-//             Option<&BossCore>,
-//             &Handle<ColorMaterial>,
-//             &GlobalTransform,
-//             &Health,
-//         ),
-//         Or<(With<BossCore>, With<BossEdge>)>,
-//     >,
-//     mut query_boss_core: Query<&Velocity, With<BossCore>>,
-// ) {
-//     if let Ok(core_velocity) = query_boss_core.get_single_mut() {
-//         for (maybe_core, color, transform, health) in query_boss_part.iter() {
-//             if health.0 > 0 {
-//                 continue;
-//             }
-
-//             let color = materials.get(color).unwrap().color;
-//             let mut rng = rand::thread_rng();
-//             let triangles = if maybe_core.is_some() {
-//                 CORE_TRIANGLES.iter()
-//             } else {
-//                 EDGE_TRIANGLES.iter()
-//             };
-
-//             for triangle in triangles {
-//                 // Arbitrary number of debris per triangle : area/16
-//                 for _ in 0..(triangle.area() / 16.0).round() as usize {
-//                     let p = triangle.xy().random_point();
-//                     let debris_relative =
-//                         Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
-//                     let debris = transform.transform_point(debris_relative);
-//                     let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
-
-//                     commands
-//                         .spawn(Debris)
-//                         .insert(Velocity(core_velocity.0 + dv))
-//                         .insert(ColorMesh2dBundle {
-//                             mesh: meshes
-//                                 .add(Mesh::from(shape::Circle {
-//                                     radius: rng.gen_range(2.0..15.0),
-//                                     vertices: 8,
-//                                 }))
-//                                 .into(),
-//                             transform: Transform::from_translation(debris),
-//                             material: materials.add(color.into()),
-//                             ..default()
-//                         });
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// pub fn despawn(
-//     mut commands: Commands,
-//     query: Query<(Entity, &Health), Or<(With<BossCore>, With<BossEdge>)>>,
-// ) {
-//     for (entity, health) in query.iter() {
-//         if health.0 <= 0 {
-//             commands.entity(entity).despawn();
-//         }
-//     }
-// }

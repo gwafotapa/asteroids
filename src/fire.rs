@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    collision::{damages::Damageable, impact::Impact, Aabb},
+    collision::{impact::Impact, Aabb},
     AngularVelocity, Collider, Health, Mass, MomentOfInertia, Part, Topology, Velocity,
 };
 
@@ -13,8 +13,6 @@ pub struct Fire {
 
 #[derive(Component)]
 pub struct Enemy;
-
-impl Damageable for Fire {}
 
 pub struct FireEvent {
     pub fire: Fire,

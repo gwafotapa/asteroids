@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
+use bevy::{prelude::*, render::mesh::VertexAttributeValues};
 use rand::Rng;
 use std::f32::consts::PI;
 
