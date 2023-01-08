@@ -20,9 +20,6 @@ const MASS: f32 = AREA;
 const MOMENT_OF_INERTIA: f32 =
     0.5 * MASS * (INNER_RADIUS + OUTER_RADIUS) / 2.0 * (INNER_RADIUS + OUTER_RADIUS) / 2.0;
 
-// #[derive(Component)]
-// pub struct Boss;
-
 #[derive(Component)]
 pub struct Boss;
 

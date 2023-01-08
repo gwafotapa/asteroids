@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    collision::{impact::Impact, Aabb},
+    collision::{impact::ImpactEvent, Aabb},
     AngularVelocity, Collider, Health, Mass, MomentOfInertia, Part, Topology, Velocity,
 };
 
@@ -92,28 +92,19 @@ pub fn movement(
 }
 
 pub fn impact(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
+    mut impact_event: EventWriter<ImpactEvent>,
     query: Query<(&Children, &Fire, &Transform), Without<Part>>,
     query_part: Query<(&Handle<ColorMaterial>, &Health), With<Fire>>,
 ) {
     for (children, fire, transform) in query.iter() {
         let (color, health) = query_part.get(children[0]).unwrap();
         if health.0 <= 0 {
-            commands
-                .spawn(Impact)
-                .insert(Health(10))
-                .insert(ColorMesh2dBundle {
-                    mesh: meshes
-                        .add(Mesh::from(shape::Circle {
-                            radius: fire.impact_radius,
-                            vertices: fire.impact_vertices,
-                        }))
-                        .into(),
-                    transform: Transform::from_translation(transform.translation),
-                    material: color.clone(),
-                    ..default()
-                });
+            impact_event.send(ImpactEvent {
+                radius: fire.impact_radius,
+                vertices: fire.impact_vertices,
+                color: color.clone_weak(),
+                translation: transform.translation,
+            });
         }
     }
 }
