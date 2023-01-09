@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::f32::consts::PI;
 
 use crate::{
     collision::{Aabb, Collider, Topology},
@@ -16,78 +14,82 @@ use crate::{
     WINDOW_WIDTH,
 };
 
-const VELOCITY_MIN: f32 = 100.0;
-const VELOCITY_MAX: f32 = 500.0;
-const HEALTH_MAX: i32 = 60;
-const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const ASTEROID_Z: f32 = PLANE_Z;
 
 #[derive(Clone, Component, Copy)]
 pub struct Asteroid;
 
+pub struct AsteroidEvent {
+    pub x: f32,
+    pub y: f32,
+    pub radius: f32,
+    pub vertices: usize,
+    pub color: Color,
+    pub health: Health,
+    pub mass: Mass,
+    pub moment_of_inertia: MomentOfInertia,
+    pub velocity: Velocity,
+    pub angular_velocity: AngularVelocity,
+}
+
 pub fn spawn(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-    sector: [isize; 2],
+    mut asteroid_event: EventReader<AsteroidEvent>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut rng = rand::thread_rng();
-    let health = rng.gen_range(10..HEALTH_MAX + 1);
-    let radius = (health * 2) as f32;
-    let area = PI * radius.powi(2);
-    // let mass = 0.3 * health as f32;
-    let mass = area;
-    let moment_of_inertia = 0.5 * mass * radius.powi(2);
-    let rho = rng.gen_range(VELOCITY_MIN..VELOCITY_MAX);
-    let theta = rng.gen_range(0.0..2.0 * PI);
-    let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);
-    let angular_velocity = rng.gen_range(0.0..0.01);
-    let xmin = sector[0] as f32 * WINDOW_WIDTH;
-    let ymin = sector[1] as f32 * WINDOW_HEIGHT;
-    let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
-    let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
+    // let mut rng = rand::thread_rng();
+    // let health = rng.gen_range(10..HEALTH_MAX + 1);
+    // let radius = (health * 2) as f32;
+    // let area = PI * radius.powi(2);
+    // let mass = area;
+    // let moment_of_inertia = 0.5 * mass * radius.powi(2);
+    // let rho = rng.gen_range(VELOCITY_MIN..VELOCITY_MAX);
+    // let theta = rng.gen_range(0.0..2.0 * PI);
+    // let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);
+    // let angular_velocity = rng.gen_range(0.0..0.01);
+    // let xmin = sector[0] as f32 * WINDOW_WIDTH;
+    // let ymin = sector[1] as f32 * WINDOW_HEIGHT;
+    // let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
+    // let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
 
-    // println!(
-    //     "asteroid\narea: {}\nmass: {}\nmoment of inertia: {}\n",
-    //     area, mass, moment_of_inertia
-    // );
+    for ev in asteroid_event.iter() {
+        let asteroid = commands
+            .spawn(Asteroid)
+            .insert(ev.mass)
+            .insert(ev.moment_of_inertia)
+            .insert(ev.velocity)
+            .insert(ev.angular_velocity)
+            .insert(SpatialBundle {
+                transform: Transform::from_xyz(ev.x, ev.y, ASTEROID_Z),
+                ..Default::default()
+            })
+            .id();
 
-    let asteroid = commands
-        .spawn(Asteroid)
-        .insert(Mass(mass))
-        .insert(MomentOfInertia(moment_of_inertia))
-        // .insert(Velocity(Vec3::ZERO))
-        .insert(Velocity(velocity))
-        .insert(AngularVelocity(angular_velocity))
-        .insert(SpatialBundle {
-            transform: Transform::from_xyz(x, y, ASTEROID_Z),
-            ..Default::default()
-        })
-        .id();
+        let asteroid_part = commands
+            .spawn((Asteroid, Part))
+            .insert(ev.health)
+            .insert(Collider {
+                aabb: Aabb {
+                    hw: ev.radius,
+                    hh: ev.radius,
+                },
+                topology: Topology::Disk { radius: ev.radius },
+            })
+            .insert(ColorMesh2dBundle {
+                mesh: meshes
+                    .add(Mesh::from(shape::Circle {
+                        radius: ev.radius,
+                        vertices: ev.vertices,
+                    }))
+                    .into(),
+                material: materials.add(ev.color.into()),
+                ..Default::default()
+            })
+            .id();
 
-    let asteroid_part = commands
-        .spawn((Asteroid, Part))
-        .insert(Health(health))
-        .insert(Collider {
-            aabb: Aabb {
-                hw: radius,
-                hh: radius,
-            },
-            topology: Topology::Disk { radius },
-        })
-        .insert(ColorMesh2dBundle {
-            mesh: meshes
-                .add(Mesh::from(shape::Circle {
-                    radius,
-                    vertices: 16,
-                }))
-                .into(),
-            material: materials.add(ColorMaterial::from(COLOR)),
-            ..Default::default()
-        })
-        .id();
-
-    commands.entity(asteroid).add_child(asteroid_part);
+        commands.entity(asteroid).add_child(asteroid_part);
+    }
 }
 
 // pub fn asteroids(
