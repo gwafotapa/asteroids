@@ -113,3 +113,7 @@ pub fn count_asteroids_without_mesh(
 ) {
     println!("{}", query.iter().count());
 }
+
+pub fn count_stars(query: Query<&map::star::Star>) {
+    println!("{}", query.iter().count());
+}

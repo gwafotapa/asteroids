@@ -38,18 +38,19 @@ pub fn spawn(mut stars_event: EventWriter<StarsEvent>, mut commands: Commands) {
                 })
                 .id();
 
+            let seed = rng.gen::<u64>();
             sectors.push((
                 sector_id,
                 Sector {
                     i,
                     j,
                     neighboors: Vec::new(),
-                    seed: rng.gen::<u64>(),
+                    seed,
                 },
             ));
 
             // for _ in 0..STARS_PER_SECTOR {
-            stars_event.send(StarsEvent { sector: sector_id });
+            stars_event.send(StarsEvent { sector_id, seed });
             // }
         }
     }
@@ -112,7 +113,7 @@ pub fn update(
 
     // Update current sector and turn off the visibility of sectors now at distance 2
     for sector_id in current_sector.neighboors {
-        let (_, sector, mut visibility) = query_sector.get_mut(sector_id).unwrap();
+        let (sector_id, sector, mut visibility) = query_sector.get_mut(sector_id).unwrap();
         if [sector.i, sector.j] == [camera_i, camera_j] {
             current_sector_id.0 = sector_id;
             continue;
@@ -120,6 +121,7 @@ pub fn update(
 
         if (camera_i - sector.i).abs() > 1 || (camera_j - sector.j).abs() > 1 {
             visibility.is_visible = false;
+            commands.entity(sector_id).despawn_descendants();
         }
     }
 
@@ -128,9 +130,16 @@ pub fn update(
     for di in [-1isize, 0, 1] {
         'outer: for dj in [-1isize, 0, 1] {
             // Check if that sector is already known
-            for (_, sector, mut visibility) in &mut query_sector {
+            for (sector_id, sector, mut visibility) in &mut query_sector {
                 if [sector.i, sector.j] == [camera_i + di, camera_j + dj] {
-                    visibility.is_visible = true;
+                    // visibility.is_visible = true;
+                    if !visibility.is_visible {
+                        visibility.is_visible = true;
+                        stars_event.send(StarsEvent {
+                            sector_id,
+                            seed: sector.seed,
+                        });
+                    }
                     continue 'outer;
                 }
             }
@@ -147,6 +156,7 @@ pub fn update(
                 })
                 .id();
 
+            let seed = rng.gen::<u64>();
             let [i, j] = [camera_i + di, camera_j + dj];
             new_sectors.push((
                 new_sector_id,
@@ -154,14 +164,15 @@ pub fn update(
                     i,
                     j,
                     neighboors: Vec::new(),
-                    seed: rng.gen::<u64>(),
+                    seed,
                 },
             ));
 
             // Populate this new sector with stars
             // for _ in 0..STARS_PER_SECTOR {
             stars_event.send(StarsEvent {
-                sector: new_sector_id,
+                sector_id: new_sector_id,
+                seed,
             });
             // }
 

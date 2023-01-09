@@ -23,10 +23,7 @@ fn asteroids_dimension_1() {
         .insert_resource(Cache::default())
         .add_startup_system(spawn_camera)
         .add_system(asteroid::update)
-        .add_system(
-            collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>
-                .after(asteroid::update),
-        );
+        .add_system(collision::generic::with::<asteroid::Asteroid>.after(asteroid::update));
 
     let healths = [Health(100), Health(100)];
     let radii = [100.0, 100.0];
@@ -76,10 +73,7 @@ fn asteroids_dimension_2() {
         .insert_resource(Cache::default())
         .add_startup_system(spawn_camera)
         .add_system(asteroid::update)
-        .add_system(
-            collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>
-                .after(asteroid::update),
-        );
+        .add_system(collision::generic::with::<asteroid::Asteroid>.after(asteroid::update));
 
     let epsilon: f32 = 0.01;
     let healths = [Health(100), Health(100)];
@@ -160,7 +154,7 @@ fn asteroid_spaceship() {
                 .into(),
         )
         .add_system(
-            collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>
+            collision::generic::among::<asteroid::Asteroid, spaceship::Spaceship>
                 // .run_on_event::<SpacePressedEvent>()
                 .after("Movement"),
         );
@@ -352,7 +346,7 @@ fn spawn_asteroid(
         .clone();
 
     app.world
-        .spawn(Asteroid { radius })
+        .spawn(Asteroid)
         .insert(health)
         .insert(mass)
         .insert(moment_of_inertia)

@@ -31,3 +31,7 @@ pub fn ingame_to_paused(
         commands.insert_resource(NextState(GameState::Paused));
     }
 }
+
+pub fn gamesetup_or_ingame(current_state: Res<CurrentState<GameState>>) -> bool {
+    current_state.0 == GameState::GameSetup || current_state.0 == GameState::InGame
+}

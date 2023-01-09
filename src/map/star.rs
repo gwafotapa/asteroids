@@ -2,19 +2,20 @@ use bevy::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_pcg::Pcg32;
 
-use crate::{map::Sector, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;
 const VERTICES: usize = 4;
 const COLOR: Color = Color::WHITE;
-const STARS_PER_SECTOR: usize = 50;
+pub const STARS_PER_SECTOR: usize = 50;
 
 #[derive(Component)]
 pub struct Star;
 
 pub struct StarsEvent {
-    pub sector: Entity,
+    pub sector_id: Entity,
+    pub seed: u64,
 }
 
 pub fn spawn(
@@ -22,11 +23,11 @@ pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    query: Query<&Sector>,
+    // query: Query<&Sector>,
 ) {
     for ev in stars_event.iter() {
-        let sector = query.get(ev.sector).unwrap();
-        let mut rng = Pcg32::seed_from_u64(sector.seed);
+        // let sector = query.get(ev.sector).unwrap();
+        let mut rng = Pcg32::seed_from_u64(ev.seed);
         for _ in 0..STARS_PER_SECTOR {
             let star = commands
                 .spawn(Star)
@@ -47,7 +48,7 @@ pub fn spawn(
                 })
                 .id();
 
-            commands.entity(ev.sector).add_child(star);
+            commands.entity(ev.sector_id).add_child(star);
         }
     }
 }

@@ -60,9 +60,10 @@ fn main() {
                 .with_system(compass::spawn)
                 .with_system(health_bar::spawn)
                 .with_system(game_state::gamesetup_to_turnuplight)
-                .with_system(map::star::spawn)
+                // .with_system(map::star::spawn)
                 .into(),
         )
+        .add_system(map::star::spawn.run_if(game_state::gamesetup_or_ingame))
         .add_exit_system(GameState::GameSetup, light::kill)
         .add_enter_system(GameState::TurnUpLight, camera::setup)
         .add_system(light::turn_up.run_in_state(GameState::TurnUpLight))
@@ -72,7 +73,7 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 .label("free")
                 .with_system(map::update)
-                .with_system(map::star::spawn)
+                // .with_system(map::star::spawn)
                 .with_system(game_state::ingame_to_paused)
                 .with_system(game_over::update_text)
                 .with_system(wreckage::update)
@@ -80,7 +81,8 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 // .with_system(count_entities)
-                .with_system(count_asteroids_without_mesh)
+                // .with_system(count_asteroids_without_mesh)
+                .with_system(count_stars)
                 .into(),
         )
         .add_system_set(
