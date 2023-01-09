@@ -1,31 +1,16 @@
-use asteroids::{camera, map};
+use asteroids::{camera, map, WINDOW_HEIGHT, WINDOW_WIDTH};
+use bevy::app::PluginGroupBuilder;
 use bevy::prelude::*;
-use bevy::{
-    app::PluginGroupBuilder, prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle,
-};
-use iyes_loopless::prelude::*;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum State {
-    A,
-    B,
-}
-
-pub fn to_b(mut commands: Commands) {
-    commands.insert_resource(NextState(State::B));
-}
 
 #[test]
 fn count_stars() {
     let mut app = App::new();
     app.add_plugins(TestPlugins)
         .add_event::<map::star::StarsEvent>()
-        .add_loopless_state(State::A)
         .add_startup_system(camera::spawn)
-        .add_system(map::spawn.run_in_state(State::A))
-        .add_system(map::star::spawn.run_in_state(State::B))
-        .add_system(to_b);
-    // .add_system(map::update);
+        .add_startup_system(map::spawn)
+        .add_system(map::update)
+        .add_system(map::star::spawn.after(map::update));
 
     app.update();
 
@@ -37,25 +22,59 @@ fn count_stars() {
         9 * map::star::STARS_PER_SECTOR
     );
 
-    // let (mut c_id, mut c_transform) = app
-    //     .world
-    //     .query::<(&Camera, &mut Transform)>()
-    //     .single_mut(&mut app.world);
+    // Move camera to sector (1, 1)
+    let (mut c_transform, _) = app
+        .world
+        .query::<(&mut Transform, With<Camera>)>()
+        .single_mut(&mut app.world);
+    c_transform.translation.x = 1.5 * WINDOW_WIDTH;
+    c_transform.translation.y = 1.5 * WINDOW_HEIGHT;
 
-    // // Move camera to sector (-1, -1)
-    // c_transform.translation.x = -1.0;
-    // c_transform.translation.y = -1.0;
+    app.update();
 
-    // // Discover six new sectors
-    // app.update();
+    assert_eq!(
+        app.world
+            .query::<&map::star::Star>()
+            .iter(&app.world)
+            .count(),
+        9 * map::star::STARS_PER_SECTOR
+    );
 
-    // assert_eq!(
-    //     app.world
-    //         .query::<&map::star::Star>()
-    //         .iter(&app.world)
-    //         .count(),
-    //     (9 + 6) * map::star::STARS_PER_SECTOR
-    // );
+    // Move camera to sector (2, 1)
+    let (mut c_transform, _) = app
+        .world
+        .query::<(&mut Transform, With<Camera>)>()
+        .single_mut(&mut app.world);
+    c_transform.translation.x = 2.5 * WINDOW_WIDTH;
+    c_transform.translation.y = 1.5 * WINDOW_HEIGHT;
+
+    app.update();
+
+    assert_eq!(
+        app.world
+            .query::<&map::star::Star>()
+            .iter(&app.world)
+            .count(),
+        9 * map::star::STARS_PER_SECTOR
+    );
+
+    // Move camera back to sector (1, 1)
+    let (mut c_transform, _) = app
+        .world
+        .query::<(&mut Transform, With<Camera>)>()
+        .single_mut(&mut app.world);
+    c_transform.translation.x = 1.5 * WINDOW_WIDTH;
+    c_transform.translation.y = 1.5 * WINDOW_HEIGHT;
+
+    app.update();
+
+    assert_eq!(
+        app.world
+            .query::<&map::star::Star>()
+            .iter(&app.world)
+            .count(),
+        9 * map::star::STARS_PER_SECTOR
+    );
 }
 
 struct TestPlugins;
