@@ -38,21 +38,6 @@ pub fn spawn(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    // let mut rng = rand::thread_rng();
-    // let health = rng.gen_range(10..HEALTH_MAX + 1);
-    // let radius = (health * 2) as f32;
-    // let area = PI * radius.powi(2);
-    // let mass = area;
-    // let moment_of_inertia = 0.5 * mass * radius.powi(2);
-    // let rho = rng.gen_range(VELOCITY_MIN..VELOCITY_MAX);
-    // let theta = rng.gen_range(0.0..2.0 * PI);
-    // let velocity = Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]);
-    // let angular_velocity = rng.gen_range(0.0..0.01);
-    // let xmin = sector[0] as f32 * WINDOW_WIDTH;
-    // let ymin = sector[1] as f32 * WINDOW_HEIGHT;
-    // let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
-    // let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
-
     for ev in asteroid_event.iter() {
         let asteroid = commands
             .spawn(Asteroid)

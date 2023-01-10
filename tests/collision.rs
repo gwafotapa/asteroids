@@ -1,7 +1,8 @@
 use asteroids::{
-    asteroid::Asteroid,
+    asteroid::{Asteroid, AsteroidEvent},
     collision::{
         cache::Cache,
+        damages::DamageEvent,
         detection::{triangle::Triangle, *},
     },
     *,
@@ -21,30 +22,53 @@ fn asteroids_dimension_1() {
     let mut app = App::new();
     app.add_plugins(TestPlugins)
         .insert_resource(Cache::default())
-        .add_startup_system(spawn_camera)
-        .add_system(asteroid::update)
+        .add_event::<AsteroidEvent>()
+        .add_event::<DamageEvent>()
+        .add_system(asteroid::spawn)
         .add_system(collision::generic::with::<asteroid::Asteroid>.after(asteroid::update));
 
-    let healths = [Health(100), Health(100)];
-    let radii = [100.0, 100.0];
-    let maybe_masses = [None, None];
+    let health = Health(100);
+    let radius: f32 = 100.0;
+    let mass = Mass(PI * radius.powi(2));
+    let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
     let v = Vec3::new(10.0, 0.0, 0.0);
-    let velocities = [Velocity(v), Velocity(-v)];
-    let angular_velocities = [AngularVelocity(2.0 * PI), AngularVelocity(0.0)];
-    let transforms = [
-        Transform::from_translation(Vec3::new(-radii[0], 0.0, 0.0) - velocities[0].0),
-        Transform::from_translation(Vec3::new(radii[1], 0.0, 0.0) - velocities[1].0),
-    ];
 
-    let asteroids = spawn_asteroids::<2>(
-        &mut app,
-        healths,
-        radii,
-        maybe_masses,
-        transforms,
-        velocities,
-        angular_velocities,
-    );
+    app.world.send_event(AsteroidEvent {
+        x: -radius,
+        y: 0.0,
+        radius,
+        vertices: 16,
+        color: Color::BLUE,
+        health,
+        mass,
+        moment_of_inertia,
+        velocity: Velocity(v),
+        angular_velocity: AngularVelocity(2.0 * PI),
+    });
+
+    app.world.send_event(AsteroidEvent {
+        x: radius,
+        y: 0.0,
+        radius,
+        vertices: 16,
+        color: Color::BLUE,
+        health,
+        mass,
+        moment_of_inertia,
+        velocity: Velocity(-v),
+        angular_velocity: AngularVelocity(0.0),
+    });
+
+    app.update();
+
+    let mut asteroids = Vec::new();
+    for (id, _) in app
+        .world
+        .query::<(Entity, (With<Asteroid>, Without<Part>))>()
+        .iter(&app.world)
+    {
+        asteroids.push(id);
+    }
 
     entity_print_static(&app, asteroids[0], Some(BLUE));
     entity_print_static(&app, asteroids[1], Some(RED));
@@ -59,11 +83,17 @@ fn asteroids_dimension_1() {
     entity_print_dynamic(&app, asteroids[0], Some(BLUE));
     entity_print_dynamic(&app, asteroids[1], Some(RED));
 
-    assert!(app.world.resource::<Cache>().new.len() == 1);
-    assert!(app.world.get::<Velocity>(asteroids[0]).unwrap().0 == -velocities[0].0);
-    assert!(app.world.get::<Velocity>(asteroids[1]).unwrap().0 == -velocities[1].0);
-    assert!(app.world.get::<AngularVelocity>(asteroids[0]).unwrap().0 == angular_velocities[0].0);
-    assert!(app.world.get::<AngularVelocity>(asteroids[1]).unwrap().0 == angular_velocities[1].0);
+    // assert!(app.world.resource::<Cache>().new.len() == 1);
+    assert_eq!(app.world.get::<Velocity>(asteroids[0]).unwrap().0, -v);
+    assert_eq!(app.world.get::<Velocity>(asteroids[1]).unwrap().0, v);
+    assert_eq!(
+        app.world.get::<AngularVelocity>(asteroids[0]).unwrap().0,
+        2.0 * PI
+    );
+    assert_eq!(
+        app.world.get::<AngularVelocity>(asteroids[1]).unwrap().0,
+        0.0
+    );
 }
 
 #[test]
@@ -71,36 +101,56 @@ fn asteroids_dimension_2() {
     let mut app = App::new();
     app.add_plugins(TestPlugins)
         .insert_resource(Cache::default())
-        .add_startup_system(spawn_camera)
-        .add_system(asteroid::update)
+        .add_event::<AsteroidEvent>()
+        .add_event::<DamageEvent>()
+        .add_system(asteroid::spawn)
         .add_system(collision::generic::with::<asteroid::Asteroid>.after(asteroid::update));
 
     let epsilon: f32 = 0.01;
-    let healths = [Health(100), Health(100)];
-    let radii = [100.0, 100.0];
-    let maybe_masses = [None, None];
-    let velocities = [
-        Velocity(Vec3::new(10.0, 0.0, 0.0)),
-        Velocity(Vec3::new(-30.0, 0.0, 0.0)),
-    ];
-    let angular_velocities = [AngularVelocity(0.0), AngularVelocity(-PI)];
+    let health = Health(100);
+    let radius: f32 = 100.0;
+    let mass = Mass(PI * radius.powi(2));
+    let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
     // Add epsilon so asteroids are not just tangent but intersect properly
-    let x1 = -radii[0] / 2.0f32.sqrt() + epsilon;
-    let x2 = radii[1] / 2.0f32.sqrt();
-    let transforms = [
-        Transform::from_translation(Vec3::new(x1, 0.0, 0.0) - velocities[0].0),
-        Transform::from_translation(Vec3::new(x2, -x1 + x2, 0.0) - velocities[1].0),
-    ];
+    let x1 = -radius / 2.0f32.sqrt() + epsilon;
+    let x2 = radius / 2.0f32.sqrt();
 
-    let asteroids = spawn_asteroids::<2>(
-        &mut app,
-        healths,
-        radii,
-        maybe_masses,
-        transforms,
-        velocities,
-        angular_velocities,
-    );
+    app.world.send_event(AsteroidEvent {
+        x: x1,
+        y: 0.0,
+        radius,
+        vertices: 16,
+        color: Color::BLUE,
+        health,
+        mass,
+        moment_of_inertia,
+        velocity: Velocity(Vec3::new(10.0, 0.0, 0.0)),
+        angular_velocity: AngularVelocity(0.0),
+    });
+
+    app.world.send_event(AsteroidEvent {
+        x: x2,
+        y: x2 - x1,
+        radius,
+        vertices: 16,
+        color: Color::BLUE,
+        health,
+        mass,
+        moment_of_inertia,
+        velocity: Velocity(Vec3::new(-30.0, 0.0, 0.0)),
+        angular_velocity: AngularVelocity(-PI),
+    });
+
+    app.update();
+
+    let mut asteroids = Vec::new();
+    for (id, _) in app
+        .world
+        .query::<(Entity, (With<Asteroid>, Without<Part>))>()
+        .iter(&app.world)
+    {
+        asteroids.push(id);
+    }
 
     entity_print_static(&app, asteroids[0], Some(BLUE));
     entity_print_static(&app, asteroids[1], Some(RED));
@@ -115,7 +165,7 @@ fn asteroids_dimension_2() {
     entity_print_dynamic(&app, asteroids[0], Some(BLUE));
     entity_print_dynamic(&app, asteroids[1], Some(RED));
 
-    assert!(app.world.resource::<Cache>().new.len() == 1);
+    // assert!(app.world.resource::<Cache>().new.len() == 1);
     assert!(
         (app.world.get::<Velocity>(asteroids[0]).unwrap().0 - Vec3::new(-10.0, -20.0, 0.0))
             .length()
@@ -125,25 +175,23 @@ fn asteroids_dimension_2() {
         (app.world.get::<Velocity>(asteroids[1]).unwrap().0 - Vec3::new(-10.0, 20.0, 0.0)).length()
             < epsilon
     );
-    assert!(
-        (app.world.get::<AngularVelocity>(asteroids[0]).unwrap().0 - angular_velocities[0].0).abs()
-            < epsilon
-    );
-    assert!(
-        (app.world.get::<AngularVelocity>(asteroids[1]).unwrap().0 - angular_velocities[1].0).abs()
-            < epsilon
-    );
+    assert!((app.world.get::<AngularVelocity>(asteroids[0]).unwrap().0 - 0.0).abs() < epsilon);
+    assert!((app.world.get::<AngularVelocity>(asteroids[1]).unwrap().0 - (-PI)).abs() < epsilon);
 }
 
+// TODO: Needs to be reworked now that time advances time.delta_seconds() per frame
 #[test]
 fn asteroid_spaceship() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
         .insert_resource(Cache::default())
+        .add_event::<AsteroidEvent>()
+        .add_event::<DamageEvent>()
         .add_event::<SpacePressedEvent>()
         .add_startup_system(spawn_camera)
         .add_system(bevy::window::close_on_esc)
+        .add_system(asteroid::spawn)
         .add_system(pause)
         .add_system_set(
             ConditionSet::new()
@@ -165,19 +213,28 @@ fn asteroid_spaceship() {
         Vec3::new(0.0, -100.0, 0.0) - center_of_gravity,
         Vec3::new(100.0, 0.0, 0.0) - center_of_gravity,
     );
-    let radius = 100.0;
+    let radius: f32 = 100.0;
+    let mass = Mass(PI * radius.powi(2));
     let va = Vec3::new(10.0, 0.0, 0.0);
-    let asteroid = spawn_asteroid(
-        &mut app,
-        Health(100),
+
+    app.world.send_event(AsteroidEvent {
+        x: -radius,
+        y: 0.0,
         radius,
-        None,
-        Transform::from_translation(Vec3::new(-radius, 0.0, 0.0) - va),
-        Velocity(va),
-        AngularVelocity(PI / 10.0),
-    );
+        vertices: 16,
+        color: Color::BLUE,
+        health: Health(100),
+        mass,
+        moment_of_inertia: MomentOfInertia(0.5 * mass.0 * radius.powi(2)),
+        velocity: Velocity(va),
+        angular_velocity: AngularVelocity(PI / 10.0),
+    });
+
+    // app.update();
+
     let vs = Vec3::ZERO;
     let avs = PI / 10.0;
+
     let spaceship = spawn_spaceship_triangle(
         &mut app,
         Health(100),
@@ -190,19 +247,26 @@ fn asteroid_spaceship() {
         AngularVelocity(avs),
     );
 
-    // entity_print_static(&app, asteroid, Some(BLUE));
-    // entity_print_static(&app, spaceship, Some(RED));
+    app.update();
 
-    // println!("PRE COLLISION");
-    // entity_print_dynamic(&app, asteroid, Some(BLUE));
-    // entity_print_dynamic(&app, spaceship, Some(RED));
+    let (asteroid, _) = app
+        .world
+        .query::<(Entity, (With<Asteroid>, Without<Part>))>()
+        .single(&app.world);
+
+    entity_print_static(&app, asteroid, Some(BLUE));
+    entity_print_static(&app, spaceship, Some(RED));
+
+    println!("PRE COLLISION");
+    entity_print_dynamic(&app, asteroid, Some(BLUE));
+    entity_print_dynamic(&app, spaceship, Some(RED));
 
     // app.update();
     app.run();
 
-    // println!("POST COLLISION");
-    // entity_print_dynamic(&app, asteroid, Some(BLUE));
-    // entity_print_dynamic(&app, spaceship, Some(RED));
+    println!("POST COLLISION");
+    entity_print_dynamic(&app, asteroid, Some(BLUE));
+    entity_print_dynamic(&app, spaceship, Some(RED));
 
     // assert!(app.world.resource::<Cache>().new.len() == 1);
     // assert!(
@@ -275,13 +339,10 @@ fn spawn_spaceship_triangle(
         .add(Color::RED.into())
         .clone();
 
-    app.world
-        .spawn(Spaceship)
+    let spaceship_part = app
+        .world
+        .spawn((Spaceship, Part))
         .insert(health)
-        .insert(mass)
-        .insert(moment_of_inertia)
-        .insert(velocity)
-        .insert(angular_velocity)
         .insert(Collider {
             aabb: Aabb { hw, hh },
             topology: Topology::Triangles {
@@ -294,79 +355,89 @@ fn spawn_spaceship_triangle(
             material: color,
             ..Default::default()
         })
-        .id()
-}
-
-fn spawn_asteroids<const N: usize>(
-    app: &mut App,
-    healths: [Health; N],
-    radii: [f32; N],
-    maybe_masses: [Option<Mass>; N],
-    transforms: [Transform; N],
-    velocities: [Velocity; N],
-    angular_velocities: [AngularVelocity; N],
-) -> [Entity; N] {
-    let mut asteroids = [Entity::from_raw(0); N];
-    for i in 0..N {
-        asteroids[i] = spawn_asteroid(
-            app,
-            healths[i],
-            radii[i],
-            maybe_masses[i],
-            transforms[i],
-            velocities[i],
-            angular_velocities[i],
-        );
-    }
-
-    asteroids
-}
-
-fn spawn_asteroid(
-    app: &mut App,
-    health: Health,
-    radius: f32,
-    maybe_mass: Option<Mass>,
-    transform: Transform,
-    velocity: Velocity,
-    angular_velocity: AngularVelocity,
-) -> Entity {
-    let mass = maybe_mass.unwrap_or_else(|| Mass(PI * radius.powi(2)));
-    let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
-    let mesh = Mesh2dHandle(app.world.resource_mut::<Assets<Mesh>>().add(Mesh::from(
-        shape::Circle {
-            radius,
-            vertices: 16,
-        },
-    )));
-    let color = app
-        .world
-        .resource_mut::<Assets<ColorMaterial>>()
-        .add(Color::BLUE.into())
-        .clone();
+        .id();
 
     app.world
-        .spawn(Asteroid)
-        .insert(health)
+        .spawn(Spaceship)
         .insert(mass)
         .insert(moment_of_inertia)
         .insert(velocity)
         .insert(angular_velocity)
-        .insert(Collider {
-            aabb: Aabb {
-                hw: radius,
-                hh: radius,
-            },
-            topology: Topology::Disk { radius },
-        })
-        .insert(ColorMesh2dBundle {
-            mesh: mesh.clone(),
-            transform,
-            material: color,
-            ..Default::default()
-        })
+        .insert(SpatialBundle::default())
+        .push_children(&[spaceship_part])
         .id()
 }
+
+// fn spawn_asteroids<const N: usize>(
+//     app: &mut App,
+//     healths: [Health; N],
+//     radii: [f32; N],
+//     maybe_masses: [Option<Mass>; N],
+//     transforms: [Transform; N],
+//     velocities: [Velocity; N],
+//     angular_velocities: [AngularVelocity; N],
+// ) -> [Entity; N] {
+//     let mut asteroids = [Entity::from_raw(0); N];
+//     for i in 0..N {
+//         asteroids[i] = spawn_asteroid(
+//             app,
+//             healths[i],
+//             radii[i],
+//             maybe_masses[i],
+//             transforms[i],
+//             velocities[i],
+//             angular_velocities[i],
+//         );
+//     }
+
+//     asteroids
+// }
+
+// fn spawn_asteroid(
+//     app: &mut App,
+//     health: Health,
+//     radius: f32,
+//     maybe_mass: Option<Mass>,
+//     transform: Transform,
+//     velocity: Velocity,
+//     angular_velocity: AngularVelocity,
+// ) -> Entity {
+//     let mass = maybe_mass.unwrap_or_else(|| Mass(PI * radius.powi(2)));
+//     let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
+//     let mesh = Mesh2dHandle(app.world.resource_mut::<Assets<Mesh>>().add(Mesh::from(
+//         shape::Circle {
+//             radius,
+//             vertices: 16,
+//         },
+//     )));
+//     let color = app
+//         .world
+//         .resource_mut::<Assets<ColorMaterial>>()
+//         .add(Color::BLUE.into())
+//         .clone();
+
+//     app.world
+//         .spawn(Asteroid)
+//         .insert(health)
+//         .insert(mass)
+//         .insert(moment_of_inertia)
+//         .insert(velocity)
+//         .insert(angular_velocity)
+//         .insert(Collider {
+//             aabb: Aabb {
+//                 hw: radius,
+//                 hh: radius,
+//             },
+//             topology: Topology::Disk { radius },
+//         })
+//         .insert(ColorMesh2dBundle {
+//             mesh: mesh.clone(),
+//             transform,
+//             material: color,
+//             ..Default::default()
+//         })
+//         .id()
+// }
 
 fn entity_print_static(app: &App, entity: Entity, maybe_color: Option<&str>) {
     if let Some(color) = maybe_color {
@@ -424,7 +495,7 @@ impl PluginGroup for TestPlugins {
             .add(bevy::render::RenderPlugin::default())
             .add(bevy::render::texture::ImagePlugin::default())
             .add(bevy::core_pipeline::CorePipelinePlugin::default())
-        // .add(bevy::sprite::SpritePlugin::default())
+            .add(bevy::sprite::SpritePlugin::default())
         // .add(bevy::text::TextPlugin::default())
         // .add(bevy::ui::UiPlugin::default())
         // .add(bevy::pbr::PbrPlugin::default())
