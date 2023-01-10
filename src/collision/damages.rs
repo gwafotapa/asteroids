@@ -39,6 +39,7 @@ pub fn apply(
         if maybe_indestructible.is_some() {
             continue;
         }
+        // println!("damages extent: {}", ev.extent);
         health.0 -= ev.extent as i32;
         if let Some(Damaged(wreck_color)) = maybe_damaged {
             let color = &mut materials.get_mut(color).unwrap().color;

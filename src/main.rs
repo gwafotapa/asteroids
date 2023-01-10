@@ -84,7 +84,7 @@ fn main() {
                 .with_system(collision::impact::update)
                 // .with_system(count_entities)
                 // .with_system(count_asteroids_without_mesh)
-                .with_system(count_stars)
+                // .with_system(count_stars)
                 .into(),
         )
         .add_system_set(
@@ -188,7 +188,7 @@ fn main() {
                 .run_in_state(GameState::InGame)
                 // .with_system(spaceship::before_despawn)
                 .with_system(game_over::spawn_text)
-                .with_system(boss::cut_off_edge)
+                .with_system(boss::lone_core)
                 // .with_system(wreckage::wreck_with::<boss::Boss>)
                 .with_system(wreckage::wreck_with::<spaceship::Spaceship>)
                 .with_system(wreckage::wreck_with::<asteroid::Asteroid>)

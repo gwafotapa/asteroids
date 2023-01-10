@@ -418,7 +418,7 @@ pub fn attack(
     }
 }
 
-pub fn cut_off_edge(
+pub fn lone_core(
     mut commands: Commands,
     query_core: Query<Entity, With<BossCore>>,
     query_edge: Query<With<BossEdge>>,
