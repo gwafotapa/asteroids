@@ -509,18 +509,16 @@ pub fn intersection_at(
         );
         debug!(
             "\nCollision detected at time tc\n\
-             translation1: {}, translation2: {}\n\
-	     Standard response\n\
-	     velocity1: {}, velocity2: {}\n\
-	     Rewind\n\
-             translation1_a: {}, translation2_a: {}\n\
+             translation1_a = {}, translation2_a = {}\n\
+             translation1_c = {}, translation2_c = {}\n\
+	     velocity1_c = {}, velocity2_c = {}\n\
              ta = {}, tc = {}, contact = {:?}",
+            transform1_a.translation,
+            transform2_a.translation,
             transform1_c.translation,
             transform2_c.translation,
             v1.0,
             v2.0,
-            transform1_a.translation,
-            transform2_a.translation,
             time_a,
             time_c,
             contact_c

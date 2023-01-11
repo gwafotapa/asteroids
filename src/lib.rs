@@ -36,7 +36,7 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 pub struct Part;
 
 #[derive(Clone, Component, Copy)]
-pub struct Health(pub i32);
+pub struct Health(pub u32);
 
 #[derive(Clone, Component, Copy)]
 pub struct Mass(pub f32);

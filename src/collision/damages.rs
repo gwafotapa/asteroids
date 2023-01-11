@@ -6,10 +6,10 @@ use crate::{
     Health,
 };
 
-pub struct Damages {
-    pub location: Vec3,
-    pub extent: u32,
-}
+// pub struct Damages {
+//     pub location: Vec3,
+//     pub extent: u32,
+// }
 
 // pub trait Damageable {
 //     fn damage(&self, health: &mut Health, collider: &mut Collider, damages: Damages) {
@@ -40,7 +40,7 @@ pub fn apply(
             continue;
         }
         // println!("damages extent: {}", ev.extent);
-        health.0 -= ev.extent as i32;
+        health.0 = health.0.saturating_sub(ev.extent);
         if let Some(Damaged(wreck_color)) = maybe_damaged {
             let color = &mut materials.get_mut(color).unwrap().color;
             if health.0 > 0 {

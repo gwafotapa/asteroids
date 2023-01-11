@@ -16,7 +16,7 @@ use crate::{
 use star::StarsEvent;
 const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
 const ASTEROID_COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
-const ASTEROID_HEALTH_MAX: i32 = 60;
+const ASTEROID_HEALTH_MAX: u32 = 60;
 const ASTEROID_VELOCITY_MIN: f32 = 100.0;
 const ASTEROID_VELOCITY_MAX: f32 = 500.0;
 

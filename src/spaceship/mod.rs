@@ -11,7 +11,7 @@ use crate::{
 
 pub mod flame;
 
-pub const HEALTH: i32 = 10000;
+pub const HEALTH: u32 = 10000;
 const AREA: f32 = (S2.x - S4.x) * S4.y + (S6.x - S8.x) * S8.y + (S10.x - S11.x) * (S10.y - S9.y)
     - (S6.x + 13.0) * 12.0; // looking at assets/spaceship.ggb
 const MASS: f32 = AREA;

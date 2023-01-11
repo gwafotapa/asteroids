@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 
 use crate::{transform, AngularVelocity, Collider, Health, Part, Topology, TriangleXY, Velocity};
 
-const HEALTH: i32 = 100;
+const HEALTH: u32 = 100;
 const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 16.0;
 
 #[derive(Component)]

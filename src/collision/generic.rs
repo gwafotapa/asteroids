@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 // use iyes_loopless::prelude::*;
 
-use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Part, Velocity};
+use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity};
 
 use super::{
     // cache::{Cache, Collision},
@@ -24,7 +24,7 @@ pub fn with<C: Component>(
         ),
         Without<Part>,
     >,
-    query_c_part: Query<(&Collider, Entity, &Transform), (With<C>, With<Part>)>,
+    query_c_part: Query<(&Collider, Entity, &Health, &Transform), (With<C>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -51,7 +51,7 @@ pub fn with<C: Component>(
             for child1 in children1 {
                 for child2 in children2 {
                     if let Ok(
-                        [(collider1p, entity1, transform1p), (collider2p, entity2, transform2p)],
+                        [(collider1p, entity1p, health1p, transform1p), (collider2p, entity2p, health2p, transform2p)],
                     ) = query_c_part.get_many([*child1, *child2])
                     {
                         if let Some((contact, time_c, transform1_c, transform2_c)) =
@@ -88,29 +88,6 @@ pub fn with<C: Component>(
                                 *moment_of_inertia2,
                                 contact,
                             );
-                            [*transform1, *transform2] = [
-                                transform::at(
-                                    time.delta_seconds() - time_c,
-                                    transform1_c,
-                                    *velocity1,
-                                    *angular_velocity1,
-                                ),
-                                transform::at(
-                                    time.delta_seconds() - time_c,
-                                    transform2_c,
-                                    *velocity2,
-                                    *angular_velocity2,
-                                ),
-                            ];
-                            debug!(
-                                "\nMore precise response\n\
-				 translation1: {}, translation2: {}\n\
-				 velocity1: {}, velocity2: {}\n",
-                                transform1.translation,
-                                transform2.translation,
-                                velocity1.0,
-                                velocity2.0,
-                            );
 
                             let dv = (velocity1.0 - velocity2.0).length();
                             // println!("health1: {}, h1: {}", health1.0, h1);
@@ -118,13 +95,44 @@ pub fn with<C: Component>(
                             let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
                             let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
                             damage_event.send(DamageEvent {
-                                entity: entity1,
+                                entity: entity1p,
                                 extent: damage1,
                             });
                             damage_event.send(DamageEvent {
-                                entity: entity2,
+                                entity: entity2p,
                                 extent: damage2,
                             });
+
+                            *transform1 = if damage1 < health1p.0 {
+                                transform::at(
+                                    time.delta_seconds() - time_c,
+                                    transform1_c,
+                                    *velocity1,
+                                    *angular_velocity1,
+                                )
+                            } else {
+                                transform1_c
+                            };
+
+                            *transform2 = if damage2 < health2p.0 {
+                                transform::at(
+                                    time.delta_seconds() - time_c,
+                                    transform2_c,
+                                    *velocity2,
+                                    *angular_velocity2,
+                                )
+                            } else {
+                                transform2_c
+                            };
+
+                            debug!(
+                                "translation1_c = {}, translation2_c = {}\n\
+				 velocity1 = {}, velocity2 = {}\n",
+                                transform1.translation,
+                                transform2.translation,
+                                velocity1.0,
+                                velocity2.0,
+                            );
 
                             // cache.add(Collision(spaceship, b_id));
                             continue 'outer;
@@ -161,8 +169,11 @@ pub fn between<C1: Component, C2: Component>(
         ),
         (With<C2>, Without<Part>, Without<C1>),
     >,
-    query_c1_part: Query<(&Collider, Entity, &Transform), (With<C1>, With<Part>)>,
-    query_c2_part: Query<(&Collider, Entity, &Transform), (With<C2>, With<Part>, Without<C1>)>,
+    query_c1_part: Query<(&Collider, Entity, &Health, &Transform), (With<C1>, With<Part>)>,
+    query_c2_part: Query<
+        (&Collider, Entity, &Health, &Transform),
+        (With<C2>, With<Part>, Without<C1>),
+    >,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -177,7 +188,9 @@ pub fn between<C1: Component, C2: Component>(
     {
         if let Some(children1) = maybe_children1 {
             for child1 in children1 {
-                if let Ok((collider1p, entity1, transform1p)) = query_c1_part.get(*child1) {
+                if let Ok((collider1p, entity1p, health1p, transform1p)) =
+                    query_c1_part.get(*child1)
+                {
                     for (
                         mut angular_velocity2,
                         maybe_children2,
@@ -189,7 +202,7 @@ pub fn between<C1: Component, C2: Component>(
                     {
                         if let Some(children2) = maybe_children2 {
                             for child2 in children2 {
-                                if let Ok((collider2p, entity2, transform2p)) =
+                                if let Ok((collider2p, entity2p, health2p, transform2p)) =
                                     query_c2_part.get(*child2)
                                 {
                                     if let Some((contact, time_c, transform1_c, transform2_c)) =
@@ -226,29 +239,6 @@ pub fn between<C1: Component, C2: Component>(
                                             *moment_of_inertia2,
                                             contact,
                                         );
-                                        [*transform1, *transform2] = [
-                                            transform::at(
-                                                time.delta_seconds() - time_c,
-                                                transform1_c,
-                                                *velocity1,
-                                                *angular_velocity1,
-                                            ),
-                                            transform::at(
-                                                time.delta_seconds() - time_c,
-                                                transform2_c,
-                                                *velocity2,
-                                                *angular_velocity2,
-                                            ),
-                                        ];
-                                        debug!(
-                                            "\nMore precise response\n\
-					     translation1: {}, translation2: {}\n\
-					     velocity1: {}, velocity2: {}\n",
-                                            transform1.translation,
-                                            transform2.translation,
-                                            velocity1.0,
-                                            velocity2.0,
-                                        );
 
                                         let dv = (velocity1.0 - velocity2.0).length();
                                         // println!("health1: {}, h1: {}", health1.0, h1);
@@ -256,13 +246,44 @@ pub fn between<C1: Component, C2: Component>(
                                         let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
                                         let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
                                         damage_event.send(DamageEvent {
-                                            entity: entity1,
+                                            entity: entity1p,
                                             extent: damage1,
                                         });
                                         damage_event.send(DamageEvent {
-                                            entity: entity2,
+                                            entity: entity2p,
                                             extent: damage2,
                                         });
+                                        *transform1 = if damage1 < health1p.0 {
+                                            transform::at(
+                                                time.delta_seconds() - time_c,
+                                                transform1_c,
+                                                *velocity1,
+                                                *angular_velocity1,
+                                            )
+                                        } else {
+                                            transform1_c
+                                        };
+
+                                        *transform2 = if damage2 < health2p.0 {
+                                            transform::at(
+                                                time.delta_seconds() - time_c,
+                                                transform2_c,
+                                                *velocity2,
+                                                *angular_velocity2,
+                                            )
+                                        } else {
+                                            transform2_c
+                                        };
+
+                                        debug!(
+                                            "translation1_c = {}, translation2_c = {}\n\
+				 velocity1 = {}, velocity2 = {}\n",
+                                            transform1.translation,
+                                            transform2.translation,
+                                            velocity1.0,
+                                            velocity2.0,
+                                        );
+
                                         // cache.add(Collision(spaceship, b_id));
                                         continue 'outer;
                                     }
@@ -290,7 +311,10 @@ pub fn among<C1: Component, C2: Component>(
         ),
         (Or<(With<C1>, With<C2>)>, Without<Part>),
     >,
-    query_part: Query<(&Collider, Entity, &Transform), (Or<(With<C1>, With<C2>)>, With<Part>)>,
+    query_part: Query<
+        (&Collider, Entity, &Health, &Transform),
+        (Or<(With<C1>, With<C2>)>, With<Part>),
+    >,
     meshes: Res<Assets<Mesh>>,
     time: Res<Time>,
 ) {
@@ -317,7 +341,7 @@ pub fn among<C1: Component, C2: Component>(
             for child1 in children1 {
                 for child2 in children2 {
                     if let Ok(
-                        [(collider1p, entity1, transform1p), (collider2p, entity2, transform2p)],
+                        [(collider1p, entity1p, health1p, transform1p), (collider2p, entity2p, health2p, transform2p)],
                     ) = query_part.get_many([*child1, *child2])
                     {
                         if let Some((contact, time_c, transform1_c, transform2_c)) =
@@ -354,29 +378,6 @@ pub fn among<C1: Component, C2: Component>(
                                 *moment_of_inertia2,
                                 contact,
                             );
-                            [*transform1, *transform2] = [
-                                transform::at(
-                                    time.delta_seconds() - time_c,
-                                    transform1_c,
-                                    *velocity1,
-                                    *angular_velocity1,
-                                ),
-                                transform::at(
-                                    time.delta_seconds() - time_c,
-                                    transform2_c,
-                                    *velocity2,
-                                    *angular_velocity2,
-                                ),
-                            ];
-                            debug!(
-                                "\nMore precise response\n\
-			     translation1: {}, translation2: {}\n\
-			     velocity1: {}, velocity2: {}\n",
-                                transform1.translation,
-                                transform2.translation,
-                                velocity1.0,
-                                velocity2.0,
-                            );
 
                             let dv = (velocity1.0 - velocity2.0).length();
                             // println!("health1: {}, h1: {}", health1.0, h1);
@@ -384,13 +385,44 @@ pub fn among<C1: Component, C2: Component>(
                             let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
                             let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
                             damage_event.send(DamageEvent {
-                                entity: entity1,
+                                entity: entity1p,
                                 extent: damage1,
                             });
                             damage_event.send(DamageEvent {
-                                entity: entity2,
+                                entity: entity2p,
                                 extent: damage2,
                             });
+
+                            *transform1 = if damage1 < health1p.0 {
+                                transform::at(
+                                    time.delta_seconds() - time_c,
+                                    transform1_c,
+                                    *velocity1,
+                                    *angular_velocity1,
+                                )
+                            } else {
+                                transform1_c
+                            };
+
+                            *transform2 = if damage2 < health2p.0 {
+                                transform::at(
+                                    time.delta_seconds() - time_c,
+                                    transform2_c,
+                                    *velocity2,
+                                    *angular_velocity2,
+                                )
+                            } else {
+                                transform2_c
+                            };
+
+                            debug!(
+                                "translation1_c = {}, translation2_c = {}\n\
+				 velocity1 = {}, velocity2 = {}\n",
+                                transform1.translation,
+                                transform2.translation,
+                                velocity1.0,
+                                velocity2.0,
+                            );
 
                             // cache.add(Collision(spaceship, b_id));
                             continue 'outer;
