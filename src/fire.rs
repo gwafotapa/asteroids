@@ -98,11 +98,11 @@ pub fn impact(
 ) {
     for (children, fire, transform) in query.iter() {
         let (color, health) = query_part.get(children[0]).unwrap();
-        if health.0 <= 0 {
+        if health.0 == 0 {
             impact_event.send(ImpactEvent {
                 radius: fire.impact_radius,
                 vertices: fire.impact_vertices,
-                color: color.clone_weak(),
+                color: color.clone(),
                 translation: transform.translation,
             });
         }
@@ -116,7 +116,7 @@ pub fn despawn(
 ) {
     for (children, fire, transform) in query_fire.iter() {
         let health = query_fire_part.get(children[0]).unwrap();
-        if health.0 <= 0 || transform.scale == Vec3::ZERO {
+        if health.0 == 0 || transform.scale == Vec3::ZERO {
             commands.entity(fire).despawn_recursive();
         }
     }

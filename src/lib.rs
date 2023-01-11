@@ -87,7 +87,7 @@ pub fn despawn_with<C: Component>(
     query: Query<(Entity, &Health), With<C>>,
 ) {
     for (entity, health) in query.iter() {
-        if health.0 <= 0 {
+        if health.0 == 0 {
             commands.entity(entity).despawn();
         }
     }
@@ -98,7 +98,7 @@ pub fn despawn_recursive_with<C: Component>(
     query: Query<(Entity, &Health), With<C>>,
 ) {
     for (entity, health) in query.iter() {
-        if health.0 <= 0 {
+        if health.0 == 0 {
             commands.entity(entity).despawn_recursive();
         }
     }
