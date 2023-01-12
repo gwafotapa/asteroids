@@ -22,7 +22,7 @@ pub fn with<C: Component>(
             &mut Transform,
             &mut Velocity,
         ),
-        Without<Part>,
+        (With<C>, Without<Part>),
     >,
     query_c_part: Query<(&Collider, Entity, &Health, &Transform), (With<C>, With<Part>)>,
     meshes: Res<Assets<Mesh>>,
@@ -54,34 +54,33 @@ pub fn with<C: Component>(
                         [(collider1p, entity1p, health1p, transform1p), (collider2p, entity2p, health2p, transform2p)],
                     ) = query_c_part.get_many([*child1, *child2])
                     {
-                        if let Some((contact, time_c, transform1_c, transform2_c)) =
-                            detection::intersection_at(
-                                *mass1,
-                                *mass2,
-                                *moment_of_inertia1,
-                                *moment_of_inertia2,
-                                *transform1,
-                                *transform2,
-                                *velocity1,
-                                *velocity2,
-                                *angular_velocity1,
-                                *angular_velocity2,
-                                *transform1p,
-                                *transform2p,
-                                &collider1p,
-                                &collider2p,
-                                Res::clone(&meshes),
-                                Res::clone(&time),
-                            )
-                        {
+                        let mut time_c = time.delta_seconds();
+                        if let Some(contact) = detection::intersection_at(
+                            &mut transform1,
+                            &mut transform2,
+                            &mut time_c,
+                            *mass1,
+                            *mass2,
+                            *moment_of_inertia1,
+                            *moment_of_inertia2,
+                            *velocity1,
+                            *velocity2,
+                            *angular_velocity1,
+                            *angular_velocity2,
+                            *transform1p,
+                            *transform2p,
+                            &collider1p,
+                            &collider2p,
+                            Res::clone(&meshes),
+                        ) {
                             // if !cache.contains(Collision(spaceship, b_id)) {
                             response::compute_velocities(
                                 &mut velocity1,
                                 &mut velocity2,
                                 &mut angular_velocity1,
                                 &mut angular_velocity2,
-                                transform1_c,
-                                transform2_c,
+                                *transform1,
+                                *transform2,
                                 *mass1,
                                 *mass2,
                                 *moment_of_inertia1,
@@ -103,27 +102,23 @@ pub fn with<C: Component>(
                                 extent: damage2,
                             });
 
-                            *transform1 = if damage1 < health1p.0 {
-                                transform::at(
+                            if damage1 < health1p.0 {
+                                *transform1 = transform::at(
                                     time.delta_seconds() - time_c,
-                                    transform1_c,
+                                    *transform1,
                                     *velocity1,
                                     *angular_velocity1,
-                                )
-                            } else {
-                                transform1_c
-                            };
+                                );
+                            }
 
-                            *transform2 = if damage2 < health2p.0 {
-                                transform::at(
+                            if damage2 < health2p.0 {
+                                *transform2 = transform::at(
                                     time.delta_seconds() - time_c,
-                                    transform2_c,
+                                    *transform2,
                                     *velocity2,
                                     *angular_velocity2,
-                                )
-                            } else {
-                                transform2_c
-                            };
+                                );
+                            }
 
                             debug!(
                                 "translation1_c = {}, translation2_c = {}\n\
@@ -205,34 +200,33 @@ pub fn between<C1: Component, C2: Component>(
                                 if let Ok((collider2p, entity2p, health2p, transform2p)) =
                                     query_c2_part.get(*child2)
                                 {
-                                    if let Some((contact, time_c, transform1_c, transform2_c)) =
-                                        detection::intersection_at(
-                                            *mass1,
-                                            *mass2,
-                                            *moment_of_inertia1,
-                                            *moment_of_inertia2,
-                                            *transform1,
-                                            *transform2,
-                                            *velocity1,
-                                            *velocity2,
-                                            *angular_velocity1,
-                                            *angular_velocity2,
-                                            *transform1p,
-                                            *transform2p,
-                                            &collider1p,
-                                            &collider2p,
-                                            Res::clone(&meshes),
-                                            Res::clone(&time),
-                                        )
-                                    {
+                                    let mut time_c = time.delta_seconds();
+                                    if let Some(contact) = detection::intersection_at(
+                                        &mut transform1,
+                                        &mut transform2,
+                                        &mut time_c,
+                                        *mass1,
+                                        *mass2,
+                                        *moment_of_inertia1,
+                                        *moment_of_inertia2,
+                                        *velocity1,
+                                        *velocity2,
+                                        *angular_velocity1,
+                                        *angular_velocity2,
+                                        *transform1p,
+                                        *transform2p,
+                                        &collider1p,
+                                        &collider2p,
+                                        Res::clone(&meshes),
+                                    ) {
                                         // if !cache.contains(Collision(spaceship, b_id)) {
                                         response::compute_velocities(
                                             &mut velocity1,
                                             &mut velocity2,
                                             &mut angular_velocity1,
                                             &mut angular_velocity2,
-                                            transform1_c,
-                                            transform2_c,
+                                            *transform1,
+                                            *transform2,
                                             *mass1,
                                             *mass2,
                                             *moment_of_inertia1,
@@ -253,31 +247,27 @@ pub fn between<C1: Component, C2: Component>(
                                             entity: entity2p,
                                             extent: damage2,
                                         });
-                                        *transform1 = if damage1 < health1p.0 {
-                                            transform::at(
+                                        if damage1 < health1p.0 {
+                                            *transform1 = transform::at(
                                                 time.delta_seconds() - time_c,
-                                                transform1_c,
+                                                *transform1,
                                                 *velocity1,
                                                 *angular_velocity1,
-                                            )
-                                        } else {
-                                            transform1_c
-                                        };
+                                            );
+                                        }
 
-                                        *transform2 = if damage2 < health2p.0 {
-                                            transform::at(
+                                        if damage2 < health2p.0 {
+                                            *transform2 = transform::at(
                                                 time.delta_seconds() - time_c,
-                                                transform2_c,
+                                                *transform2,
                                                 *velocity2,
                                                 *angular_velocity2,
-                                            )
-                                        } else {
-                                            transform2_c
-                                        };
+                                            );
+                                        }
 
                                         debug!(
                                             "translation1_c = {}, translation2_c = {}\n\
-				 velocity1 = {}, velocity2 = {}\n",
+					     velocity1 = {}, velocity2 = {}\n",
                                             transform1.translation,
                                             transform2.translation,
                                             velocity1.0,
@@ -344,34 +334,33 @@ pub fn among<C1: Component, C2: Component>(
                         [(collider1p, entity1p, health1p, transform1p), (collider2p, entity2p, health2p, transform2p)],
                     ) = query_part.get_many([*child1, *child2])
                     {
-                        if let Some((contact, time_c, transform1_c, transform2_c)) =
-                            detection::intersection_at(
-                                *mass1,
-                                *mass2,
-                                *moment_of_inertia1,
-                                *moment_of_inertia2,
-                                *transform1,
-                                *transform2,
-                                *velocity1,
-                                *velocity2,
-                                *angular_velocity1,
-                                *angular_velocity2,
-                                *transform1p,
-                                *transform2p,
-                                &collider1p,
-                                &collider2p,
-                                Res::clone(&meshes),
-                                Res::clone(&time),
-                            )
-                        {
+                        let mut time_c = time.delta_seconds();
+                        if let Some(contact) = detection::intersection_at(
+                            &mut transform1,
+                            &mut transform2,
+                            &mut time_c,
+                            *mass1,
+                            *mass2,
+                            *moment_of_inertia1,
+                            *moment_of_inertia2,
+                            *velocity1,
+                            *velocity2,
+                            *angular_velocity1,
+                            *angular_velocity2,
+                            *transform1p,
+                            *transform2p,
+                            &collider1p,
+                            &collider2p,
+                            Res::clone(&meshes),
+                        ) {
                             // if !cache.contains(Collision(spaceship, b_id)) {
                             response::compute_velocities(
                                 &mut velocity1,
                                 &mut velocity2,
                                 &mut angular_velocity1,
                                 &mut angular_velocity2,
-                                transform1_c,
-                                transform2_c,
+                                *transform1,
+                                *transform2,
                                 *mass1,
                                 *mass2,
                                 *moment_of_inertia1,
@@ -393,27 +382,23 @@ pub fn among<C1: Component, C2: Component>(
                                 extent: damage2,
                             });
 
-                            *transform1 = if damage1 < health1p.0 {
-                                transform::at(
+                            if damage1 < health1p.0 {
+                                *transform1 = transform::at(
                                     time.delta_seconds() - time_c,
-                                    transform1_c,
+                                    *transform1,
                                     *velocity1,
                                     *angular_velocity1,
-                                )
-                            } else {
-                                transform1_c
-                            };
+                                );
+                            }
 
-                            *transform2 = if damage2 < health2p.0 {
-                                transform::at(
+                            if damage2 < health2p.0 {
+                                *transform2 = transform::at(
                                     time.delta_seconds() - time_c,
-                                    transform2_c,
+                                    *transform2,
                                     *velocity2,
                                     *angular_velocity2,
-                                )
-                            } else {
-                                transform2_c
-                            };
+                                );
+                            }
 
                             debug!(
                                 "translation1_c = {}, translation2_c = {}\n\

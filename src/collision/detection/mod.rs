@@ -461,12 +461,13 @@ pub fn intersection(
 }
 
 pub fn intersection_at(
+    transform1: &mut Transform,
+    transform2: &mut Transform,
+    time: &mut f32,
     mass1: Mass,
     mass2: Mass,
     moment_of_inertia1: MomentOfInertia,
     moment_of_inertia2: MomentOfInertia,
-    transform1: Transform,
-    transform2: Transform,
     velocity1: Velocity,
     velocity2: Velocity,
     angular_velocity1: AngularVelocity,
@@ -476,21 +477,20 @@ pub fn intersection_at(
     collider1p: &Collider,
     collider2p: &Collider,
     meshes: Res<Assets<Mesh>>,
-    time: Res<Time>,
-) -> Option<(Contact, f32, Transform, Transform)> {
+) -> Option<Contact> {
     if let Some(mut contact_c) = intersection(
-        transform::global_of(transform1p, transform1),
-        transform::global_of(transform2p, transform2),
+        transform::global_of(transform1p, *transform1),
+        transform::global_of(transform2p, *transform2),
         collider1p,
         collider2p,
         Some(Res::clone(&meshes)),
     ) {
-        let [mut time_a, mut time_c] = [0.0, time.delta_seconds()];
+        let [mut time_a, mut time_c] = [0.0, *time];
         let [mut transform1_a, mut transform2_a] = [
-            transform::at(-time_c, transform1, velocity1, angular_velocity1),
-            transform::at(-time_c, transform2, velocity2, angular_velocity2),
+            transform::at(-time_c, *transform1, velocity1, angular_velocity1),
+            transform::at(-time_c, *transform2, velocity2, angular_velocity2),
         ];
-        let [mut transform1_c, mut transform2_c] = [transform1, transform2];
+        let [mut transform1_c, mut transform2_c] = [*transform1, *transform2];
 
         let [mut v1, mut v2] = [velocity1, velocity2];
         let [mut w1, mut w2] = [angular_velocity1, angular_velocity2];
@@ -552,7 +552,10 @@ pub fn intersection_at(
             );
         }
 
-        Some((contact_c, time_c, transform1_c, transform2_c))
+        [*transform1, *transform2] = [transform1_c, transform2_c];
+        *time = time_c;
+
+        Some(contact_c)
     } else {
         None
     }
