@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
 
-use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Velocity};
+use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Velocity};
 use triangle::TriangleXY;
 
 pub mod triangle;
@@ -460,10 +460,10 @@ pub fn intersection(
     }
 }
 
-pub fn intersection_at(
-    transform1: &mut Transform,
+pub fn intersection_at<'a, I, J>(
+    transform1: &mut Transform, // transform of entity 1 at time
     transform2: &mut Transform,
-    time: &mut f32,
+    time: &mut f32, // time at which the transforms are taken
     mass1: Mass,
     mass2: Mass,
     moment_of_inertia1: MomentOfInertia,
@@ -472,19 +472,39 @@ pub fn intersection_at(
     velocity2: Velocity,
     angular_velocity1: AngularVelocity,
     angular_velocity2: AngularVelocity,
-    transform1p: Transform,
-    transform2p: Transform,
-    collider1p: &Collider,
-    collider2p: &Collider,
+    parts1: I,
+    parts2: J,
+    children1: &Children,
+    children2: &Children,
     meshes: Res<Assets<Mesh>>,
-) -> Option<Contact> {
-    if let Some(mut contact_c) = intersection(
-        transform::global_of(transform1p, *transform1),
-        transform::global_of(transform2p, *transform2),
-        collider1p,
-        collider2p,
-        Some(Res::clone(&meshes)),
-    ) {
+) -> Option<(Contact, Entity, Entity)>
+where
+    I: Copy + IntoIterator<Item = (&'a Collider, Entity, &'a Health, &'a Transform)>,
+    J: Copy + IntoIterator<Item = (&'a Collider, Entity, &'a Health, &'a Transform)>,
+{
+    let mut maybe_collision_c: Option<(Contact, Entity, Entity)> = None;
+    'outer: for (collider1p, entity1p, _, transform1p) in parts1.into_iter() {
+        if !children1.contains(&entity1p) {
+            continue;
+        }
+        for (collider2p, entity2p, _, transform2p) in parts2.into_iter() {
+            if !children2.contains(&entity2p) {
+                continue;
+            }
+            if let Some(contact_c) = intersection(
+                transform::global_of(*transform1p, *transform1),
+                transform::global_of(*transform2p, *transform2),
+                collider1p,
+                collider2p,
+                Some(Res::clone(&meshes)),
+            ) {
+                maybe_collision_c = Some((contact_c, entity1p, entity2p));
+                break 'outer;
+            }
+        }
+    }
+
+    if let Some((contact_c, _, _)) = maybe_collision_c {
         let [mut time_a, mut time_c] = [0.0, *time];
         let [mut transform1_a, mut transform2_a] = [
             transform::at(-time_c, *transform1, velocity1, angular_velocity1),
@@ -531,14 +551,30 @@ pub fn intersection_at(
                 transform::at(time_b - time_a, transform2_a, velocity2, angular_velocity2),
             ];
 
-            if let Some(contact_b) = intersection(
-                transform::global_of(transform1p, transform1_b),
-                transform::global_of(transform2p, transform2_b),
-                collider1p,
-                collider2p,
-                Some(Res::clone(&meshes)),
-            ) {
-                contact_c = contact_b;
+            let mut maybe_collision_b: Option<(Contact, Entity, Entity)> = None;
+            'outer: for (collider1p, entity1p, _, transform1p) in parts1.into_iter() {
+                if !children1.contains(&entity1p) {
+                    continue;
+                }
+                for (collider2p, entity2p, _, transform2p) in parts2.into_iter() {
+                    if !children2.contains(&entity2p) {
+                        continue;
+                    }
+                    if let Some(contact_b) = intersection(
+                        transform::global_of(*transform1p, transform1_b),
+                        transform::global_of(*transform2p, transform2_b),
+                        collider1p,
+                        collider2p,
+                        Some(Res::clone(&meshes)),
+                    ) {
+                        maybe_collision_b = Some((contact_b, entity1p, entity2p));
+                        break 'outer;
+                    }
+                }
+            }
+
+            if maybe_collision_b.is_some() {
+                maybe_collision_c = maybe_collision_b;
                 [transform1_c, transform2_c] = [transform1_b, transform2_b];
                 time_c = time_b;
             } else {
@@ -554,9 +590,7 @@ pub fn intersection_at(
 
         [*transform1, *transform2] = [transform1_c, transform2_c];
         *time = time_c;
-
-        Some(contact_c)
-    } else {
-        None
     }
+
+    maybe_collision_c
 }
