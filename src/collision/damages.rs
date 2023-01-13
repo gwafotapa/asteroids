@@ -31,6 +31,7 @@ pub fn apply<'a, I>(
     mass2: Mass,
     velocity1: Velocity,
     velocity2: Velocity,
+    normal: Vec2,
     materials: &mut Assets<ColorMaterial>,
 ) where
     I: IntoIterator<
@@ -42,7 +43,7 @@ pub fn apply<'a, I>(
         ),
     >,
 {
-    let dv = (velocity1.0 - velocity2.0).length();
+    let dv = (velocity1.0 - velocity2.0).truncate().dot(normal).abs();
     let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
     let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
 

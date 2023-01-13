@@ -99,6 +99,7 @@ pub fn with<C: Component>(
                 *mass2,
                 *velocity1,
                 *velocity2,
+                contact.normal,
                 materials.as_mut(),
             );
 
@@ -251,6 +252,7 @@ pub fn between<C1: Component, C2: Component>(
                     *mass2,
                     *velocity1,
                     *velocity2,
+                    contact.normal,
                     materials.as_mut(),
                 );
 
@@ -381,6 +383,7 @@ pub fn among<C1: Component, C2: Component>(
                 *mass2,
                 *velocity1,
                 *velocity2,
+                contact.normal,
                 materials.as_mut(),
             );
 
