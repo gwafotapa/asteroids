@@ -36,7 +36,7 @@ pub struct BossEdge;
 pub struct Indestructible;
 
 #[derive(Component)]
-pub struct Damaged(pub Color);
+pub struct ColorDamaged(pub Color);
 
 // const A0: Vec3 = Vec3 {
 //     x: -OUTER_RADIUS,
@@ -289,7 +289,7 @@ pub fn spawn(
             .spawn((Boss, Part))
             .insert(BossEdge)
             .insert(Health(EDGE_HEALTH))
-            .insert(Damaged(Color::GRAY))
+            .insert(ColorDamaged(Color::GRAY))
             .insert(Collider {
                 aabb: Aabb {
                     hw: OUTER_RADIUS - INNER_RADIUS,

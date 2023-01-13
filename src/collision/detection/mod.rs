@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
 
-use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Velocity};
+use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Velocity};
 use triangle::TriangleXY;
 
 pub mod triangle;
@@ -479,15 +479,15 @@ pub fn intersection_at<'a, I, J>(
     meshes: Res<Assets<Mesh>>,
 ) -> Option<(Contact, Entity, Entity)>
 where
-    I: Copy + IntoIterator<Item = (&'a Collider, Entity, &'a Health, &'a Transform)>,
-    J: Copy + IntoIterator<Item = (&'a Collider, Entity, &'a Health, &'a Transform)>,
+    I: Copy + IntoIterator<Item = (&'a Collider, Entity, &'a Transform)>,
+    J: Copy + IntoIterator<Item = (&'a Collider, Entity, &'a Transform)>,
 {
     let mut maybe_collision_c: Option<(Contact, Entity, Entity)> = None;
-    'outer: for (collider1p, entity1p, _, transform1p) in parts1.into_iter() {
+    'outer: for (collider1p, entity1p, transform1p) in parts1.into_iter() {
         if !children1.contains(&entity1p) {
             continue;
         }
-        for (collider2p, entity2p, _, transform2p) in parts2.into_iter() {
+        for (collider2p, entity2p, transform2p) in parts2.into_iter() {
             if !children2.contains(&entity2p) {
                 continue;
             }
@@ -552,11 +552,11 @@ where
             ];
 
             let mut maybe_collision_b: Option<(Contact, Entity, Entity)> = None;
-            'outer: for (collider1p, entity1p, _, transform1p) in parts1.into_iter() {
+            'outer: for (collider1p, entity1p, transform1p) in parts1.into_iter() {
                 if !children1.contains(&entity1p) {
                     continue;
                 }
-                for (collider2p, entity2p, _, transform2p) in parts2.into_iter() {
+                for (collider2p, entity2p, transform2p) in parts2.into_iter() {
                     if !children2.contains(&entity2p) {
                         continue;
                     }

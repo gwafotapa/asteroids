@@ -1,18 +1,20 @@
 use bevy::prelude::*;
 // use iyes_loopless::prelude::*;
 
-use crate::{transform, AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity};
+use crate::{
+    boss::ColorDamaged, boss::Indestructible, transform, AngularVelocity, Health, Mass,
+    MomentOfInertia, Part, Velocity,
+};
 
 use super::{
     // cache::{Cache, Collision},
-    damages::DamageEvent,
+    damages::{self},
     detection::{self, Collider},
     response,
 };
 
 pub fn with<C: Component>(
     // mut cache: ResMut<Cache>,
-    mut damage_event: EventWriter<DamageEvent>,
     mut query_c: Query<
         (
             &mut AngularVelocity,
@@ -24,8 +26,18 @@ pub fn with<C: Component>(
         ),
         (With<C>, Without<Part>),
     >,
-    query_c_part: Query<(&Collider, Entity, &Health, &Transform), (With<C>, With<Part>)>,
+    query_c_part: Query<(&Collider, Entity, &Transform), (With<C>, With<Part>)>,
+    mut query_c_part_mut: Query<
+        (
+            &Handle<ColorMaterial>,
+            Option<&ColorDamaged>,
+            &mut Health,
+            Option<&Indestructible>,
+        ),
+        (With<C>, With<Part>),
+    >,
     meshes: Res<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
 ) {
     let mut combinations = query_c.iter_combinations_mut();
@@ -82,21 +94,21 @@ pub fn with<C: Component>(
                     contact,
                 );
 
-                let dv = (velocity1.0 - velocity2.0).length();
-                // println!("health1: {}, h1: {}", health1.0, h1);
-                // println!("health2: {}, h2: {}", health2.0, h2);
-                let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
-                let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
-                damage_event.send(DamageEvent {
-                    entity: entity1p,
-                    extent: damage1,
-                });
-                damage_event.send(DamageEvent {
-                    entity: entity2p,
-                    extent: damage2,
-                });
+                damages::apply(
+                    query_c_part_mut.get_many_mut([entity1p, entity2p]).unwrap(),
+                    *mass1,
+                    *mass2,
+                    *velocity1,
+                    *velocity2,
+                    materials.as_mut(),
+                );
 
-                if damage1 < query_c_part.get_component::<Health>(entity1p).unwrap().0 {
+                if query_c_part_mut
+                    .get_component::<Health>(entity1p)
+                    .unwrap()
+                    .0
+                    > 0
+                {
                     *transform1 = transform::at(
                         time.delta_seconds() - time_c,
                         *transform1,
@@ -105,7 +117,12 @@ pub fn with<C: Component>(
                     );
                 }
 
-                if damage2 < query_c_part.get_component::<Health>(entity2p).unwrap().0 {
+                if query_c_part_mut
+                    .get_component::<Health>(entity2p)
+                    .unwrap()
+                    .0
+                    > 0
+                {
                     *transform2 = transform::at(
                         time.delta_seconds() - time_c,
                         *transform2,
@@ -129,7 +146,6 @@ pub fn with<C: Component>(
 
 pub fn between<C1: Component, C2: Component>(
     // mut cache: ResMut<Cache>,
-    mut damage_event: EventWriter<DamageEvent>,
     mut query_c1: Query<
         (
             &mut AngularVelocity,
@@ -152,12 +168,28 @@ pub fn between<C1: Component, C2: Component>(
         ),
         (With<C2>, Without<Part>, Without<C1>),
     >,
-    query_c1_part: Query<(&Collider, Entity, &Health, &Transform), (With<C1>, With<Part>)>,
-    query_c2_part: Query<
-        (&Collider, Entity, &Health, &Transform),
+    query_c1_part: Query<(&Collider, Entity, &Transform), (With<C1>, With<Part>)>,
+    mut query_c1_part_mut: Query<
+        (
+            &Handle<ColorMaterial>,
+            Option<&ColorDamaged>,
+            &mut Health,
+            Option<&Indestructible>,
+        ),
+        (With<C1>, With<Part>),
+    >,
+    query_c2_part: Query<(&Collider, Entity, &Transform), (With<C2>, With<Part>, Without<C1>)>,
+    mut query_c2_part_mut: Query<
+        (
+            &Handle<ColorMaterial>,
+            Option<&ColorDamaged>,
+            &mut Health,
+            Option<&Indestructible>,
+        ),
         (With<C2>, With<Part>, Without<C1>),
     >,
     meshes: Res<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
 ) {
     'outer: for (
@@ -214,20 +246,24 @@ pub fn between<C1: Component, C2: Component>(
                             contact,
                         );
 
-                        let dv = (velocity1.0 - velocity2.0).length();
-                        // println!("health1: {}, h1: {}", health1.0, h1);
-                        // println!("health2: {}, h2: {}", health2.0, h2);
-                        let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
-                        let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
-                        damage_event.send(DamageEvent {
-                            entity: entity1p,
-                            extent: damage1,
-                        });
-                        damage_event.send(DamageEvent {
-                            entity: entity2p,
-                            extent: damage2,
-                        });
-                        if damage1 < query_c1_part.get_component::<Health>(entity1p).unwrap().0 {
+                        damages::apply(
+                            [
+                                query_c1_part_mut.get_mut(entity1p).unwrap(),
+                                query_c2_part_mut.get_mut(entity2p).unwrap(),
+                            ],
+                            *mass1,
+                            *mass2,
+                            *velocity1,
+                            *velocity2,
+                            materials.as_mut(),
+                        );
+
+                        if query_c1_part_mut
+                            .get_component::<Health>(entity1p)
+                            .unwrap()
+                            .0
+                            > 0
+                        {
                             *transform1 = transform::at(
                                 time.delta_seconds() - time_c,
                                 *transform1,
@@ -236,7 +272,12 @@ pub fn between<C1: Component, C2: Component>(
                             );
                         }
 
-                        if damage2 < query_c2_part.get_component::<Health>(entity2p).unwrap().0 {
+                        if query_c2_part_mut
+                            .get_component::<Health>(entity2p)
+                            .unwrap()
+                            .0
+                            > 0
+                        {
                             *transform2 = transform::at(
                                 time.delta_seconds() - time_c,
                                 *transform2,
@@ -265,7 +306,6 @@ pub fn between<C1: Component, C2: Component>(
 
 pub fn among<C1: Component, C2: Component>(
     // mut cache: ResMut<Cache>,
-    mut damage_event: EventWriter<DamageEvent>,
     mut query: Query<
         (
             &mut AngularVelocity,
@@ -277,11 +317,18 @@ pub fn among<C1: Component, C2: Component>(
         ),
         (Or<(With<C1>, With<C2>)>, Without<Part>),
     >,
-    query_part: Query<
-        (&Collider, Entity, &Health, &Transform),
+    query_part: Query<(&Collider, Entity, &Transform), (Or<(With<C1>, With<C2>)>, With<Part>)>,
+    mut query_part_mut: Query<
+        (
+            &Handle<ColorMaterial>,
+            Option<&ColorDamaged>,
+            &mut Health,
+            Option<&Indestructible>,
+        ),
         (Or<(With<C1>, With<C2>)>, With<Part>),
     >,
     meshes: Res<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
 ) {
     let mut combinations = query.iter_combinations_mut();
@@ -338,21 +385,16 @@ pub fn among<C1: Component, C2: Component>(
                     contact,
                 );
 
-                let dv = (velocity1.0 - velocity2.0).length();
-                // println!("health1: {}, h1: {}", health1.0, h1);
-                // println!("health2: {}, h2: {}", health2.0, h2);
-                let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
-                let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
-                damage_event.send(DamageEvent {
-                    entity: entity1p,
-                    extent: damage1,
-                });
-                damage_event.send(DamageEvent {
-                    entity: entity2p,
-                    extent: damage2,
-                });
+                damages::apply(
+                    query_part_mut.get_many_mut([entity1p, entity2p]).unwrap(),
+                    *mass1,
+                    *mass2,
+                    *velocity1,
+                    *velocity2,
+                    materials.as_mut(),
+                );
 
-                if damage1 < query_part.get_component::<Health>(entity1p).unwrap().0 {
+                if query_part_mut.get_component::<Health>(entity1p).unwrap().0 > 0 {
                     *transform1 = transform::at(
                         time.delta_seconds() - time_c,
                         *transform1,
@@ -361,7 +403,7 @@ pub fn among<C1: Component, C2: Component>(
                     );
                 }
 
-                if damage2 < query_part.get_component::<Health>(entity2p).unwrap().0 {
+                if query_part_mut.get_component::<Health>(entity2p).unwrap().0 > 0 {
                     *transform2 = transform::at(
                         time.delta_seconds() - time_c,
                         *transform2,

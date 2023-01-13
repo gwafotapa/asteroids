@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    boss::{Damaged, Indestructible},
+    boss::{ColorDamaged, Indestructible},
     // collision::Collider,
     Health,
+    Mass,
+    Velocity,
 };
 
 // pub struct Damages {
@@ -17,32 +19,43 @@ use crate::{
 //     }
 // }
 
-pub struct DamageEvent {
-    pub entity: Entity,
-    // location: Vec3,
-    pub extent: u32,
-}
+// pub struct DamageEvent {
+//     pub entity: Entity,
+//     // location: Vec3,
+//     pub extent: u32,
+// }
 
-pub fn apply(
-    mut damage_event: EventReader<DamageEvent>,
-    mut query: Query<(
-        &Handle<ColorMaterial>,
-        Option<&Damaged>,
-        &mut Health,
-        Option<&Indestructible>,
-    )>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    for ev in damage_event.iter() {
-        let (color, maybe_damaged, mut health, maybe_indestructible) =
-            query.get_mut(ev.entity).unwrap();
+pub fn apply<'a, I>(
+    parts: I,
+    mass1: Mass,
+    mass2: Mass,
+    velocity1: Velocity,
+    velocity2: Velocity,
+    materials: &mut Assets<ColorMaterial>,
+) where
+    I: IntoIterator<
+        Item = (
+            &'a Handle<ColorMaterial>,
+            Option<&'a ColorDamaged>,
+            Mut<'a, Health>,
+            Option<&'a Indestructible>,
+        ),
+    >,
+{
+    let dv = (velocity1.0 - velocity2.0).length();
+    let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
+    let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
+
+    for ((color_material, maybe_color_damaged, mut health, maybe_indestructible), damage) in
+        parts.into_iter().zip([damage1, damage2])
+    {
         if maybe_indestructible.is_some() {
             continue;
         }
         // println!("damages extent: {}", ev.extent);
-        health.0 = health.0.saturating_sub(ev.extent);
-        if let Some(Damaged(wreck_color)) = maybe_damaged {
-            let color = &mut materials.get_mut(color).unwrap().color;
+        health.0 = health.0.saturating_sub(damage);
+        if let Some(ColorDamaged(wreck_color)) = maybe_color_damaged {
+            let color = &mut materials.get_mut(color_material).unwrap().color;
             if health.0 > 0 {
                 //     *color = *wreck_color;
                 // } else {
