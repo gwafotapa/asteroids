@@ -1,24 +1,24 @@
 use bevy::prelude::*;
 use rand::Rng;
-use std::f32::consts::PI;
+// use std::f32::consts::PI;
 
 use crate::{
-    asteroid::AsteroidEvent,
-    AngularVelocity,
+    // asteroid::AsteroidEvent,
+    // AngularVelocity,
     // map::ASTEROIDS_MAX_PER_SECTOR,
-    Health,
-    Mass,
-    MomentOfInertia,
-    Velocity,
+    // Health,
+    // Mass,
+    // MomentOfInertia,
+    // Velocity,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 };
 use star::StarsEvent;
-const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
-const ASTEROID_COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
-const ASTEROID_HEALTH_MAX: u32 = 60;
-const ASTEROID_VELOCITY_MIN: f32 = 100.0;
-const ASTEROID_VELOCITY_MAX: f32 = 500.0;
+// const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
+// const ASTEROID_COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
+// const ASTEROID_HEALTH_MAX: u32 = 60;
+// const ASTEROID_VELOCITY_MIN: f32 = 100.0;
+// const ASTEROID_VELOCITY_MAX: f32 = 500.0;
 
 const SECTOR_Z: f32 = 0.0;
 
@@ -102,7 +102,7 @@ pub fn spawn(mut stars_event: EventWriter<StarsEvent>, mut commands: Commands) {
 }
 
 pub fn update(
-    mut asteroid_event: EventWriter<AsteroidEvent>,
+    // mut asteroid_event: EventWriter<AsteroidEvent>,
     mut stars_event: EventWriter<StarsEvent>,
     mut commands: Commands,
     mut current_sector_id: ResMut<CurrentSectorId>,
@@ -194,34 +194,35 @@ pub fn update(
             // let population = rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1);
             // let asteroids = asteroid::spawn(&mut commands, &mut meshes, &mut materials, population);
             // commands.entity(new_sector_id).push_children(&asteroids);
-            for _ in 0..rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1) {
-                let xmin = i as f32 * WINDOW_WIDTH;
-                let ymin = j as f32 * WINDOW_HEIGHT;
-                let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
-                let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
-                let health = Health(rng.gen_range(10..ASTEROID_HEALTH_MAX + 1));
-                let radius = (health.0 * 2) as f32;
-                let area = PI * radius.powi(2);
-                let mass = Mass(area);
-                let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
-                let rho = rng.gen_range(ASTEROID_VELOCITY_MIN..ASTEROID_VELOCITY_MAX);
-                let theta = rng.gen_range(0.0..2.0 * PI);
-                let velocity = Velocity(Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]));
-                let angular_velocity = AngularVelocity(rng.gen_range(0.0..0.01));
 
-                asteroid_event.send(AsteroidEvent {
-                    x,
-                    y,
-                    radius,
-                    vertices: 16,
-                    color: ASTEROID_COLOR,
-                    health,
-                    mass,
-                    moment_of_inertia,
-                    velocity,
-                    angular_velocity,
-                });
-            }
+            // for _ in 0..rng.gen_range(0..ASTEROIDS_MAX_PER_SECTOR + 1) {
+            //     let xmin = i as f32 * WINDOW_WIDTH;
+            //     let ymin = j as f32 * WINDOW_HEIGHT;
+            //     let x = rng.gen_range(xmin..xmin + WINDOW_WIDTH);
+            //     let y = rng.gen_range(ymin..ymin + WINDOW_HEIGHT);
+            //     let health = Health(rng.gen_range(10..ASTEROID_HEALTH_MAX + 1));
+            //     let radius = (health.0 * 2) as f32;
+            //     let area = PI * radius.powi(2);
+            //     let mass = Mass(area);
+            //     let moment_of_inertia = MomentOfInertia(0.5 * mass.0 * radius.powi(2));
+            //     let rho = rng.gen_range(ASTEROID_VELOCITY_MIN..ASTEROID_VELOCITY_MAX);
+            //     let theta = rng.gen_range(0.0..2.0 * PI);
+            //     let velocity = Velocity(Vec3::from([rho * theta.cos(), rho * theta.sin(), 0.]));
+            //     let angular_velocity = AngularVelocity(rng.gen_range(0.0..0.01));
+
+            //     asteroid_event.send(AsteroidEvent {
+            //         x,
+            //         y,
+            //         radius,
+            //         vertices: 16,
+            //         color: ASTEROID_COLOR,
+            //         health,
+            //         mass,
+            //         moment_of_inertia,
+            //         velocity,
+            //         angular_velocity,
+            //     });
+            // }
         }
     }
 
