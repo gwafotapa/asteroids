@@ -11,7 +11,7 @@ use crate::{
 
 pub mod flame;
 
-pub const HEALTH: u32 = 10000;
+pub const HEALTH: u32 = 100;
 const AREA: f32 = (S2.x - S4.x) * S4.y + (S6.x - S8.x) * S8.y + (S10.x - S11.x) * (S10.y - S9.y)
     - (S6.x + 13.0) * 12.0; // looking at assets/spaceship.ggb
 const MASS: f32 = AREA;
@@ -32,6 +32,7 @@ const BLAST_RADIUS: f32 = 8.0;
 const BLAST_VERTICES: usize = 8;
 const COLOR: Color = Color::BLUE;
 const DRAG: f32 = 0.01;
+const FIRE_DAMAGES: u32 = 1;
 const FIRE_IMPACT_RADIUS: f32 = 12.0;
 const FIRE_IMPACT_VERTICES: usize = 16;
 const FIRE_RADIUS: f32 = 3.0 / FIRE_RANGE as f32;
@@ -284,6 +285,7 @@ pub fn attack(
                 impact_vertices: FIRE_IMPACT_VERTICES,
             },
             enemy: false,
+            damages: FIRE_DAMAGES,
             radius: FIRE_RADIUS,
             vertices: FIRE_VERTICES,
             color: ATTACK_COLOR,

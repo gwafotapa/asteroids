@@ -14,9 +14,13 @@ pub struct Fire {
 #[derive(Component)]
 pub struct Enemy;
 
+#[derive(Component)]
+pub struct Damages(pub u32);
+
 pub struct FireEvent {
     pub fire: Fire,
     pub enemy: bool,
+    pub damages: u32,
     pub radius: f32,
     pub vertices: usize,
     pub color: Color,
@@ -37,6 +41,7 @@ pub fn spawn(
                 impact_radius: ev.fire.impact_radius,
                 impact_vertices: ev.fire.impact_vertices,
             })
+            .insert(Damages(ev.damages))
             .insert(Mass(1.0))
             .insert(MomentOfInertia(1.0))
             .insert(ev.velocity)

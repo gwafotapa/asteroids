@@ -132,8 +132,9 @@ const ATTACK_COLOR: Color = Color::RED;
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const CORE_HEALTH: u32 = 5000;
-const EDGE_HEALTH: u32 = 100;
+const CORE_HEALTH: u32 = 50;
+const EDGE_HEALTH: u32 = 15;
+const FIRE_DAMAGES: u32 = 1;
 const FIRE_VELOCITY: f32 = 400.0;
 const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE as f32;
 const FIRE_RANGE: u32 = 100;
@@ -404,6 +405,7 @@ pub fn attack(
                             impact_vertices: FIRE_IMPACT_VERTICES,
                         },
                         enemy: true,
+                        damages: FIRE_DAMAGES,
                         radius: FIRE_RADIUS,
                         vertices: FIRE_VERTICES,
                         color: ATTACK_COLOR,

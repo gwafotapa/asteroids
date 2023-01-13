@@ -2,8 +2,8 @@ use bevy::prelude::*;
 // use iyes_loopless::prelude::*;
 
 use crate::{
-    boss::ColorDamaged, boss::Indestructible, transform, AngularVelocity, Health, Mass,
-    MomentOfInertia, Part, Velocity,
+    boss::ColorDamaged, boss::Indestructible, fire::Damages, transform, AngularVelocity, Health,
+    Mass, MomentOfInertia, Part, Velocity,
 };
 
 use super::{
@@ -19,6 +19,7 @@ pub fn with<C: Component>(
         (
             &mut AngularVelocity,
             &Children,
+            Option<&Damages>,
             &Mass,
             &MomentOfInertia,
             &mut Transform,
@@ -45,6 +46,7 @@ pub fn with<C: Component>(
         [(
             mut angular_velocity1,
             children1,
+            maybe_damages1,
             mass1,
             moment_of_inertia1,
             mut transform1,
@@ -52,6 +54,7 @@ pub fn with<C: Component>(
         ), (
             mut angular_velocity2,
             children2,
+            maybe_damages2,
             mass2,
             moment_of_inertia2,
             mut transform2,
@@ -95,6 +98,8 @@ pub fn with<C: Component>(
 
             damages::apply(
                 query_c_part_mut.get_many_mut([entity1p, entity2p]).unwrap(),
+                maybe_damages1,
+                maybe_damages2,
                 *mass1,
                 *mass2,
                 *velocity1,
@@ -149,6 +154,7 @@ pub fn between<C1: Component, C2: Component>(
         (
             &mut AngularVelocity,
             &Children,
+            Option<&Damages>,
             &Mass,
             &MomentOfInertia,
             &mut Transform,
@@ -160,6 +166,7 @@ pub fn between<C1: Component, C2: Component>(
         (
             &mut AngularVelocity,
             &Children,
+            Option<&Damages>,
             &Mass,
             &MomentOfInertia,
             &mut Transform,
@@ -194,6 +201,7 @@ pub fn between<C1: Component, C2: Component>(
     'outer: for (
         mut angular_velocity1,
         children1,
+        maybe_damages1,
         mass1,
         moment_of_inertia1,
         mut transform1,
@@ -203,6 +211,7 @@ pub fn between<C1: Component, C2: Component>(
         for (
             mut angular_velocity2,
             children2,
+            maybe_damages2,
             mass2,
             moment_of_inertia2,
             mut transform2,
@@ -248,6 +257,8 @@ pub fn between<C1: Component, C2: Component>(
                         query_c1_part_mut.get_mut(entity1p).unwrap(),
                         query_c2_part_mut.get_mut(entity2p).unwrap(),
                     ],
+                    maybe_damages1,
+                    maybe_damages2,
                     *mass1,
                     *mass2,
                     *velocity1,
@@ -303,6 +314,7 @@ pub fn among<C1: Component, C2: Component>(
         (
             &mut AngularVelocity,
             &Children,
+            Option<&Damages>,
             &Mass,
             &MomentOfInertia,
             &mut Transform,
@@ -329,6 +341,7 @@ pub fn among<C1: Component, C2: Component>(
         [(
             mut angular_velocity1,
             children1,
+            maybe_damages1,
             mass1,
             moment_of_inertia1,
             mut transform1,
@@ -336,6 +349,7 @@ pub fn among<C1: Component, C2: Component>(
         ), (
             mut angular_velocity2,
             children2,
+            maybe_damages2,
             mass2,
             moment_of_inertia2,
             mut transform2,
@@ -379,6 +393,8 @@ pub fn among<C1: Component, C2: Component>(
 
             damages::apply(
                 query_part_mut.get_many_mut([entity1p, entity2p]).unwrap(),
+                maybe_damages1,
+                maybe_damages2,
                 *mass1,
                 *mass2,
                 *velocity1,

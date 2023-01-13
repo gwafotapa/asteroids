@@ -53,7 +53,7 @@ pub fn point_in_triangle(p: Vec2, t: impl Into<TriangleXY>) -> Option<Contact> {
     if pa.perp_dot(pb) > 0.0 && pb.perp_dot(pc) > 0.0 && pc.perp_dot(pa) > 0.0 {
         Some(Contact {
             point: p,
-            normal: Vec2::ZERO,
+            normal: ((a + b + c) / 3.0 - p).normalize(),
         })
     } else {
         None
@@ -394,7 +394,13 @@ pub fn intersection(
                 .unwrap()
                 .attribute(Mesh::ATTRIBUTE_POSITION)
             {
-                point_in_transformed_triangles(point, triangles, vertices)
+                let mut maybe_contact = point_in_transformed_triangles(point, triangles, vertices);
+                if let Topology::Point = c1.topology {
+                    if let Some(contact) = maybe_contact.as_mut() {
+                        contact.normal = -contact.normal;
+                    }
+                }
+                maybe_contact
             } else {
                 panic!("Cannot access triangle's mesh");
             }

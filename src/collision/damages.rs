@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     boss::{ColorDamaged, Indestructible},
+    fire::Damages,
     // collision::Collider,
     Health,
     Mass,
@@ -27,6 +28,8 @@ use crate::{
 
 pub fn apply<'a, I>(
     parts: I,
+    damages1: Option<&Damages>,
+    damages2: Option<&Damages>,
     mass1: Mass,
     mass2: Mass,
     velocity1: Velocity,
@@ -44,17 +47,29 @@ pub fn apply<'a, I>(
     >,
 {
     let dv = (velocity1.0 - velocity2.0).truncate().dot(normal).abs();
-    let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
-    let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
+    // let damage1 = (mass2.0 / mass1.0 * dv / 10.0) as u32 + 1;
+    // let damage2 = (mass1.0 / mass2.0 * dv / 10.0) as u32 + 1;
+    let [damages1, damages2] = [
+        damages2.map_or_else(|| (mass2.0.sqrt() * dv) as u32 / 2000, |d| d.0),
+        damages1.map_or_else(|| (mass1.0.sqrt() * dv) as u32 / 2000, |d| d.0),
+    ];
+    // println!(
+    //     "mass1: {}\n\
+    // 	 mass2: {}\n\
+    // 	 dv: {}\n\
+    //     damages1: {}\n\
+    // 	damages2: {}",
+    //     mass1.0, mass2.0, dv, damages1, damages2
+    // );
 
-    for ((color_material, maybe_color_damaged, mut health, maybe_indestructible), damage) in
-        parts.into_iter().zip([damage1, damage2])
+    for ((color_material, maybe_color_damaged, mut health, maybe_indestructible), damages) in
+        parts.into_iter().zip([damages1, damages2])
     {
         if maybe_indestructible.is_some() {
             continue;
         }
         // println!("damages extent: {}", ev.extent);
-        health.0 = health.0.saturating_sub(damage);
+        health.0 = health.0.saturating_sub(damages);
         if let Some(ColorDamaged(wreck_color)) = maybe_color_damaged {
             let color = &mut materials.get_mut(color_material).unwrap().color;
             if health.0 > 0 {

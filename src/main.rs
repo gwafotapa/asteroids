@@ -117,7 +117,8 @@ fn main() {
                 .with_system(collision::generic::among::<boss::Boss, spaceship::Spaceship>)
                 .with_system(collision::generic::between::<boss::Boss, fire::Fire>)
                 .with_system(collision::generic::between::<spaceship::Spaceship, fire::Fire>)
-                .with_system(collision::generic::between::<asteroid::Asteroid, fire::Fire>) // .with_system(
+                .with_system(collision::generic::between::<asteroid::Asteroid, fire::Fire>)
+                // .with_system(collision::generic::between::<fire::Fire, asteroid::Asteroid>)
                 //     collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
                 // )
                 // .with_system(collision::generic::with::<asteroid::Asteroid>)
