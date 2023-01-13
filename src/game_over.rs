@@ -14,7 +14,7 @@ pub fn spawn_text(
     asset_server: Res<AssetServer>,
 ) {
     if let Ok(health) = query_spaceship.get_single() {
-        if health.0 <= 0 {
+        if health.0 == 0 {
             commands.spawn(GameOver).insert(TextBundle {
                 text: Text::from_section(
                     "Press space to go back to the main menu",

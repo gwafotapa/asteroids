@@ -415,12 +415,14 @@ pub fn intersection(
                 .unwrap()
                 .attribute(Mesh::ATTRIBUTE_POSITION)
             {
-                let mut contact =
+                let mut maybe_contact =
                     disk_intersects_transformed_triangles(disk, *radius, triangles, vertices);
                 if let Topology::Disk { radius: _ } = c2.topology {
-                    contact.as_mut().map(|c| c.normal = -c.normal);
+                    if let Some(contact) = maybe_contact.as_mut() {
+                        contact.normal = -contact.normal;
+                    }
                 }
-                contact
+                maybe_contact
             } else {
                 panic!("Cannot access triangle's mesh");
             }

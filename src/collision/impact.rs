@@ -46,7 +46,7 @@ pub fn update(
         // } else if health.0 > 0 {
         transform.scale -= 0.1;
         // } else {
-        if health.0 <= 0 {
+        if health.0 == 0 {
             if let Some(parent) = parent {
                 commands.entity(parent.get()).remove_children(&[entity]);
             }
