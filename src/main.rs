@@ -83,7 +83,7 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 // .with_system(count_entities)
-                // .with_system(count_asteroids_without_mesh)
+                // .with_system(count_asteroids)
                 // .with_system(count_stars)
                 .into(),
         )

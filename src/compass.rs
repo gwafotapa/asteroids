@@ -109,8 +109,16 @@ pub fn spawn(
 pub fn update(
     mut query_compass: Query<(&mut Transform, &mut Text), With<Compass>>,
     mut query_needle: Query<&mut Transform, (With<Needle>, Without<Compass>)>,
-    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Compass>, Without<Needle>)>,
-    query_boss: Query<&Transform, (With<Boss>, Without<Compass>, Without<Needle>)>,
+    query_spaceship: Query<
+        &Transform,
+        (
+            With<Spaceship>,
+            Without<Part>,
+            Without<Compass>,
+            Without<Needle>,
+        ),
+    >,
+    query_boss: Query<&Transform, (With<Boss>, Without<Part>, Without<Compass>, Without<Needle>)>,
     query_camera: Query<&Transform, (With<Camera>, Without<Compass>, Without<Needle>)>,
 ) {
     let camera = query_camera.single();
