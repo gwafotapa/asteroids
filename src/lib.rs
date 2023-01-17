@@ -15,6 +15,7 @@ pub mod fire;
 pub mod game_over;
 pub mod game_state;
 pub mod health_bar;
+pub mod intercepter;
 pub mod keyboard;
 pub mod light;
 pub mod map;
