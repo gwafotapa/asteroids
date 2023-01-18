@@ -163,8 +163,8 @@ pub fn spawn(
         .insert(Health(HEALTH))
         .insert(Collider {
             aabb: Aabb {
-                hw: CORE_RADIUS,
-                hh: CORE_RADIUS,
+                hw: WING_HEIGHT,
+                hh: WING_HEIGHT,
             },
             topology: Topology::Disk {
                 radius: CORE_RADIUS,
