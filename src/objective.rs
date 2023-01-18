@@ -1,10 +1,6 @@
-use bevy::{app::AppExit, prelude::*, text::Text2dBounds};
-use iyes_loopless::prelude::*;
+use bevy::{prelude::*, text::Text2dBounds};
 
-use crate::{
-    boss::Boss, game_state::GameState, keyboard::KeyboardBindings, spaceship::Spaceship, Health,
-    WINDOW_HEIGHT, WINDOW_WIDTH,
-};
+use crate::keyboard::KeyboardBindings;
 
 #[derive(Clone, Component, Copy)]
 pub struct Objective;

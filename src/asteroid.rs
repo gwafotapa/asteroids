@@ -4,19 +4,8 @@ use std::f32::consts::PI;
 
 use crate::{
     collision::{Aabb, Collider, Topology},
-    AngularVelocity,
-    // map::ASTEROIDS_MAX_PER_SECTOR,
-    Health,
-    Mass,
-    MomentOfInertia,
-    Part,
-    Velocity,
-    PLANE_Z,
-    WINDOW_HEIGHT,
-    WINDOW_WIDTH,
+    AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z, WINDOW_WIDTH,
 };
-
-// const ASTEROID_Z: f32 = PLANE_Z;
 
 #[derive(Clone, Component, Copy)]
 pub struct Asteroid;
@@ -34,52 +23,6 @@ pub struct AsteroidEvent {
     pub angular_velocity: AngularVelocity,
 }
 
-// pub fn spawn(
-//     mut asteroid_event: EventReader<AsteroidEvent>,
-//     mut commands: Commands,
-//     mut meshes: ResMut<Assets<Mesh>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-// ) {
-//     for ev in asteroid_event.iter() {
-//         let asteroid = commands
-//             .spawn(Asteroid)
-//             .insert(ev.mass)
-//             .insert(ev.moment_of_inertia)
-//             .insert(ev.velocity)
-//             .insert(ev.angular_velocity)
-//             .insert(SpatialBundle {
-//                 transform: Transform::from_xyz(ev.x, ev.y, ASTEROID_Z),
-//                 ..Default::default()
-//             })
-//             .id();
-
-//         let asteroid_part = commands
-//             .spawn((Asteroid, Part))
-//             .insert(ev.health)
-//             .insert(Collider {
-//                 aabb: Aabb {
-//                     hw: ev.radius,
-//                     hh: ev.radius,
-//                 },
-//                 topology: Topology::Disk { radius: ev.radius },
-//             })
-//             .insert(ColorMesh2dBundle {
-//                 mesh: meshes
-//                     .add(Mesh::from(shape::Circle {
-//                         radius: ev.radius,
-//                         vertices: ev.vertices,
-//                     }))
-//                     .into(),
-//                 material: materials.add(ev.color.into()),
-//                 ..Default::default()
-//             })
-//             .id();
-
-//         commands.entity(asteroid).add_child(asteroid_part);
-//     }
-// }
-
-// const ASTEROIDS_MAX_PER_SECTOR: usize = 5;
 const COLOR: Color = Color::rgb(0.25, 0.25, 0.25);
 const HEALTH_MAX: u32 = 60;
 const VELOCITY_MIN: f32 = 100.0;

@@ -1,22 +1,18 @@
-use bevy::{
-    prelude::*,
-    render::mesh::{Indices, PrimitiveTopology},
-    sprite::Mesh2dHandle,
-};
+use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 use rand::Rng;
-use std::f32::consts::{PI, SQRT_2};
+use std::f32::consts::PI;
 
 use crate::{
     blast::BlastEvent,
     boss::Attack,
-    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Fire, FireEvent},
-    spaceship::{self, Spaceship},
+    spaceship::Spaceship,
     AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z, WINDOW_HEIGHT,
     WINDOW_WIDTH,
 };
 
-const SQRT_3: f32 = 1.73205080756887729352744634151;
+const SQRT_3: f32 = 1.732_050_8; // 1.73205080756887729352744634151
 
 const CORE_RADIUS: f32 = 12.0;
 const CORE_VERTICES: usize = 8;
