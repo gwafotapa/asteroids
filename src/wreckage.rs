@@ -153,10 +153,10 @@ pub fn wreck_with<C: Component>(
             }
             Topology::Disk { radius } => {
                 let area = PI * radius * radius;
-                println!(
-                    "number of debris spawned: {}",
-                    area * DEBRIS_PER_SQUARE_UNIT
-                );
+                // println!(
+                //     "number of debris spawned: {}",
+                //     area * DEBRIS_PER_SQUARE_UNIT
+                // );
                 for _ in 0..(area * DEBRIS_PER_SQUARE_UNIT).round() as usize {
                     let rho = rng.gen_range(0.0..*radius);
                     let theta = rng.gen_range(0.0..2.0 * PI);

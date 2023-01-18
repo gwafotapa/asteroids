@@ -40,7 +40,7 @@ pub fn spawn_text(
         if health.0 == 0 {
             commands.spawn(GameOver).insert(Text2dBundle {
                 text: Text::from_section(
-                    "Mission failed. Press space to go back to the main menu",
+                    "Mission failed. Press Enter to go back to the main menu",
                     text_style,
                 )
                 .with_alignment(text_alignment),
@@ -56,7 +56,7 @@ pub fn spawn_text(
             if health.0 == 0 {
                 commands.spawn(GameOver).insert(Text2dBundle {
                     text: Text::from_section(
-                        "Mission cleared. Press space to go back to the main menu",
+                        "Mission cleared. Press Enter to go back to the main menu",
                         text_style,
                     )
                     .with_alignment(text_alignment),
@@ -88,7 +88,7 @@ pub fn update_text(
             const INC: f32 = 0.002;
             text.sections[0].style.color += Color::rgb(INC, INC, INC);
         }
-        if input.just_pressed(KeyCode::Space) {
+        if input.just_pressed(KeyCode::Return) {
             commands.insert_resource(NextState(GameState::TurnDownLight));
         } else if input.just_pressed(KeyCode::Escape) {
             exit.send(AppExit);
