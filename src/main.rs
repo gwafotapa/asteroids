@@ -210,6 +210,7 @@ fn main() {
                 .with_system(wreckage::wreck_with::<spaceship::Spaceship>)
                 .with_system(wreckage::wreck_with::<asteroid::Asteroid>)
                 .with_system(wreckage::wreck_with::<boss::Boss>)
+                .with_system(wreckage::wreck_with::<intercepter::Intercepter>)
                 // .with_system(asteroid::before_despawn)
                 // .with_system(spaceship::wreck)
                 // .with_system(asteroid::wreck)

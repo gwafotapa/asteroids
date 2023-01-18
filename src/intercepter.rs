@@ -157,6 +157,7 @@ pub fn spawn(
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.set_indices(Some(Indices::U32(indices)));
+    let mesh_handle = meshes.add(mesh);
 
     const ATTACK: Vec3 = Vec3::new(0.0, CORE_RADIUS, 0.0);
 
@@ -168,12 +169,12 @@ pub fn spawn(
                 hw: WING_HEIGHT,
                 hh: WING_HEIGHT,
             },
-            topology: Topology::Disk {
-                radius: CORE_RADIUS,
+            topology: Topology::Triangles {
+                mesh_handle: Mesh2dHandle(mesh_handle.clone_weak()),
             },
         })
         .insert(ColorMesh2dBundle {
-            mesh: meshes.add(mesh).into(),
+            mesh: mesh_handle.into(),
             material: materials.add(COLOR.into()),
             ..Default::default()
         })
