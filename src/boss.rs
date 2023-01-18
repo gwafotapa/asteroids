@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub const BOSS_Z: f32 = PLANE_Z;
-pub const DISTANCE_TO_BOSS: f32 = 1000.0;
+pub const DISTANCE_TO_BOSS: f32 = 10000.0;
 const INNER_RADIUS: f32 = 100.0;
 const OUTER_RADIUS: f32 = INNER_RADIUS * SQRT_2;
 const AREA: f32 = PI * (INNER_RADIUS + OUTER_RADIUS) / 2.0 * (INNER_RADIUS + OUTER_RADIUS) / 2.0;
@@ -124,16 +124,16 @@ const A15: Vec3 = Vec3 {
 //     A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15,
 // ];
 
-const ACCELERATION: f32 = 0.0;
-// const ACCELERATION: f32 = 500.0;
+// const ACCELERATION: f32 = 0.0;
+const ACCELERATION: f32 = 500.0;
 const ANGULAR_DRAG: f32 = 0.25;
 const DRAG: f32 = 0.05;
 const ATTACK_COLOR: Color = Color::RED;
 const BLAST_RADIUS: f32 = 15.0;
 const BLAST_VERTICES: usize = 32;
 const COLOR: Color = Color::rgb(0.25, 0.5, 0.25);
-const CORE_HEALTH: u32 = 5;
-const EDGE_HEALTH: u32 = 0;
+const CORE_HEALTH: u32 = 50;
+const EDGE_HEALTH: u32 = 15;
 const FIRE_DAMAGES: u32 = 1;
 const FIRE_VELOCITY: f32 = 400.0;
 const FIRE_RADIUS: f32 = 5.0 / FIRE_RANGE as f32;
@@ -148,8 +148,8 @@ const FIRE_IMPACT_VERTICES: usize = 32;
 //     y: 0.0,
 //     z: BOSS_Z,
 // };
-const ROTATION_SPEED: f32 = 0.0;
-// const ROTATION_SPEED: f32 = 20.0;
+// const ROTATION_SPEED: f32 = 0.0;
+const ROTATION_SPEED: f32 = 20.0;
 
 #[derive(Component)]
 pub struct Attack(pub Vec3);
