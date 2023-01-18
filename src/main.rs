@@ -70,6 +70,7 @@ fn main() {
         .add_system(light::turn_up.run_in_state(GameState::TurnUpLight))
         .add_system(light::turn_down.run_in_state(GameState::TurnDownLight))
         // .add_enter_system(GameState::InGame, intercepter::spawn)
+        .add_exit_system(GameState::GameSetup, objective::spawn_text)
         .add_system_set(
             ConditionSet::new()
                 .run_in_state(GameState::InGame)
@@ -84,6 +85,7 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 .with_system(intercepter::spawn)
+                .with_system(objective::update_text)
                 // .with_system(count_entities)
                 // .with_system(count_asteroids)
                 // .with_system(count_stars)

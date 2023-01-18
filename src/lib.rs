@@ -19,6 +19,7 @@ pub mod intercepter;
 pub mod keyboard;
 pub mod light;
 pub mod map;
+pub mod objective;
 pub mod spaceship;
 pub mod transform;
 pub mod ui;
