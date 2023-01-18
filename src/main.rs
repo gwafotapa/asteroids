@@ -85,7 +85,6 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 .with_system(intercepter::spawn)
-                .with_system(objective::update_text)
                 // .with_system(count_entities)
                 // .with_system(count_asteroids)
                 // .with_system(count_stars)
@@ -182,6 +181,11 @@ fn main() {
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
+        .add_system(
+            objective::update_text
+                .run_in_state(GameState::InGame)
+                .after("camera"),
+        )
         .add_system(blast::spawn.after("attack"))
         .add_system(fire::spawn.after("attack"))
         // .add_system(collision::damages::apply.after("collision"))
