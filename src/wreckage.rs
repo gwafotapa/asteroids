@@ -5,7 +5,7 @@ use std::f32::consts::PI;
 use crate::{transform, AngularVelocity, Collider, Health, Part, Topology, TriangleXY, Velocity};
 
 const HEALTH: u32 = 100;
-const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 16.0;
+const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 32.0;
 
 #[derive(Component)]
 pub struct Wreckage;
@@ -153,6 +153,10 @@ pub fn wreck_with<C: Component>(
             }
             Topology::Disk { radius } => {
                 let area = PI * radius * radius;
+                println!(
+                    "number of debris spawned: {}",
+                    area * DEBRIS_PER_SQUARE_UNIT
+                );
                 for _ in 0..(area * DEBRIS_PER_SQUARE_UNIT).round() as usize {
                     let rho = rng.gen_range(0.0..*radius);
                     let theta = rng.gen_range(0.0..2.0 * PI);

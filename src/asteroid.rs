@@ -201,10 +201,12 @@ pub fn update(
     query_camera: Query<&Transform, (With<Camera>, Without<Asteroid>)>,
     time: Res<Time>,
 ) {
-    let Vec3 { x: xc, y: yc, z: _ } = query_camera.single().translation;
     for (a_angular_velocity, a_id, mut a_transform, a_velocity) in query_asteroid.iter_mut() {
-        let Vec3 { x: xa, y: ya, z: _ } = a_transform.translation;
-        if (xa - xc).abs() > 2.5 * WINDOW_WIDTH || (ya - yc).abs() > 2.5 * WINDOW_HEIGHT {
+        if (query_camera.single().translation - a_transform.translation)
+            .truncate()
+            .length()
+            > 2.5 * WINDOW_WIDTH
+        {
             commands.entity(a_id).despawn_recursive();
         } else {
             a_transform.translation += a_velocity.0 * time.delta_seconds();

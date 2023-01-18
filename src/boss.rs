@@ -378,7 +378,8 @@ pub fn attack(
         if let Ok(s_transform) = query_spaceship.get_single() {
             for (bp_attack, bp_transform) in query_boss_edge.iter() {
                 let mut rng = rand::thread_rng();
-                if rng.gen_range(0..10) == 0 {
+                const ATTACK_RATE: usize = 10;
+                if rng.gen_range(0..ATTACK_RATE) == 0 {
                     let attack_absolute_translation =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 

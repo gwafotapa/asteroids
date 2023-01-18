@@ -201,13 +201,15 @@ pub fn movement(
     time: Res<Time>,
 ) {
     let mut rng = rand::thread_rng();
-    let Vec3 { x: xc, y: yc, z: _ } = query_camera.single().translation;
 
     for (mut angular_velocity, mut behavior, id, mut i_transform, mut velocity) in
         query_intercepter.iter_mut()
     {
-        let Vec3 { x: xi, y: yi, z: _ } = i_transform.translation;
-        if (xi - xc).abs() > 2.5 * WINDOW_WIDTH || (yi - yc).abs() > 2.5 * WINDOW_HEIGHT {
+        if (query_camera.single().translation - i_transform.translation)
+            .truncate()
+            .length()
+            > 2.5 * WINDOW_WIDTH
+        {
             commands.entity(id).despawn_recursive();
         }
 
@@ -250,52 +252,52 @@ pub fn attack(
     mut blast_event: EventWriter<BlastEvent>,
     mut fire_event: EventWriter<FireEvent>,
     query_intercepter: Query<&Transform, (With<Intercepter>, Without<Part>)>,
-    query_intercepter_part: Query<(&Attack, &Transform), With<Intercepter>>,
+    query_intercepter_part: Query<(&Attack, &Parent, &Transform), (With<Intercepter>, With<Part>)>,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
 ) {
     if let Ok(s_transform) = query_spaceship.get_single() {
-        for i_transform in query_intercepter.iter() {
-            for (ip_attack, ip_transform) in query_intercepter_part.iter() {
-                let mut rng = rand::thread_rng();
-                if rng.gen_range(0..10) == 0 {
-                    let attack_absolute_translation =
-                        i_transform.transform_point(ip_transform.transform_point(ip_attack.0));
+        for (ip_attack, ip_parent, ip_transform) in query_intercepter_part.iter() {
+            let i_transform = query_intercepter.get(**ip_parent).unwrap();
+            let mut rng = rand::thread_rng();
+            const ATTACK_RATE: usize = 20;
+            if rng.gen_range(0..ATTACK_RATE) == 0 {
+                let attack_absolute_translation =
+                    i_transform.transform_point(ip_transform.transform_point(ip_attack.0));
 
-                    // Compute coordinates of vector from intercepter to spaceship
-                    let is = s_transform.translation - i_transform.translation;
-                    // Compute coordinates of vector from intercepter to attack source
-                    let ia = attack_absolute_translation - i_transform.translation;
-                    // Scalar product sign determines whether or not attack has line of sight
-                    // if bs.truncate().dot(bc.truncate()) < 0.0 {
-                    if is.truncate().angle_between(ia.truncate()).abs() > PI / 6.0 {
-                        continue;
-                    }
-
-                    blast_event.send(BlastEvent {
-                        radius: BLAST_RADIUS,
-                        vertices: BLAST_VERTICES,
-                        color: ATTACK_COLOR,
-                        translation: attack_absolute_translation,
-                    });
-
-                    fire_event.send(FireEvent {
-                        fire: Fire {
-                            impact_radius: FIRE_IMPACT_RADIUS,
-                            impact_vertices: FIRE_IMPACT_VERTICES,
-                        },
-                        enemy: true,
-                        damages: FIRE_DAMAGES,
-                        radius: FIRE_RADIUS,
-                        vertices: FIRE_VERTICES,
-                        color: ATTACK_COLOR,
-                        range: FIRE_RANGE as f32,
-                        translation: attack_absolute_translation,
-                        velocity: Velocity(
-                            (s_transform.translation - attack_absolute_translation).normalize()
-                                * FIRE_VELOCITY,
-                        ),
-                    });
+                // Compute coordinates of vector from intercepter to spaceship
+                let is = s_transform.translation - i_transform.translation;
+                // Compute coordinates of vector from intercepter to attack source
+                let ia = attack_absolute_translation - i_transform.translation;
+                // Scalar product sign determines whether or not attack has line of sight
+                // if bs.truncate().dot(bc.truncate()) < 0.0 {
+                if is.truncate().angle_between(ia.truncate()).abs() > PI / 6.0 {
+                    continue;
                 }
+
+                let looking_at =
+                    i_transform.rotation * Quat::from_axis_angle(Vec3::Z, PI / 2.0) * Vec3::X;
+
+                blast_event.send(BlastEvent {
+                    radius: BLAST_RADIUS,
+                    vertices: BLAST_VERTICES,
+                    color: ATTACK_COLOR,
+                    translation: attack_absolute_translation,
+                });
+
+                fire_event.send(FireEvent {
+                    fire: Fire {
+                        impact_radius: FIRE_IMPACT_RADIUS,
+                        impact_vertices: FIRE_IMPACT_VERTICES,
+                    },
+                    enemy: true,
+                    damages: FIRE_DAMAGES,
+                    radius: FIRE_RADIUS,
+                    vertices: FIRE_VERTICES,
+                    color: ATTACK_COLOR,
+                    range: FIRE_RANGE as f32,
+                    translation: attack_absolute_translation,
+                    velocity: Velocity(looking_at * FIRE_VELOCITY),
+                });
             }
         }
     }

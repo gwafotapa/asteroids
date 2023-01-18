@@ -84,9 +84,11 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 .with_system(intercepter::spawn)
-                // .with_system(count_entities)
+                .with_system(count_entities)
                 // .with_system(count_asteroids)
                 // .with_system(count_stars)
+                .with_system(count_wreckages)
+                .with_system(count_debris)
                 .into(),
         )
         .add_system_set(
@@ -117,10 +119,19 @@ fn main() {
                 .with_system(collision::generic::with::<asteroid::Asteroid>)
                 .with_system(collision::generic::among::<asteroid::Asteroid, boss::Boss>)
                 .with_system(collision::generic::among::<asteroid::Asteroid, spaceship::Spaceship>)
+                .with_system(
+                    collision::generic::between::<asteroid::Asteroid, intercepter::Intercepter>,
+                )
+                .with_system(collision::generic::between::<asteroid::Asteroid, fire::Fire>)
                 .with_system(collision::generic::among::<boss::Boss, spaceship::Spaceship>)
                 .with_system(collision::generic::between::<boss::Boss, fire::Fire>)
+                .with_system(collision::generic::between::<boss::Boss, intercepter::Intercepter>)
                 .with_system(collision::generic::between::<spaceship::Spaceship, fire::Fire>)
-                .with_system(collision::generic::between::<asteroid::Asteroid, fire::Fire>)
+                .with_system(
+                    collision::generic::between::<spaceship::Spaceship, intercepter::Intercepter>,
+                )
+                .with_system(collision::generic::between::<intercepter::Intercepter, fire::Fire>)
+                .with_system(collision::generic::with::<intercepter::Intercepter>)
                 // .with_system(collision::generic::between::<fire::Fire, asteroid::Asteroid>)
                 //     collision::generic::among::<asteroid::Asteroid, fire::Fire, spaceship::Spaceship>,
                 // )
