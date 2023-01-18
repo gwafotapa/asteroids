@@ -28,7 +28,7 @@ const AREA: f32 = CORE_AREA + 2.0 * WING_AREA;
 const MASS: f32 = AREA;
 const MOMENT_OF_INERTIA: f32 = 0.5 * MASS * AREA / PI;
 
-const ACCELERATION: f32 = 300.0;
+const ACCELERATION: f32 = 400.0;
 // const ANGULAR_DRAG: f32 = 0.25;
 const ANGULAR_DRAG: f32 = 0.25;
 const ATTACK_COLOR: Color = Color::RED;
@@ -78,6 +78,12 @@ pub struct Intercepter;
 #[derive(Component)]
 pub struct IntercepterPart;
 
+#[derive(Clone, Component, Copy, Eq, PartialEq)]
+pub enum Behavior {
+    Random,
+    Chase,
+}
+
 pub fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -108,6 +114,7 @@ pub fn spawn(
             // transform: Transform::from_translation(Vec3::new(xc + 100.0, yc, 500.0)),
             ..Default::default()
         })
+        .insert(Behavior::Random)
         .id();
 
     let mut positions = Vec::with_capacity(CORE_VERTICES + 2 * 3);
@@ -175,47 +182,71 @@ pub fn spawn(
 
 pub fn movement(
     mut query_intercepter: Query<
-        (&mut AngularVelocity, &mut Transform, &mut Velocity),
+        (
+            &mut AngularVelocity,
+            &mut Behavior,
+            &mut Transform,
+            &mut Velocity,
+        ),
         With<Intercepter>,
     >,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>, Without<Intercepter>)>,
     // cache: Res<Cache>,
     time: Res<Time>,
 ) {
-    for (mut angular_velocity, mut i_transform, mut velocity) in query_intercepter.iter_mut() {
-        // if !cache.contains_entity(id) {
-        if let Ok(s_transform) = query_spaceship.get_single() {
-            let mut direction = (s_transform.translation - i_transform.translation).normalize();
-            let mut rng = rand::thread_rng();
-            let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
-            direction = Quat::from_axis_angle(Vec3::Z, angle) * direction;
-            velocity.0 += ACCELERATION * time.delta_seconds() * direction;
-            // angular_velocity.0 += ROTATION_SPEED * time.delta_seconds();
-            // let direction = (s_transform.translation - i_transform.translation).normalize();
-            // velocity.0 += 2.0 * ACCELERATION * time.delta_seconds() * direction;
-            // angular_velocity.0 += 2.0 * ROTATION_SPEED * time.delta_seconds();
+    let mut rng = rand::thread_rng();
 
-            let looking_at =
-                (i_transform.rotation * Quat::from_axis_angle(Vec3::Z, PI / 2.0) * Vec3::X)
+    for (mut angular_velocity, mut behavior, mut i_transform, mut velocity) in
+        query_intercepter.iter_mut()
+    {
+        if *behavior == Behavior::Chase {
+            // if !cache.contains_entity(id) {
+            if let Ok(s_transform) = query_spaceship.get_single() {
+                let mut direction = (s_transform.translation - i_transform.translation).normalize();
+                let angle = rng.gen_range(-PI / 2.0..PI / 2.0);
+                direction = Quat::from_axis_angle(Vec3::Z, angle) * direction;
+                velocity.0 += ACCELERATION * time.delta_seconds() * direction;
+
+                let looking_at =
+                    (i_transform.rotation * Quat::from_axis_angle(Vec3::Z, PI / 2.0) * Vec3::X)
+                        .truncate()
+                        .normalize();
+                let should_look_at = (s_transform.translation - i_transform.translation)
                     .truncate()
                     .normalize();
+                let should_rotate = Quat::from_rotation_arc_2d(looking_at, should_look_at);
+                angular_velocity.0 += if should_rotate.to_axis_angle().0.z > 0.0 {
+                    ROTATION_SPEED
+                } else {
+                    -ROTATION_SPEED
+                } * time.delta_seconds();
+            };
+            // else {
+            // velocity.0 += Vec3::ZERO;
+            // angular_velocity.0 -= ROTATION_SPEED * time.delta_seconds();
+            // }
+        } else {
+            let looking_at =
+                i_transform.rotation * Quat::from_axis_angle(Vec3::Z, PI / 2.0) * Vec3::X;
+            velocity.0 += ACCELERATION * time.delta_seconds() * looking_at;
 
-            let should_look_at = (s_transform.translation - i_transform.translation)
-                .truncate()
-                .normalize();
-
-            let should_rotate = Quat::from_rotation_arc_2d(looking_at, should_look_at);
-
+            let should_look_at =
+                Quat::from_rotation_z(rng.gen_range(-PI / 2.0..PI / 2.0)) * looking_at;
+            let should_rotate =
+                Quat::from_rotation_arc_2d(looking_at.truncate(), should_look_at.truncate());
             angular_velocity.0 += if should_rotate.to_axis_angle().0.z > 0.0 {
                 ROTATION_SPEED
             } else {
                 -ROTATION_SPEED
             } * time.delta_seconds();
-        };
-        // else {
-        // velocity.0 += Vec3::ZERO;
-        // angular_velocity.0 -= ROTATION_SPEED * time.delta_seconds();
-        // }
+
+            if let Ok(s_transform) = query_spaceship.get_single() {
+                const CHASE: f32 = WINDOW_HEIGHT / 2.0;
+                if (s_transform.translation - i_transform.translation).length() < CHASE {
+                    *behavior = Behavior::Chase;
+                }
+            }
+        }
 
         velocity.0 *= 1.0 - DRAG;
         angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
