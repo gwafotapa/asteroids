@@ -79,7 +79,6 @@ fn main() {
                 .with_system(map::update)
                 // .with_system(map::star::spawn)
                 .with_system(game_state::ingame_to_paused)
-                .with_system(game_over::update_text)
                 .with_system(wreckage::update)
                 .with_system(wreckage::update_debris)
                 .with_system(blast::update)
@@ -181,11 +180,6 @@ fn main() {
                 .label("camera")
                 .after("movement"),
         ) // .after(spaceship::movement)
-        .add_system(
-            objective::update_text
-                .run_in_state(GameState::InGame)
-                .after("camera"),
-        )
         .add_system(blast::spawn.after("attack"))
         .add_system(fire::spawn.after("attack"))
         // .add_system(collision::damages::apply.after("collision"))
@@ -201,6 +195,8 @@ fn main() {
                 .after("camera")
                 .with_system(compass::update)
                 .with_system(health_bar::update)
+                .with_system(objective::update_text)
+                .with_system(game_over::update_text)
                 .into(),
         )
         // .add_exit_system(GameState::GameOver, exit_game)
