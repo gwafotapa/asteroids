@@ -152,7 +152,7 @@ const ROTATION_SPEED: f32 = 0.0;
 // const ROTATION_SPEED: f32 = 20.0;
 
 #[derive(Component)]
-pub struct Attack(Vec3);
+pub struct Attack(pub Vec3);
 
 // The body is a collection of 6 triangles. It is a single part of the boss.
 const CORE_PARTS: usize = 6;

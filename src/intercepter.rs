@@ -102,7 +102,7 @@ pub fn spawn(
         yc + 2.0 * WINDOW_WIDTH * phi.sin(),
         PLANE_Z,
     );
-    println!("{}", translation);
+    // println!("{}", translation);
     let intercepter = commands
         .spawn(Intercepter)
         .insert(Mass(MASS))
@@ -158,6 +158,8 @@ pub fn spawn(
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.set_indices(Some(Indices::U32(indices)));
 
+    const ATTACK: Vec3 = Vec3::new(0.0, CORE_RADIUS, 0.0);
+
     let intercepter_part = commands
         .spawn((Intercepter, Part))
         .insert(Health(HEALTH))
@@ -175,30 +177,40 @@ pub fn spawn(
             material: materials.add(COLOR.into()),
             ..Default::default()
         })
+        .insert(Attack(ATTACK))
         .id();
 
     commands.entity(intercepter).add_child(intercepter_part);
 }
 
 pub fn movement(
+    mut commands: Commands,
     mut query_intercepter: Query<
         (
             &mut AngularVelocity,
             &mut Behavior,
+            Entity,
             &mut Transform,
             &mut Velocity,
         ),
         With<Intercepter>,
     >,
     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>, Without<Intercepter>)>,
+    query_camera: Query<&Transform, (With<Camera>, Without<Intercepter>)>,
     // cache: Res<Cache>,
     time: Res<Time>,
 ) {
     let mut rng = rand::thread_rng();
+    let Vec3 { x: xc, y: yc, z: _ } = query_camera.single().translation;
 
-    for (mut angular_velocity, mut behavior, mut i_transform, mut velocity) in
+    for (mut angular_velocity, mut behavior, id, mut i_transform, mut velocity) in
         query_intercepter.iter_mut()
     {
+        let Vec3 { x: xi, y: yi, z: _ } = i_transform.translation;
+        if (xi - xc).abs() > 2.5 * WINDOW_WIDTH || (yi - yc).abs() > 2.5 * WINDOW_HEIGHT {
+            commands.entity(id).despawn_recursive();
+        }
+
         if *behavior == Behavior::Random {
             if let Ok(s_transform) = query_spaceship.get_single() {
                 const CHASE: f32 = WINDOW_HEIGHT / 2.0;
@@ -234,57 +246,57 @@ pub fn movement(
     }
 }
 
-// pub fn attack(
-//     mut blast_event: EventWriter<BlastEvent>,
-//     mut fire_event: EventWriter<FireEvent>,
-//     query_boss: Query<&Transform, (With<Boss>, Without<Part>)>,
-//     query_boss_edge: Query<(&Attack, &Transform), With<Boss>>,
-//     query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
-// ) {
-//     if let Ok(b_transform) = query_boss.get_single() {
-//         if let Ok(s_transform) = query_spaceship.get_single() {
-//             for (bp_attack, bp_transform) in query_boss_edge.iter() {
-//                 let mut rng = rand::thread_rng();
-//                 if rng.gen_range(0..10) == 0 {
-//                     let attack_absolute_translation =
-//                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
+pub fn attack(
+    mut blast_event: EventWriter<BlastEvent>,
+    mut fire_event: EventWriter<FireEvent>,
+    query_intercepter: Query<&Transform, (With<Intercepter>, Without<Part>)>,
+    query_intercepter_part: Query<(&Attack, &Transform), With<Intercepter>>,
+    query_spaceship: Query<&Transform, (With<Spaceship>, Without<Part>)>,
+) {
+    if let Ok(s_transform) = query_spaceship.get_single() {
+        for i_transform in query_intercepter.iter() {
+            for (ip_attack, ip_transform) in query_intercepter_part.iter() {
+                let mut rng = rand::thread_rng();
+                if rng.gen_range(0..10) == 0 {
+                    let attack_absolute_translation =
+                        i_transform.transform_point(ip_transform.transform_point(ip_attack.0));
 
-//                     // Compute coordinates of vector from boss to spaceship
-//                     let bs = s_transform.translation - b_transform.translation;
-//                     // Compute coordinates of vector from boss to attack source
-//                     let bc = attack_absolute_translation - b_transform.translation;
-//                     // Scalar product sign determines whether or not attack has line of sight
-//                     // if bs.truncate().dot(bc.truncate()) < 0.0 {
-//                     if bs.truncate().angle_between(bc.truncate()).abs() > PI / 6.0 {
-//                         continue;
-//                     }
+                    // Compute coordinates of vector from intercepter to spaceship
+                    let is = s_transform.translation - i_transform.translation;
+                    // Compute coordinates of vector from intercepter to attack source
+                    let ia = attack_absolute_translation - i_transform.translation;
+                    // Scalar product sign determines whether or not attack has line of sight
+                    // if bs.truncate().dot(bc.truncate()) < 0.0 {
+                    if is.truncate().angle_between(ia.truncate()).abs() > PI / 6.0 {
+                        continue;
+                    }
 
-//                     blast_event.send(BlastEvent {
-//                         radius: BLAST_RADIUS,
-//                         vertices: BLAST_VERTICES,
-//                         color: ATTACK_COLOR,
-//                         translation: attack_absolute_translation,
-//                     });
+                    blast_event.send(BlastEvent {
+                        radius: BLAST_RADIUS,
+                        vertices: BLAST_VERTICES,
+                        color: ATTACK_COLOR,
+                        translation: attack_absolute_translation,
+                    });
 
-//                     fire_event.send(FireEvent {
-//                         fire: Fire {
-//                             impact_radius: FIRE_IMPACT_RADIUS,
-//                             impact_vertices: FIRE_IMPACT_VERTICES,
-//                         },
-//                         enemy: true,
-//                         damages: FIRE_DAMAGES,
-//                         radius: FIRE_RADIUS,
-//                         vertices: FIRE_VERTICES,
-//                         color: ATTACK_COLOR,
-//                         range: FIRE_RANGE as f32,
-//                         translation: attack_absolute_translation,
-//                         velocity: Velocity(
-//                             (s_transform.translation - attack_absolute_translation).normalize()
-//                                 * FIRE_VELOCITY,
-//                         ),
-//                     });
-//                 }
-//             }
-//         }
-//     }
-// }
+                    fire_event.send(FireEvent {
+                        fire: Fire {
+                            impact_radius: FIRE_IMPACT_RADIUS,
+                            impact_vertices: FIRE_IMPACT_VERTICES,
+                        },
+                        enemy: true,
+                        damages: FIRE_DAMAGES,
+                        radius: FIRE_RADIUS,
+                        vertices: FIRE_VERTICES,
+                        color: ATTACK_COLOR,
+                        range: FIRE_RANGE as f32,
+                        translation: attack_absolute_translation,
+                        velocity: Velocity(
+                            (s_transform.translation - attack_absolute_translation).normalize()
+                                * FIRE_VELOCITY,
+                        ),
+                    });
+                }
+            }
+        }
+    }
+}

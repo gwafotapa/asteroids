@@ -156,6 +156,7 @@ fn main() {
                 .after("movement")
                 .with_system(spaceship::attack) // .after(spaceship::movement)
                 .with_system(boss::attack) // .after(boss::movement)
+                .with_system(intercepter::attack)
                 .into(),
         )
         .add_system(
