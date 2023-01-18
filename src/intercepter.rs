@@ -18,10 +18,10 @@ use crate::{
 
 const SQRT_3: f32 = 1.73205080756887729352744634151;
 
-const CORE_RADIUS: f32 = 10.0;
-const CORE_VERTICES: usize = 32;
+const CORE_RADIUS: f32 = 12.0;
+const CORE_VERTICES: usize = 8;
 const CORE_AREA: f32 = PI * CORE_RADIUS * CORE_RADIUS;
-const WING_EDGE: f32 = 25.0;
+const WING_EDGE: f32 = 30.0;
 const WING_HEIGHT: f32 = WING_EDGE * SQRT_3 / 2.0;
 const WING_AREA: f32 = WING_EDGE * WING_HEIGHT / 2.0; // area of an equilateral triangle of edge 15.0
 const AREA: f32 = CORE_AREA + 2.0 * WING_AREA;
@@ -117,24 +117,28 @@ pub fn spawn(
         .insert(Behavior::Random)
         .id();
 
-    let mut positions = Vec::with_capacity(CORE_VERTICES + 2 * 3);
+    let mut positions = Vec::with_capacity(CORE_VERTICES * 3 + 2 * 3);
     // let mut normals = Vec::with_capacity(CORE_VERTICES + 2 * 3);
     // let mut uvs = Vec::with_capacity(CORE_VERTICES + 2 * 3);
 
     let step = std::f32::consts::TAU / CORE_VERTICES as f32;
     for i in 0..CORE_VERTICES {
+        let theta = std::f32::consts::FRAC_PI_2 - (i + 1) as f32 * step;
+        let (sin, cos) = theta.sin_cos();
+        positions.push([0.0, 0.0, 0.0]);
+        positions.push([cos * CORE_RADIUS, sin * CORE_RADIUS, 0.0]);
         let theta = std::f32::consts::FRAC_PI_2 - i as f32 * step;
         let (sin, cos) = theta.sin_cos();
-
         positions.push([cos * CORE_RADIUS, sin * CORE_RADIUS, 0.0]);
+
         // normals.push([0.0, 0.0, 1.0]);
         // uvs.push([0.5 * (cos + 1.0), 1.0 - 0.5 * (sin + 1.0)]);
     }
 
-    let mut indices = Vec::with_capacity((CORE_VERTICES - 2) * 3 + 2);
-    for i in 1..(CORE_VERTICES as u32 - 1) {
-        indices.extend_from_slice(&[0, i + 1, i]);
-    }
+    // let mut indices = Vec::with_capacity((CORE_VERTICES - 2) * 3 + 2);
+    // for i in 1..(CORE_VERTICES as u32 - 1) {
+    //     indices.extend_from_slice(&[0, i + 1, i]);
+    // }
 
     positions.extend(
         TRIANGLES
@@ -143,20 +147,20 @@ pub fn spawn(
             .map(|vec3| vec3.to_array()),
     );
 
-    indices.extend_from_slice(&[
-        CORE_VERTICES as u32,
-        CORE_VERTICES as u32 + 1,
-        CORE_VERTICES as u32 + 2,
-    ]);
-    indices.extend_from_slice(&[
-        CORE_VERTICES as u32 + 3,
-        CORE_VERTICES as u32 + 4,
-        CORE_VERTICES as u32 + 5,
-    ]);
+    // indices.extend_from_slice(&[
+    //     CORE_VERTICES as u32,
+    //     CORE_VERTICES as u32 + 1,
+    //     CORE_VERTICES as u32 + 2,
+    // ]);
+    // indices.extend_from_slice(&[
+    //     CORE_VERTICES as u32 + 3,
+    //     CORE_VERTICES as u32 + 4,
+    //     CORE_VERTICES as u32 + 5,
+    // ]);
 
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-    mesh.set_indices(Some(Indices::U32(indices)));
+    // mesh.set_indices(Some(Indices::U32(indices)));
     let mesh_handle = meshes.add(mesh);
 
     const ATTACK: Vec3 = Vec3::new(0.0, CORE_RADIUS, 0.0);

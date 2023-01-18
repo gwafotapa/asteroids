@@ -84,11 +84,11 @@ fn main() {
                 .with_system(blast::update)
                 .with_system(collision::impact::update)
                 .with_system(intercepter::spawn)
-                .with_system(count_entities)
+                // .with_system(count_entities)
                 // .with_system(count_asteroids)
                 // .with_system(count_stars)
-                .with_system(count_wreckages)
-                .with_system(count_debris)
+                // .with_system(count_wreckages)
+                // .with_system(count_debris)
                 .into(),
         )
         .add_system_set(
