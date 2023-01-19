@@ -2,9 +2,6 @@ use bevy::{prelude::*, text::Text2dBounds};
 
 use crate::keyboard::KeyboardBindings;
 
-#[derive(Clone, Component, Copy)]
-pub struct Objective;
-
 const FONT_SIZE: f32 = 24.0;
 const BOX_WIDTH: f32 = 360.0;
 const BOX_HEIGHT: f32 = FONT_SIZE;
@@ -13,6 +10,9 @@ const BOX_CENTER_LEFT: Vec3 = Vec3 {
     y: 100.0 - BOX_HEIGHT / 2.0,
     z: 0.0,
 };
+
+#[derive(Clone, Component, Copy)]
+pub struct Objective;
 
 pub fn spawn_text(
     mut commands: Commands,
