@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-// use iyes_loopless::prelude::*;
 
 use crate::{
     boss::ColorDamaged, boss::Indestructible, fire::Damages, transform, AngularVelocity, Health,
@@ -7,14 +6,12 @@ use crate::{
 };
 
 use super::{
-    // cache::{Cache, Collision},
     damages,
     detection::{self, Collider},
     response,
 };
 
 pub fn with<C: Component>(
-    // mut cache: ResMut<Cache>,
     mut query_c: Query<
         (
             &mut AngularVelocity,
@@ -81,7 +78,6 @@ pub fn with<C: Component>(
             children2,
             Res::clone(&meshes),
         ) {
-            // if !cache.contains(Collision(spaceship, b_id)) {
             response::compute_velocities(
                 &mut velocity1,
                 &mut velocity2,
@@ -142,14 +138,12 @@ pub fn with<C: Component>(
                 transform1.translation, transform2.translation, velocity1.0, velocity2.0,
             );
 
-            // cache.add(Collision(spaceship, b_id));
             continue 'outer;
         }
     }
 }
 
 pub fn between<C1: Component, C2: Component>(
-    // mut cache: ResMut<Cache>,
     mut query_c1: Query<
         (
             &mut AngularVelocity,
@@ -237,7 +231,6 @@ pub fn between<C1: Component, C2: Component>(
                 children2,
                 Res::clone(&meshes),
             ) {
-                // if !cache.contains(Collision(spaceship, b_id)) {
                 response::compute_velocities(
                     &mut velocity1,
                     &mut velocity2,
@@ -301,7 +294,6 @@ pub fn between<C1: Component, C2: Component>(
                     transform1.translation, transform2.translation, velocity1.0, velocity2.0,
                 );
 
-                // cache.add(Collision(spaceship, b_id));
                 continue 'outer;
             }
         }
@@ -309,7 +301,6 @@ pub fn between<C1: Component, C2: Component>(
 }
 
 pub fn among<C1: Component, C2: Component>(
-    // mut cache: ResMut<Cache>,
     mut query: Query<
         (
             &mut AngularVelocity,
@@ -376,7 +367,6 @@ pub fn among<C1: Component, C2: Component>(
             children2,
             Res::clone(&meshes),
         ) {
-            // if !cache.contains(Collision(spaceship, b_id)) {
             response::compute_velocities(
                 &mut velocity1,
                 &mut velocity2,
@@ -427,7 +417,6 @@ pub fn among<C1: Component, C2: Component>(
                 transform1.translation, transform2.translation, velocity1.0, velocity2.0,
             );
 
-            // cache.add(Collision(spaceship, b_id));
             continue 'outer;
         }
     }

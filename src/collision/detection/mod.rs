@@ -5,8 +5,6 @@ use triangle::TriangleXY;
 
 pub mod triangle;
 
-pub const EPSILON: f32 = 0.001;
-
 #[derive(Clone, Component)]
 pub struct Collider {
     pub aabb: Aabb,
@@ -552,6 +550,7 @@ where
             contact_c
         );
 
+        const EPSILON: f32 = 0.001;
         while time_c - time_a > EPSILON {
             let time_b = (time_a + time_c) / 2.0;
             let [transform1_b, transform2_b] = [

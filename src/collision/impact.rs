@@ -13,8 +13,8 @@ pub struct ImpactEvent {
 }
 
 pub fn spawn(
-    mut impact_event: EventReader<ImpactEvent>,
     mut commands: Commands,
+    mut impact_event: EventReader<ImpactEvent>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     for ev in impact_event.iter() {
@@ -41,11 +41,7 @@ pub fn update(
 ) {
     for (entity, mut health, parent, mut transform) in query.iter_mut() {
         health.0 -= 1;
-        // if health.0 > 5 {
-        // transform.scale += 0.1;
-        // } else if health.0 > 0 {
         transform.scale -= 0.1;
-        // } else {
         if health.0 == 0 {
             if let Some(parent) = parent {
                 commands.entity(parent.get()).remove_children(&[entity]);
@@ -53,11 +49,3 @@ pub fn update(
         }
     }
 }
-
-// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Impact>>) {
-//     for (entity, health) in query.iter() {
-//         if health.0 <= 0 {
-//             commands.entity(entity).despawn();
-//         }
-//     }
-// }

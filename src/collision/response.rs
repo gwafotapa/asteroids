@@ -5,8 +5,6 @@ use bevy::prelude::*;
 
 use crate::{collision::detection::Contact, AngularVelocity, Mass, MomentOfInertia, Velocity};
 
-const RESTITUTION: f32 = 1.0;
-
 pub fn compute_velocities(
     velocity1: &mut Velocity,
     velocity2: &mut Velocity,
@@ -20,11 +18,6 @@ pub fn compute_velocities(
     moment_of_inertia2: MomentOfInertia,
     contact: Contact,
 ) {
-    // println!(
-    //     "t1: {}\nt2: {}\ncontact: {}\nnormal: {}",
-    //     transform1.translation, transform2.translation, contact.point, contact.normal
-    // );
-
     let [m1, m2] = [mass1.0, mass2.0];
     let [i1, i2] = [moment_of_inertia1.0, moment_of_inertia2.0];
     let [v1, v2] = [velocity1.0, velocity2.0];
@@ -32,51 +25,14 @@ pub fn compute_velocities(
     let n = contact.normal.extend(0.0);
     let r1 = (contact.point - transform1.translation.truncate()).extend(0.0);
     let r2 = (contact.point - transform2.translation.truncate()).extend(0.0);
-
-    // let j = -(1.0 + RESTITUTION)
-    //     * (v1.dot(n) - v2.dot(n) + w1 * (r1.cross(n)).z - w2 * (r2.cross(n)).z)
-    //     / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
+    const RESTITUTION: f32 = 1.0;
 
     let j = -(1.0 + RESTITUTION) * ((v1 - v2).dot(n) + (w1 * r1 - w2 * r2).cross(n).z)
         / (1.0 / m1 + 1.0 / m2 + (r1.cross(n)).z.powi(2) / i1 + (r2.cross(n)).z.powi(2) / i2);
-
-    // println!("point of contact: {}", contact.point);
-    // println!("normal: {}", contact.normal);
-    // println!("r1: {}", r1);
-    // println!("r2: {}", r2);
-    // println!("r1 ^ n: {}", r1.cross(n));
-    // println!("r2 ^ n: {}", r2.cross(n));
-    // println!("j: {}", j);
-
-    let r1n = (contact.point - transform1.translation.truncate())
-        .perp()
-        .extend(0.0);
-    let r2n = (contact.point - transform2.translation.truncate())
-        .perp()
-        .extend(0.0);
-    let _j2 = -(1.0 + RESTITUTION) * (v1 + w1 * r1n - v2 - w2 * r2n).dot(n)
-        / (1.0 / m1 + 1.0 / m2 + (r1n.dot(n)).powi(2) / i1 + (r2n.dot(n)).powi(2) / i2);
-
-    // println!("j: {}\nj2: {}\n", j, j2);
-    // assert!((j - j2).abs() < 1.0);
 
     velocity1.0 += j / m1 * n;
     velocity2.0 -= j / m2 * n;
 
     angular_velocity1.0 += j / i1 * r1.cross(n).z;
     angular_velocity2.0 -= j / i2 * r2.cross(n).z;
-
-    // println!(
-    //     "normal: {}\nw1: {}\nw'1: {}\nw2: {}\nw'2: {}\n",
-    //     contact.normal, w1, angular_velocity1.0, w2, angular_velocity2.0
-    // );
-
-    // angular_velocity1.0 += j / i1 * r1n.dot(n);
-    // angular_velocity2.0 -= j / i2 * r2n.dot(n);
-
-    // let tmp = 2.0 * (u1 - u2).dot(x1 - x2) / ((m1 + m2) * (x1 - x2).dot(x1 - x2)) * (x1 - x2);
-    // let [v1, v2] = [u1 - m2 * tmp, u2 + m1 * tmp];
-    // println!("u1: {}\nv1: {}\nu2: {}\nv2: {}\n", u1, w1, u2, v2);
-    // velocity1.0 = v1.extend(velocity1.0.z);
-    // velocity2.0 = v2.extend(velocity2.0.z);
 }
