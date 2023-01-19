@@ -79,7 +79,7 @@ pub fn spawn(
     }
 }
 
-pub fn update(
+pub fn movement(
     mut commands: Commands,
     mut query_asteroid: Query<
         (&AngularVelocity, Entity, &mut Transform, &Velocity),
