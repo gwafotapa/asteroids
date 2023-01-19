@@ -21,11 +21,11 @@ const BOX_CENTER_LEFT: Vec3 = Vec3 {
 };
 
 pub fn spawn_text(
-    query_spaceship: Query<(Entity, &Health), With<Spaceship>>,
-    query_boss: Query<&Health, With<Boss>>,
-    query_camera: Query<&Transform, With<Camera>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    query_boss: Query<&Health, With<Boss>>,
+    query_camera: Query<&Transform, With<Camera>>,
+    query_spaceship: Query<(Entity, &Health), With<Spaceship>>,
 ) {
     const FONT: &str = "fonts/FiraSans-Bold.ttf";
     const COLOR: Color = Color::rgb(0.0, 0.0, 0.0);
@@ -76,9 +76,9 @@ pub fn spawn_text(
 }
 
 pub fn update_text(
-    mut query: Query<(&mut Text, &mut Transform), With<GameOver>>,
     mut commands: Commands,
     mut exit: EventWriter<AppExit>,
+    mut query: Query<(&mut Text, &mut Transform), With<GameOver>>,
     input: Res<Input<KeyCode>>,
     query_camera: Query<&Transform, (With<Camera>, Without<GameOver>)>,
 ) {
