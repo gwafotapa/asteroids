@@ -110,8 +110,7 @@ pub fn spawn(
     const DISTANCE_TO_BOSS: f32 = 10000.0;
     let x = DISTANCE_TO_BOSS * theta.cos() + spaceship::TRANSLATION.x;
     let y = DISTANCE_TO_BOSS * theta.sin() + spaceship::TRANSLATION.y;
-    const BOSS_Z: f32 = WINDOW_Z;
-    let translation = Vec3::new(x, y, BOSS_Z);
+    let translation = Vec3::new(x, y, WINDOW_Z);
     const AREA: f32 =
         PI * (INNER_RADIUS + OUTER_RADIUS) / 2.0 * (INNER_RADIUS + OUTER_RADIUS) / 2.0;
     const MASS: f32 = AREA;

@@ -5,7 +5,7 @@ use crate::{
     blast::BlastEvent,
     collision::detection::{triangle::Triangle, Aabb, Collider, Topology},
     component::{AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity},
-    constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
+    constant::{WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_Z},
     fire::{Fire, FireEvent},
     keyboard_bindings::KeyboardBindings,
 };
@@ -13,13 +13,11 @@ use crate::{
 pub mod flame;
 
 pub const HEALTH: u32 = 100;
-// See assets/spaceship.ggb
 pub const TRANSLATION: Vec3 = Vec3 {
     x: WINDOW_WIDTH / 2.0,
     y: WINDOW_HEIGHT / 2.0,
-    z: Z,
+    z: WINDOW_Z,
 };
-pub const Z: f32 = 500.0;
 
 const S1: Vec3 = Vec3 {
     x: -26.0,

@@ -50,7 +50,7 @@ fn main() {
                 .with_system(game_state::gamesetup_to_turnuplight)
                 .into(),
         )
-        .add_system(map::star::spawn.run_if(game_state::gamesetup_or_ingame))
+        .add_system(star::spawn.run_if(game_state::gamesetup_or_ingame))
         .add_exit_system(GameState::GameSetup, light::kill)
         .add_enter_system(GameState::TurnUpLight, camera::setup)
         .add_system(light::turn_up.run_in_state(GameState::TurnUpLight))
@@ -64,7 +64,7 @@ fn main() {
                 .with_system(asteroid::spawn)
                 .with_system(intercepter::spawn)
                 .with_system(blast::update)
-                .with_system(collision::impact::update)
+                .with_system(impact::update)
                 .with_system(map::update)
                 .with_system(wreckage::update)
                 .with_system(wreckage::update_debris)
@@ -115,7 +115,7 @@ fn main() {
                 .after("collision"),
         )
         .add_system(
-            collision::impact::spawn
+            impact::spawn
                 .run_in_state(GameState::InGame)
                 .after("impact event"),
         )

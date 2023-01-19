@@ -16,7 +16,7 @@ pub struct MomentOfInertia(pub f32);
 pub struct Velocity(pub Vec3);
 
 #[derive(Clone, Component, Copy, Debug)]
-pub struct AngularVelocity(pub f32); // radians per frame
+pub struct AngularVelocity(pub f32);
 
 #[derive(Component)]
 pub struct Indestructible;
