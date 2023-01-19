@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, sprite::Mesh2dHandle};
 
 use super::{Spaceship, S10, S13, S14, S7, S9};
-use crate::{keyboard::KeyboardBindings, Part};
+use crate::{component::Part, keyboard::KeyboardBindings};
 
 const COLOR: Color = Color::YELLOW;
 

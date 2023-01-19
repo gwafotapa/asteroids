@@ -3,7 +3,10 @@
 // https://www.chrishecker.com/Rigid_Body_Dynamics
 use bevy::prelude::*;
 
-use crate::{collision::detection::Contact, AngularVelocity, Mass, MomentOfInertia, Velocity};
+use crate::{
+    collision::detection::Contact,
+    component::{AngularVelocity, Mass, MomentOfInertia, Velocity},
+};
 
 pub fn compute_velocities(
     velocity1: &mut Velocity,

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::Health;
+use crate::component::Health;
 
 #[derive(Component)]
 pub struct Blast;

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_pcg::Pcg32;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::constant::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const BACKGROUND: f32 = 0.0;
 const RADIUS: f32 = 1.0;

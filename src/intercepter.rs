@@ -4,12 +4,11 @@ use std::f32::consts::PI;
 
 use crate::{
     blast::BlastEvent,
-    boss::Attack,
-    collision::{detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::detection::{triangle::Triangle, Aabb, Collider, Topology},
+    component::{AngularVelocity, Attack, Health, Mass, MomentOfInertia, Part, Velocity},
+    constant::{WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_Z},
     fire::{Fire, FireEvent},
     spaceship::Spaceship,
-    AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z, WINDOW_HEIGHT,
-    WINDOW_WIDTH,
 };
 
 const SQRT_3: f32 = 1.732_050_8; // 1.73205080756887729352744634151
@@ -77,7 +76,7 @@ pub fn spawn(
     let translation = Vec3::new(
         xc + 2.0 * WINDOW_WIDTH * phi.cos(),
         yc + 2.0 * WINDOW_WIDTH * phi.sin(),
-        PLANE_Z,
+        WINDOW_Z,
     );
     let intercepter = commands
         .spawn(Intercepter)

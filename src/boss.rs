@@ -4,10 +4,14 @@ use std::f32::consts::{PI, SQRT_2};
 
 use crate::{
     blast::BlastEvent,
-    collision::{detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::detection::{triangle::Triangle, Aabb, Collider, Topology},
+    component::{
+        AngularVelocity, Attack, ColorDamaged, Health, Indestructible, Mass, MomentOfInertia, Part,
+        Velocity,
+    },
+    constant::WINDOW_Z,
     fire::{Fire, FireEvent},
     spaceship::{self, Spaceship},
-    AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z,
 };
 
 const INNER_RADIUS: f32 = 100.0;
@@ -25,15 +29,6 @@ pub struct BossCore;
 
 #[derive(Component)]
 pub struct BossEdge;
-
-#[derive(Component)]
-pub struct Indestructible;
-
-#[derive(Component)]
-pub struct ColorDamaged(pub Color);
-
-#[derive(Component)]
-pub struct Attack(pub Vec3);
 
 const A1: Vec3 = Vec3 {
     x: -INNER_RADIUS,
@@ -115,7 +110,7 @@ pub fn spawn(
     const DISTANCE_TO_BOSS: f32 = 10000.0;
     let x = DISTANCE_TO_BOSS * theta.cos() + spaceship::TRANSLATION.x;
     let y = DISTANCE_TO_BOSS * theta.sin() + spaceship::TRANSLATION.y;
-    const BOSS_Z: f32 = PLANE_Z;
+    const BOSS_Z: f32 = WINDOW_Z;
     let translation = Vec3::new(x, y, BOSS_Z);
     const AREA: f32 =
         PI * (INNER_RADIUS + OUTER_RADIUS) / 2.0 * (INNER_RADIUS + OUTER_RADIUS) / 2.0;

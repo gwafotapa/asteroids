@@ -2,7 +2,11 @@ use bevy::{prelude::*, render::mesh::VertexAttributeValues};
 use rand::Rng;
 use std::f32::consts::PI;
 
-use crate::{transform, AngularVelocity, Collider, Health, Part, Topology, TriangleXY, Velocity};
+use crate::{
+    collision::detection::{triangle::TriangleXY, Collider, Topology},
+    component::{AngularVelocity, Health, Part, Velocity},
+    transform,
+};
 
 const HEALTH: u32 = 100;
 const DEBRIS_PER_SQUARE_UNIT: f32 = 1.0 / 32.0;

@@ -4,7 +4,11 @@ use bevy::{
     sprite::Mesh2dHandle,
 };
 
-use crate::{Health, Spaceship, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{
+    component::Health,
+    constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
+    spaceship::Spaceship,
+};
 
 const COLOR_CONTENTS: Color = Color::BLUE;
 const COLOR_OUTLINE: Color = Color::WHITE;

@@ -3,8 +3,9 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::{
-    collision::{Aabb, Collider, Topology},
-    AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, PLANE_Z, WINDOW_WIDTH,
+    collision::detection::{Aabb, Collider, Topology},
+    component::{AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity},
+    constant::{WINDOW_WIDTH, WINDOW_Z},
 };
 
 #[derive(Clone, Component, Copy)]
@@ -23,7 +24,7 @@ pub fn spawn(
         let translation = Vec3::new(
             xc + 2.0 * WINDOW_WIDTH * phi.cos(),
             yc + 2.0 * WINDOW_WIDTH * phi.sin(),
-            PLANE_Z,
+            WINDOW_Z,
         );
         const HEALTH_MAX: u32 = 60;
         let health = Health(rng.gen_range(10..HEALTH_MAX + 1));

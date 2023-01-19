@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    collision::{impact::ImpactEvent, Aabb},
-    AngularVelocity, Collider, Health, Mass, MomentOfInertia, Part, Topology, Velocity,
+    collision::{
+        detection::{Aabb, Collider, Topology},
+        impact::ImpactEvent,
+    },
+    component::{AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity},
 };
 
 #[derive(Component)]

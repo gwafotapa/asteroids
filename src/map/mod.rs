@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::constant::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use star::StarsEvent;
 
 pub mod star;

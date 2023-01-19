@@ -2,10 +2,10 @@ use bevy::{app::AppExit, prelude::*, text::Text2dBounds};
 use iyes_loopless::prelude::*;
 
 use crate::{
-    boss::{Boss, Indestructible},
+    boss::Boss,
+    component::{Health, Indestructible},
     game_state::GameState,
     spaceship::Spaceship,
-    Health,
 };
 
 #[derive(Clone, Component, Copy)]

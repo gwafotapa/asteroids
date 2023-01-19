@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{AngularVelocity, Velocity};
+use crate::component::{AngularVelocity, Velocity};
 
 pub fn global_of(child: Transform, parent: Transform) -> Transform {
     Transform {

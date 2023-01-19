@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    boss::{ColorDamaged, Indestructible},
+    component::{ColorDamaged, Health, Indestructible, Mass, Velocity},
     fire::Damages,
-    Health, Mass, Velocity,
 };
 
 pub fn apply<'a, I>(

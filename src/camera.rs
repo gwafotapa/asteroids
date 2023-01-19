@@ -2,9 +2,10 @@ use bevy::prelude::*;
 // use iyes_loopless::prelude::NextState;
 
 use crate::{
+    component::Velocity,
+    constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
     keyboard::KeyboardBindings,
     spaceship::{self, Spaceship},
-    Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const CAMERA_Z: f32 = 1000.0;

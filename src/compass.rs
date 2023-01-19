@@ -1,6 +1,11 @@
 use bevy::{prelude::*, render::mesh::PrimitiveTopology, text::Text2dBounds};
 
-use crate::{boss::Boss, spaceship::Spaceship, Part, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{
+    boss::Boss,
+    component::Part,
+    constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
+    spaceship::Spaceship,
+};
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const FONT_SIZE: f32 = 20.0;

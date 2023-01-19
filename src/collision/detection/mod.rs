@@ -1,6 +1,9 @@
 use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
 
-use crate::{transform, AngularVelocity, Mass, MomentOfInertia, Velocity};
+use crate::{
+    component::{AngularVelocity, Mass, MomentOfInertia, Velocity},
+    transform,
+};
 use triangle::TriangleXY;
 
 pub mod triangle;

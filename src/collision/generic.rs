@@ -1,8 +1,12 @@
 use bevy::prelude::*;
 
 use crate::{
-    boss::ColorDamaged, boss::Indestructible, fire::Damages, transform, AngularVelocity, Health,
-    Mass, MomentOfInertia, Part, Velocity,
+    component::{
+        AngularVelocity, ColorDamaged, Health, Indestructible, Mass, MomentOfInertia, Part,
+        Velocity,
+    },
+    fire::Damages,
+    transform,
 };
 
 use super::{
