@@ -1,4 +1,4 @@
-use asteroids::{camera, map, WINDOW_HEIGHT, WINDOW_WIDTH};
+use asteroids::*;
 use bevy::app::PluginGroupBuilder;
 use bevy::prelude::*;
 
@@ -6,20 +6,17 @@ use bevy::prelude::*;
 fn count_stars() {
     let mut app = App::new();
     app.add_plugins(TestPlugins)
-        .add_event::<map::star::StarsEvent>()
+        .add_event::<StarsEvent>()
         .add_startup_system(camera::spawn)
         .add_startup_system(map::spawn)
         .add_system(map::update)
-        .add_system(map::star::spawn.after(map::update));
+        .add_system(star::spawn.after(map::update));
 
     app.update();
 
     assert_eq!(
-        app.world
-            .query::<&map::star::Star>()
-            .iter(&app.world)
-            .count(),
-        9 * map::star::STARS_PER_SECTOR
+        app.world.query::<&star::Star>().iter(&app.world).count(),
+        9 * star::STARS_PER_SECTOR
     );
 
     // Move camera to sector (1, 1)
@@ -33,11 +30,8 @@ fn count_stars() {
     app.update();
 
     assert_eq!(
-        app.world
-            .query::<&map::star::Star>()
-            .iter(&app.world)
-            .count(),
-        9 * map::star::STARS_PER_SECTOR
+        app.world.query::<&star::Star>().iter(&app.world).count(),
+        9 * star::STARS_PER_SECTOR
     );
 
     // Move camera to sector (2, 1)
@@ -51,11 +45,8 @@ fn count_stars() {
     app.update();
 
     assert_eq!(
-        app.world
-            .query::<&map::star::Star>()
-            .iter(&app.world)
-            .count(),
-        9 * map::star::STARS_PER_SECTOR
+        app.world.query::<&star::Star>().iter(&app.world).count(),
+        9 * star::STARS_PER_SECTOR
     );
 
     // Move camera back to sector (1, 1)
@@ -69,11 +60,8 @@ fn count_stars() {
     app.update();
 
     assert_eq!(
-        app.world
-            .query::<&map::star::Star>()
-            .iter(&app.world)
-            .count(),
-        9 * map::star::STARS_PER_SECTOR
+        app.world.query::<&star::Star>().iter(&app.world).count(),
+        9 * star::STARS_PER_SECTOR
     );
 }
 

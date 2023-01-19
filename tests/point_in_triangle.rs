@@ -1,4 +1,4 @@
-use asteroids::collision::detection;
+use asteroids::*;
 use bevy::prelude::*;
 
 const O: Vec2 = Vec2::ZERO;

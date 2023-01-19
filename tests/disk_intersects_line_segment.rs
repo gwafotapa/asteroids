@@ -1,4 +1,4 @@
-use asteroids::collision::detection;
+use asteroids::*;
 use bevy::prelude::*;
 
 const A: Vec2 = Vec2 { x: -5.0, y: 1.0 };

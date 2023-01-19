@@ -19,7 +19,8 @@ pub mod collision {
     const RED: &str = "\x1b[91m";
     const WHITE: &str = "\x1b[97m";
 
-    // #[test] // Has to be run with 'cargo test asteroids_dimension_1 -- --test-threads=1'
+    #[test] // Has to be run with 'cargo test asteroids_dimension_1 -- --test-threads=1'
+    #[ignore]
     fn asteroids_dimension_1() {
         let mut app = App::new();
         app.add_plugins(TestPlugins)
@@ -84,7 +85,8 @@ pub mod collision {
         );
     }
 
-    // #[test] Has to be run with 'cargo test asteroids_dimension_2 -- --test-threads=1'
+    #[test] // Has to be run with 'cargo test asteroids_dimension_2 -- --test-threads=1'
+    #[ignore]
     fn asteroids_dimension_2() {
         let mut app = App::new();
         app.add_plugins(TestPlugins)
@@ -157,7 +159,8 @@ pub mod collision {
     }
 
     // TODO: Needs to be reworked now that time advances time.delta_seconds() per frame
-    // #[test]
+    #[test]
+    #[ignore]
     fn asteroid_spaceship() {
         let mut app = App::new();
         app.add_plugins(DefaultPlugins)
