@@ -30,10 +30,10 @@ pub struct FireEvent {
 }
 
 pub fn spawn(
-    mut fire_event: EventReader<FireEvent>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
+    mut fire_event: EventReader<FireEvent>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     for ev in fire_event.iter() {
         let fire = commands
