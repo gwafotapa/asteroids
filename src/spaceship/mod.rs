@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 
 use crate::{
     blast::BlastEvent,
-    collision::{cache::Cache, detection::triangle::Triangle, Aabb, Collider, Topology},
+    collision::{detection::triangle::Triangle, Aabb, Collider, Topology},
     fire::{Fire, FireEvent},
     keyboard::KeyboardBindings,
     AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity, WINDOW_HEIGHT, WINDOW_WIDTH,
@@ -374,48 +374,39 @@ pub fn attack(
 // }
 
 pub fn movement(
-    // commands: Commands,
-    // meshes: ResMut<Assets<Mesh>>,
-    // materials: ResMut<Assets<ColorMaterial>>,
-    keys: Res<Input<KeyCode>>,
-    cache: Res<Cache>,
     mut query_spaceship: Query<
-        (&mut AngularVelocity, Entity, &mut Transform, &mut Velocity),
+        (&mut AngularVelocity, &mut Transform, &mut Velocity),
         (With<Spaceship>, Without<Part>),
     >,
+    keys: Res<Input<KeyCode>>,
     query_bindings: Query<&KeyboardBindings>,
     time: Res<Time>,
 ) {
     let bindings = query_bindings.single();
 
-    if let Ok((mut s_angular_velocity, spaceship, mut s_transform, mut s_velocity)) =
+    if let Ok((mut s_angular_velocity, mut s_transform, mut s_velocity)) =
         query_spaceship.get_single_mut()
     {
-        if !cache.contains_entity(spaceship) {
-            if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
-                s_angular_velocity.0 += ROTATION_SPEED * time.delta_seconds();
-                // s_angular_velocity.0 =
-                // ROTATION_SPEED_MAX.min(s_angular_velocity.0 + ROTATION_SPEED);
-            } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
-                s_angular_velocity.0 -= ROTATION_SPEED * time.delta_seconds();
-                // s_angular_velocity.0 =
-                //     -ROTATION_SPEED_MAX.max(s_angular_velocity.0 - ROTATION_SPEED);
-            }
-
-            if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
-                s_velocity.0 +=
-                    ACCELERATION * time.delta_seconds() * (s_transform.rotation * Vec3::X);
-            } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
-                s_velocity.0 += 0.5
-                    * ACCELERATION
-                    * time.delta_seconds()
-                    * (s_transform.rotation * Vec3::NEG_X);
-            }
-
-            s_velocity.0 *= 1.0 - DRAG;
-            s_angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
-            // debug!("Spaceship velocity: {}", s_velocity.0);
+        if keys.any_pressed([bindings.rotate_left(), KeyCode::Left]) {
+            s_angular_velocity.0 += ROTATION_SPEED * time.delta_seconds();
+            // s_angular_velocity.0 =
+            // ROTATION_SPEED_MAX.min(s_angular_velocity.0 + ROTATION_SPEED);
+        } else if keys.any_pressed([bindings.rotate_right(), KeyCode::Right]) {
+            s_angular_velocity.0 -= ROTATION_SPEED * time.delta_seconds();
+            // s_angular_velocity.0 =
+            //     -ROTATION_SPEED_MAX.max(s_angular_velocity.0 - ROTATION_SPEED);
         }
+
+        if keys.any_pressed([bindings.accelerate(), KeyCode::Up]) {
+            s_velocity.0 += ACCELERATION * time.delta_seconds() * (s_transform.rotation * Vec3::X);
+        } else if keys.any_pressed([bindings.decelerate(), KeyCode::Down]) {
+            s_velocity.0 +=
+                0.5 * ACCELERATION * time.delta_seconds() * (s_transform.rotation * Vec3::NEG_X);
+        }
+
+        s_velocity.0 *= 1.0 - DRAG;
+        s_angular_velocity.0 *= 1.0 - ANGULAR_DRAG;
+        // debug!("Spaceship velocity: {}", s_velocity.0);
 
         s_transform.translation += s_velocity.0 * time.delta_seconds();
         s_transform.rotation *=

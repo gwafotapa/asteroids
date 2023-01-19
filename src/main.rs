@@ -10,7 +10,6 @@ fn main() {
 
     App::new()
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
-        .insert_resource(collision::cache::Cache::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Asteroids".to_string(),
@@ -154,11 +153,6 @@ fn main() {
                 // .with_system(collision::boss::with_asteroid_or_spaceship)
                 // .with_system(collision::fire_and_fire),
                 .into(),
-        )
-        .add_system(
-            collision::cache::update
-                .run_in_state(GameState::InGame)
-                .after("collision"),
         )
         .add_system_set(
             ConditionSet::new()
