@@ -20,10 +20,10 @@ pub fn gamesetup_to_turnuplight(mut commands: Commands) {
 }
 
 pub fn ingame_to_paused(
-    input: Res<Input<KeyCode>>,
     mut commands: Commands,
-    query_spaceship: Query<(With<crate::spaceship::Spaceship>, Without<Part>)>,
+    input: Res<Input<KeyCode>>,
     query_bindings: Query<&KeyboardBindings>,
+    query_spaceship: Query<(With<crate::spaceship::Spaceship>, Without<Part>)>,
 ) {
     if query_spaceship.get_single().is_ok()
         && input.any_just_pressed([KeyCode::Escape, query_bindings.single().pause()])
