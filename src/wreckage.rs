@@ -52,19 +52,12 @@ pub fn wreck_with<C: Component>(
         (With<C>, With<Part>),
     >,
 ) {
-    // for (color, collider, maybe_parent, transform, health, maybe_velocity) in &query {
     for (color, collider, part, health, parent, transform) in &query_part {
         if health.0 > 0 {
             continue;
         }
 
         let mut rng = rand::thread_rng();
-        // let color = materials.get(color).unwrap().color;
-        // let velocity = maybe_parent
-        //     .map_or(maybe_velocity, |parent| {
-        //         query.get_component::<Velocity>(**parent).ok()
-        //     })
-        //     .map_or(Vec3::ZERO, |v| v.0);
         let (p_angular_velocity, children, parent, p_transform, p_velocity) =
             query.get(**parent).unwrap();
 
@@ -94,20 +87,6 @@ pub fn wreck_with<C: Component>(
             })
             .id();
 
-        // commands.entity(child).insert(Wreckage);
-        // commands.entity(child).remove::<C>();
-        // commands.entity(child).remove::<Collider>();
-
-        // let wreck = commands
-        //     .spawn(Wreckage)
-        //     .insert(Health(WRECK_HEALTH))
-        //     .insert(Velocity(velocity))
-        //     .insert(SpatialBundle {
-        //         transform: transform.compute_transform(),
-        //         ..default()
-        //     })
-        //     .id();
-
         match &collider.topology {
             Topology::Triangles { mesh_handle } => {
                 if let Some(VertexAttributeValues::Float32x3(vertices)) = meshes
@@ -119,18 +98,14 @@ pub fn wreck_with<C: Component>(
                         let triangle: TriangleXY =
                             <[_; 3]>::try_from(triplet).expect("3 items").into();
 
-                        // Arbitrary number of debris per triangle : area/16
                         for _ in 0..(triangle.area() * DEBRIS_PER_SQUARE_UNIT).round() as usize {
                             let p = triangle.random_point();
                             let debris =
                                 Vec3::new(p.x, p.y, if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
-                            // let debris = transform.transform_point(debris_relative);
-
                             let dv =
                                 Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
                             let debris = commands
-                                // .spawn(Debris)
                                 .spawn(WreckageDebris)
                                 .insert(Velocity(dv))
                                 .insert(ColorMesh2dBundle {
@@ -153,10 +128,6 @@ pub fn wreck_with<C: Component>(
             }
             Topology::Disk { radius } => {
                 let area = PI * radius * radius;
-                // println!(
-                //     "number of debris spawned: {}",
-                //     area * DEBRIS_PER_SQUARE_UNIT
-                // );
                 for _ in 0..(area * DEBRIS_PER_SQUARE_UNIT).round() as usize {
                     let rho = rng.gen_range(0.0..*radius);
                     let theta = rng.gen_range(0.0..2.0 * PI);
@@ -168,7 +139,6 @@ pub fn wreck_with<C: Component>(
                     let dv = Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0);
 
                     let debris = commands
-                        // .spawn(Debris)
                         .spawn(WreckageDebris)
                         .insert(Velocity(dv))
                         .insert(ColorMesh2dBundle {
