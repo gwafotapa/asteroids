@@ -18,9 +18,9 @@ pub struct PauseMenuItem;
 
 pub fn spawn(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut query_menu: Query<&mut Style, With<PauseMenu>>,
     mut query_camera: Query<&mut UiCameraConfig>,
+    mut query_menu: Query<&mut Style, With<PauseMenu>>,
+    asset_server: Res<AssetServer>,
 ) {
     query_camera.single_mut().show_ui = true;
     if let Ok(mut pause_menu) = query_menu.get_single_mut() {
@@ -76,28 +76,19 @@ pub fn spawn(
 }
 
 pub fn update(
-    input: Res<Input<KeyCode>>,
     mut commands: Commands,
     mut query_camera: Query<&mut UiCameraConfig>,
-    mut query_menu_pause: Query<(&Children, &mut PauseMenu, &mut Style)>,
     mut query_item: Query<&mut Text, With<PauseMenuItem>>,
-    query_bindings: Query<&KeyboardBindings>,
+    mut query_menu_pause: Query<(&Children, &mut PauseMenu, &mut Style)>,
     mut exit: EventWriter<AppExit>,
+    input: Res<Input<KeyCode>>,
+    query_bindings: Query<&KeyboardBindings>,
 ) {
     let (children, mut menu, mut style) = query_menu_pause.single_mut();
     let bindings = query_bindings.single();
     if input.any_just_pressed([KeyCode::Escape, bindings.pause()]) {
         commands.insert_resource(NextState(GameState::InGame));
         query_camera.single_mut().show_ui = false;
-        // if menu.0 != 0 {
-        //     query_item.get_mut(children[menu.0]).unwrap().sections[0]
-        //         .style
-        //         .color = COLOR_DEFAULT;
-        //     menu.0 = 0;
-        //     query_item.get_mut(children[menu.0]).unwrap().sections[0]
-        //         .style
-        //         .color = COLOR_HIGHLIGHTED;
-        // }
     } else if input.any_just_pressed([KeyCode::Up, bindings.accelerate()]) {
         if menu.0 > 0 {
             query_item.get_mut(children[menu.0]).unwrap().sections[0]

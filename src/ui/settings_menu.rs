@@ -25,6 +25,13 @@ pub struct SettingsMenuItems;
 #[derive(Clone, Component, Copy, Debug)]
 pub struct SettingsMenuItem;
 
+#[derive(Clone, Copy, Debug, Default)]
+pub enum SettingsState {
+    #[default]
+    SelectItem,
+    BindKey,
+}
+
 pub fn spawn(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -183,13 +190,13 @@ pub fn spawn(
 
 pub fn update(
     mut commands: Commands,
-    input: Res<Input<KeyCode>>,
-    mut query_menu: Query<(&mut SettingsMenu, &mut Style)>,
-    query_menu_items: Query<&Children, With<SettingsMenuItems>>,
-    mut query_item: Query<&mut Text, With<SettingsMenuItem>>,
-    mut query_bindings: Query<&mut KeyboardBindings>,
-    mut settings_state: Local<SettingsState>,
     mut keyboard_events: EventReader<KeyboardInput>,
+    mut query_bindings: Query<&mut KeyboardBindings>,
+    mut query_item: Query<&mut Text, With<SettingsMenuItem>>,
+    mut query_menu: Query<(&mut SettingsMenu, &mut Style)>,
+    mut settings_state: Local<SettingsState>,
+    input: Res<Input<KeyCode>>,
+    query_menu_items: Query<&Children, With<SettingsMenuItems>>,
     query_main_menu: Query<With<crate::ui::main_menu::MainMenu>>,
 ) {
     let mut bindings = query_bindings.single_mut();
@@ -237,6 +244,14 @@ pub fn update(
                 state: ButtonState::Pressed,
             }) = keyboard_events.iter().next()
             {
+                const PERMANENT_BINDINGS: [KeyCode; 5] = [
+                    KeyCode::Up,     // Accelerate
+                    KeyCode::Down,   // Decelerate
+                    KeyCode::Left,   // Rotate left
+                    KeyCode::Right,  // Rotate right
+                    KeyCode::Escape, // Pause
+                ];
+
                 if !PERMANENT_BINDINGS.iter().any(|k| k == key_code) {
                     let mut i = 0;
                     while i < BINDINGS {
@@ -258,18 +273,3 @@ pub fn update(
         }
     }
 }
-
-#[derive(Clone, Copy, Debug, Default)]
-pub enum SettingsState {
-    #[default]
-    SelectItem,
-    BindKey,
-}
-
-const PERMANENT_BINDINGS: [KeyCode; 5] = [
-    KeyCode::Up,     // Accelerate
-    KeyCode::Down,   // Decelerate
-    KeyCode::Left,   // Rotate left
-    KeyCode::Right,  // Rotate right
-    KeyCode::Escape, // Pause
-];

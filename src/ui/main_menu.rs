@@ -19,8 +19,8 @@ pub struct MainMenuItem;
 
 pub fn spawn(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     mut query: Query<&mut Style, With<MainMenu>>,
+    asset_server: Res<AssetServer>,
 ) {
     if let Ok(mut main_menu) = query.get_single_mut() {
         main_menu.display = Display::Flex;
@@ -71,12 +71,12 @@ pub fn spawn(
 }
 
 pub fn update(
-    input: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut query_main_menu: Query<(&Children, &mut MainMenu, &mut Style)>,
     mut query_item: Query<&mut Text, With<MainMenuItem>>,
-    query_bindings: Query<&KeyboardBindings>,
+    mut query_main_menu: Query<(&Children, &mut MainMenu, &mut Style)>,
     mut exit: EventWriter<AppExit>,
+    input: Res<Input<KeyCode>>,
+    query_bindings: Query<&KeyboardBindings>,
 ) {
     let (children, mut menu, mut style) = query_main_menu.single_mut();
     let bindings = query_bindings.single();
