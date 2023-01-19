@@ -15,8 +15,8 @@ pub struct BlastEvent {
 pub fn spawn(
     mut blast_event: EventReader<BlastEvent>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     for ev in blast_event.iter() {
         commands
@@ -36,26 +36,8 @@ pub fn spawn(
     }
 }
 
-pub fn update(
-    // mut commands: Commands,
-    // mut query: Query<(Entity, &mut Health, Option<&Parent>), With<Blast>>,
-    mut query: Query<&mut Health, With<Blast>>,
-) {
-    // for (blast, mut health, parent) in query.iter_mut() {
+pub fn update(mut query: Query<&mut Health, With<Blast>>) {
     for mut health in query.iter_mut() {
         health.0 -= 1;
-        // if health.0 <= 0 {
-        //     if let Some(parent) = parent {
-        //         commands.entity(parent.get()).remove_children(&[blast]);
-        //     }
-        // }
     }
 }
-
-// pub fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Blast>>) {
-//     for (blast, health) in query.iter() {
-//         if health.0 <= 0 {
-//             commands.entity(blast).despawn();
-//         }
-//     }
-// }
