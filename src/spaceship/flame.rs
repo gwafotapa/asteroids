@@ -13,31 +13,18 @@ pub struct FlameFront;
 
 pub fn rear_spawn(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     query_spaceship: Query<Entity, (With<Spaceship>, Without<Part>)>,
 ) {
     let mut flame = Mesh::new(PrimitiveTopology::TriangleList);
     let v_pos = vec![[0.0, 0.0, 0.0], [0.0, -6.0, 0.0], [0.0, 6.0, 0.0]];
     flame.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
-
-    // let mut v_color: Vec<u32> = vec![Color::YELLOW.as_linear_rgba_u32(); 3];
-    // // v_color.extend_from_slice(&[Color::YELLOW.as_linear_rgba_u32(); 3]);
-    // flame.insert_attribute(
-    //     MeshVertexAttribute::new("Vertex_Color", 1, VertexFormat::Uint32),
-    //     v_color,
-    // );
-
-    // let indices = vec![0, 1, 2];
-    // flame.set_indices(Some(Indices::U32(indices)));
-
     let flame = commands
         .spawn(FlameRear)
         .insert(ColorMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(flame)),
             transform: Transform::from_xyz(S7.x, 0.0, -1.0),
-            // .with_scale(Vec3::from([0.02, 0.02, 1.0])),
-            // .with_scale(Vec3::from([1.0, 1.0, 1.0])),
             material: materials.add(COLOR.into()),
             ..default()
         })
@@ -49,8 +36,8 @@ pub fn rear_spawn(
 
 pub fn front_spawn(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     query_spaceship: Query<Entity, (With<Spaceship>, Without<Part>)>,
 ) {
     let flame_front_left = commands
@@ -60,7 +47,6 @@ pub fn front_spawn(
                 radius: 0.3,
                 vertices: 16,
             }))),
-
             transform: Transform::from_xyz(S9.x, (S9.y + S10.y) / 2.0, -1.0)
                 .with_scale(Vec3::from([0.0, 0.0, 1.0])),
             material: materials.add(COLOR.into()),
@@ -75,7 +61,6 @@ pub fn front_spawn(
                 radius: 0.3,
                 vertices: 16,
             }))),
-
             transform: Transform::from_xyz(S13.x, (S13.y + S14.y) / 2.0, -1.0)
                 .with_scale(Vec3::from([0.0, 0.0, 1.0])),
             material: materials.add(COLOR.into()),
@@ -90,34 +75,12 @@ pub fn front_spawn(
 }
 
 pub fn rear_update(
-    keys: Res<Input<KeyCode>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    keys: Res<Input<KeyCode>>,
     query: Query<&Mesh2dHandle, With<FlameRear>>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     if let Ok(mesh) = query.get_single() {
-        // meshes
-        //     .get_mut(&mesh.0)
-        //     .unwrap()
-        //     .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-        //     .unwrap()
-        //     .as_float3()
-        //     .unwrap()[0] = [-800.0, 0.0, 0.0];
-
-        // println!(
-        //     "indices: {:?}",
-        //     meshes
-        //         .get_mut(&mesh.0)
-        //         .unwrap()
-        //         .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-        //         .unwrap() // .as_float3()
-        //                   // .unwrap()[0]
-        // );
-
-        // if keys.any_just_pressed([KeyCode::K, KeyCode::Up]) {
-        //     visibility.is_visible = true;
-        // }
-
         if let Some(bevy::render::mesh::VertexAttributeValues::Float32x3(vertices)) = meshes
             .get_mut(&mesh.0)
             .unwrap()
@@ -133,42 +96,15 @@ pub fn rear_update(
                 vertices[0][0] += 4.0;
             }
         }
-
-        // if keys.any_just_released([KeyCode::K, KeyCode::Up]) {
-        //     visibility.is_visible = false;
-        // }
     }
 }
 
 pub fn front_update(
-    keys: Res<Input<KeyCode>>,
-    // mut meshes: ResMut<Assets<Mesh>>,
     mut query: Query<&mut Transform, With<FlameFront>>,
+    keys: Res<Input<KeyCode>>,
     query_bindings: Query<&KeyboardBindings>,
 ) {
     for mut transform in query.iter_mut() {
-        // meshes
-        //     .get_mut(&mesh.0)
-        //     .unwrap()
-        //     .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-        //     .unwrap()
-        //     .as_float3()
-        //     .unwrap()[0] = [-800.0, 0.0, 0.0];
-
-        // println!(
-        //     "indices: {:?}",
-        //     meshes
-        //         .get_mut(&mesh.0)
-        //         .unwrap()
-        //         .attribute_mut(Mesh::ATTRIBUTE_POSITION)
-        //         .unwrap() // .as_float3()
-        //                   // .unwrap()[0]
-        // );
-
-        // if keys.any_just_pressed([KeyCode::K, KeyCode::Up]) {
-        //     visibility.is_visible = true;
-        // }
-
         if keys.any_pressed([query_bindings.single().decelerate(), KeyCode::Down]) {
             if transform.scale.x < 10.0 {
                 transform.scale.x += 4.0;
@@ -181,23 +117,5 @@ pub fn front_update(
             transform.scale.x -= 4.0;
             transform.scale.y -= 4.0;
         }
-        // if keys.any_just_released([KeyCode::K, KeyCode::Up]) {
-        //     visibility.is_visible = false;
-        // }
     }
 }
-
-// pub fn despawn(
-//     mut commands: Commands,
-//     query_flame: Query<Entity, Or<(With<FlameRear>, With<FlameFront>)>>,
-//     query_spaceship: Query<(Entity, &Health), With<Spaceship>>,
-// ) {
-//     if let Ok((spaceship, health)) = query_spaceship.get_single() {
-//         if health.0 <= 0 {
-//             for flame in query_flame.iter() {
-//                 commands.entity(spaceship).remove_children(&[flame]);
-//                 commands.entity(flame).despawn();
-//             }
-//         }
-//     }
-// }
