@@ -7,6 +7,7 @@ use iyes_loopless::prelude::*;
 use crate::{
     game_state::GameState,
     keyboard_bindings::{KeyboardBindings, BINDINGS, KEYCODESTRING},
+    ui::main_menu::MainMenu,
 };
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
@@ -197,7 +198,7 @@ pub fn update(
     mut settings_state: Local<SettingsState>,
     input: Res<Input<KeyCode>>,
     query_menu_items: Query<&Children, With<SettingsMenuItems>>,
-    query_main_menu: Query<With<crate::ui::main_menu::MainMenu>>,
+    query_main_menu: Query<With<MainMenu>>,
 ) {
     let mut bindings = query_bindings.single_mut();
     let (mut menu, mut style) = query_menu.single_mut();

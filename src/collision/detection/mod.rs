@@ -1,6 +1,7 @@
 use bevy::{prelude::*, render::mesh::VertexAttributeValues, sprite::Mesh2dHandle};
 
 use crate::{
+    collision::response,
     component::{AngularVelocity, Mass, MomentOfInertia, Velocity},
     transform,
 };
@@ -523,7 +524,7 @@ where
 
         let [mut v1, mut v2] = [velocity1, velocity2];
         let [mut w1, mut w2] = [angular_velocity1, angular_velocity2];
-        super::response::compute_velocities(
+        response::compute_velocities(
             &mut v1,
             &mut v2,
             &mut w1,

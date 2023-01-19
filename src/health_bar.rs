@@ -7,7 +7,7 @@ use bevy::{
 use crate::{
     component::Health,
     constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
-    spaceship::Spaceship,
+    spaceship::{self, Spaceship},
 };
 
 const COLOR_CONTENTS: Color = Color::BLUE;
@@ -17,7 +17,7 @@ const CONTENTS_POSITION: Vec3 = Vec3 {
     y: OUTLINE_POSITION.y,
     z: OUTLINE_POSITION.z - 1.0,
 };
-const HEALTH_MAX: f32 = crate::spaceship::HEALTH as f32;
+const HEALTH_MAX: f32 = spaceship::HEALTH as f32;
 const HEIGHT: f32 = 10.0;
 const OUTLINE_POSITION: Vec3 = Vec3 {
     x: -WINDOW_WIDTH / 2.0,

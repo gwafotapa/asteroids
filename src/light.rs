@@ -1,7 +1,11 @@
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::{game_state::GameState, keyboard_bindings::KeyboardBindings};
+use crate::{
+    game_state::GameState,
+    keyboard_bindings::KeyboardBindings,
+    ui::{main_menu::MainMenu, settings_menu::SettingsMenu},
+};
 
 const DIM_FACTOR: f32 = 0.92;
 const DIM_TIMER: u32 = 50;
@@ -13,9 +17,9 @@ pub fn turn_down(
     mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
     mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
     mut timer: Local<u32>,
-    query_main_menu: Query<Entity, With<super::ui::main_menu::MainMenu>>,
+    query_main_menu: Query<Entity, With<MainMenu>>,
     query_reset: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
-    query_settings_menu: Query<Entity, With<super::ui::settings_menu::SettingsMenu>>,
+    query_settings_menu: Query<Entity, With<SettingsMenu>>,
 ) {
     for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {

@@ -241,18 +241,12 @@ pub fn attack(
                 let attack_absolute_translation =
                     i_transform.transform_point(ip_transform.transform_point(ip_attack.0));
 
-                // Compute coordinates of vector from intercepter to spaceship
+                // Check line of sight
                 let is = s_transform.translation - i_transform.translation;
-                // Compute coordinates of vector from intercepter to attack source
                 let ia = attack_absolute_translation - i_transform.translation;
-                // Scalar product sign determines whether or not attack has line of sight
-                // if bs.truncate().dot(bc.truncate()) < 0.0 {
                 if is.truncate().angle_between(ia.truncate()).abs() > PI / 6.0 {
                     continue;
                 }
-
-                let looking_at =
-                    i_transform.rotation * Quat::from_axis_angle(Vec3::Z, PI / 2.0) * Vec3::X;
 
                 const BLAST_RADIUS: f32 = 5.0;
                 const BLAST_VERTICES: usize = 16;
@@ -272,6 +266,8 @@ pub fn attack(
                 const FIRE_VERTICES: usize = 32;
                 const FIRE_RANGE: u32 = 100;
                 const FIRE_VELOCITY: f32 = 400.0;
+                let looking_at =
+                    i_transform.rotation * Quat::from_axis_angle(Vec3::Z, PI / 2.0) * Vec3::X;
 
                 fire_event.send(FireEvent {
                     fire: Fire {

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::{component::Part, keyboard_bindings::KeyboardBindings};
+use crate::{component::Part, keyboard_bindings::KeyboardBindings, spaceship::Spaceship};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum GameState {
@@ -23,7 +23,7 @@ pub fn ingame_to_paused(
     mut commands: Commands,
     input: Res<Input<KeyCode>>,
     query_bindings: Query<&KeyboardBindings>,
-    query_spaceship: Query<(With<crate::spaceship::Spaceship>, Without<Part>)>,
+    query_spaceship: Query<(With<Spaceship>, Without<Part>)>,
 ) {
     if query_spaceship.get_single().is_ok()
         && input.any_just_pressed([KeyCode::Escape, query_bindings.single().pause()])

@@ -274,12 +274,8 @@ pub fn attack(
                     let attack_absolute_translation =
                         b_transform.transform_point(bp_transform.transform_point(bp_attack.0));
 
-                    // Compute coordinates of vector from boss to spaceship
                     let bs = s_transform.translation - b_transform.translation;
-                    // Compute coordinates of vector from boss to attack source
                     let bc = attack_absolute_translation - b_transform.translation;
-                    // Scalar product sign determines whether or not attack has line of sight
-                    // if bs.truncate().dot(bc.truncate()) < 0.0 {
                     if bs.truncate().angle_between(bc.truncate()).abs() > PI / 6.0 {
                         continue;
                     }
