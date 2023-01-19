@@ -26,7 +26,7 @@ fn main() {
         .add_stage_after(CoreStage::Update, CLEANUP, SystemStage::parallel())
         // .add_stage_after(WRECK, DESPAWN, SystemStage::parallel())
         .add_loopless_state(GameState::MainMenu)
-        .add_event::<asteroid::AsteroidEvent>()
+        // .add_event::<asteroid::AsteroidEvent>()
         .add_event::<blast::BlastEvent>()
         // .add_event::<collision::damages::DamageEvent>()
         .add_event::<collision::impact::ImpactEvent>()

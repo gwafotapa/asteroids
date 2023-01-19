@@ -2,7 +2,6 @@ use asteroids::{
     asteroid::{Asteroid, AsteroidEvent},
     collision::{
         cache::Cache,
-        damages::DamageEvent,
         detection::{triangle::Triangle, *},
     },
     *,
@@ -23,7 +22,7 @@ fn asteroids_dimension_1() {
     app.add_plugins(TestPlugins)
         .insert_resource(Cache::default())
         .add_event::<AsteroidEvent>()
-        .add_event::<DamageEvent>()
+        .add_startup_system(camera::spawn)
         .add_system(asteroid::spawn)
         .add_system(collision::generic::with::<asteroid::Asteroid>.after(asteroid::update));
 
@@ -102,7 +101,6 @@ fn asteroids_dimension_2() {
     app.add_plugins(TestPlugins)
         .insert_resource(Cache::default())
         .add_event::<AsteroidEvent>()
-        .add_event::<DamageEvent>()
         .add_system(asteroid::spawn)
         .add_system(collision::generic::with::<asteroid::Asteroid>.after(asteroid::update));
 
@@ -187,7 +185,6 @@ fn asteroid_spaceship() {
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
         .insert_resource(Cache::default())
         .add_event::<AsteroidEvent>()
-        .add_event::<DamageEvent>()
         .add_event::<SpacePressedEvent>()
         .add_startup_system(spawn_camera)
         .add_system(bevy::window::close_on_esc)
