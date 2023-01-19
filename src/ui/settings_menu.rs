@@ -6,7 +6,7 @@ use iyes_loopless::prelude::*;
 
 use crate::{
     game_state::GameState,
-    keyboard::{KeyboardBindings, BINDINGS, KEYCODESTRING},
+    keyboard_bindings::{KeyboardBindings, BINDINGS, KEYCODESTRING},
 };
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";

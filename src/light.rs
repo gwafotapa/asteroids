@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::{game_state::GameState, keyboard::KeyboardBindings};
+use crate::{game_state::GameState, keyboard_bindings::KeyboardBindings};
 
 const DIM_FACTOR: f32 = 0.92;
 const DIM_TIMER: u32 = 50;

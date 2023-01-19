@@ -1,6 +1,6 @@
 use bevy::{prelude::*, text::Text2dBounds};
 
-use crate::keyboard::KeyboardBindings;
+use crate::keyboard_bindings::KeyboardBindings;
 
 const FONT_SIZE: f32 = 24.0;
 const BOX_WIDTH: f32 = 360.0;

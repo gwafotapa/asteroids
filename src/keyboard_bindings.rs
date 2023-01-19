@@ -19,7 +19,7 @@ impl Default for KeyboardBindings {
     }
 }
 
-pub fn spawn_bindings(mut commands: Commands) {
+pub fn spawn(mut commands: Commands) {
     commands.spawn(KeyboardBindings::default());
 }
 

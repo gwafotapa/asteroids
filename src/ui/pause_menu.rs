@@ -1,7 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 use iyes_loopless::prelude::*;
 
-use crate::{game_state::GameState, keyboard::KeyboardBindings};
+use crate::{game_state::GameState, keyboard_bindings::KeyboardBindings};
 
 const FONT: &str = "fonts/FiraSans-Bold.ttf";
 const SIZE: f32 = 24.0;

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use crate::{
     component::Velocity,
     constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
-    keyboard::KeyboardBindings,
+    keyboard_bindings::KeyboardBindings,
     spaceship::{self, Spaceship},
 };
 

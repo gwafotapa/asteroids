@@ -25,7 +25,7 @@ fn main() {
         .add_event::<FireEvent>()
         .add_event::<StarsEvent>()
         .add_startup_system(camera::spawn)
-        .add_startup_system(keyboard::spawn_bindings)
+        .add_startup_system(keyboard_bindings::spawn)
         .add_enter_system(GameState::MainMenu, ui::main_menu::spawn)
         .add_enter_system(GameState::Settings, ui::settings_menu::spawn)
         .add_enter_system(GameState::Paused, ui::pause_menu::spawn)

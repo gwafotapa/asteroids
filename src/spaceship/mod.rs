@@ -7,7 +7,7 @@ use crate::{
     component::{AngularVelocity, Health, Mass, MomentOfInertia, Part, Velocity},
     constant::{WINDOW_HEIGHT, WINDOW_WIDTH},
     fire::{Fire, FireEvent},
-    keyboard::KeyboardBindings,
+    keyboard_bindings::KeyboardBindings,
 };
 
 pub mod flame;

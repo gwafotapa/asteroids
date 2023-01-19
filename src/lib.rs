@@ -29,7 +29,7 @@ pub mod game_over;
 pub mod game_state;
 pub mod health_bar;
 pub mod intercepter;
-pub mod keyboard;
+pub mod keyboard_bindings;
 pub mod light;
 pub mod map;
 pub mod objective;

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::{component::Part, keyboard::KeyboardBindings};
+use crate::{component::Part, keyboard_bindings::KeyboardBindings};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum GameState {
