@@ -7,15 +7,15 @@ const DIM_FACTOR: f32 = 0.92;
 const DIM_TIMER: u32 = 50;
 
 pub fn turn_down(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query_camera: Query<(&mut Camera, &mut UiCameraConfig)>,
     mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
     mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
     mut timer: Local<u32>,
-    mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     query_main_menu: Query<Entity, With<super::ui::main_menu::MainMenu>>,
-    query_settings_menu: Query<Entity, With<super::ui::settings_menu::SettingsMenu>>,
-    mut query_camera: Query<(&mut Camera, &mut UiCameraConfig)>,
     query_reset: Query<Entity, (Without<KeyboardBindings>, Without<Camera>)>,
+    query_settings_menu: Query<Entity, With<super::ui::settings_menu::SettingsMenu>>,
 ) {
     for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {
@@ -53,11 +53,11 @@ pub fn turn_down(
 }
 
 pub fn turn_up(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
     mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
     mut timer: Local<u32>,
-    mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for (color_material, visibility) in &mut query_visible_mesh {
         if visibility.is_visible() {
@@ -75,15 +75,14 @@ pub fn turn_up(
     *timer += 1;
     if *timer == DIM_TIMER {
         commands.insert_resource(NextState(GameState::InGame));
-        // query_camera.single_mut().show_ui = true;
         *timer = 0;
     }
 }
 
 pub fn kill(
+    mut materials: ResMut<Assets<ColorMaterial>>,
     mut query_visible_mesh: Query<(&Handle<ColorMaterial>, &ComputedVisibility)>,
     mut query_visible_text: Query<(&ComputedVisibility, &mut Text)>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let kill_factor = DIM_FACTOR.powi(DIM_TIMER as i32);
 
