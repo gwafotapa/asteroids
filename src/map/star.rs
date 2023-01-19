@@ -19,14 +19,12 @@ pub struct StarsEvent {
 }
 
 pub fn spawn(
-    mut stars_event: EventReader<StarsEvent>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    // query: Query<&Sector>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut stars_event: EventReader<StarsEvent>,
 ) {
     for ev in stars_event.iter() {
-        // let sector = query.get(ev.sector).unwrap();
         let mut rng = Pcg32::seed_from_u64(ev.seed);
         for _ in 0..STARS_PER_SECTOR {
             let star = commands
