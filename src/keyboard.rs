@@ -24,10 +24,6 @@ pub fn spawn_bindings(mut commands: Commands) {
 }
 
 impl KeyboardBindings {
-    // fn get(&self) -> &[KeyCode] {
-    //     &self.0
-    // }
-
     pub fn accelerate(&self) -> KeyCode {
         self.0[0]
     }
